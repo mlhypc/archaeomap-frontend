@@ -1,4 +1,4 @@
-// src/pages/PanelPage.js - Mobil navigasyon düzeltilmiş
+// src/pages/PanelPage.js - Mobil navigasyon düzeltilmiş + UserManagement eklendi
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -37,8 +37,9 @@ import { useAuth } from '../contexts/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import AccountSection from '../components/panel/AccountSection';
 import CityListSection from '../components/panel/CityListSection';
+import UserManagementSection from '../components/panel/UserManagementSection';
 
-// Styled Components
+// Styled Components - Same as before
 const PanelContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
@@ -76,7 +77,7 @@ const PanelContent = styled(Box)(({ theme }) => ({
   display: 'flex',
   overflow: 'hidden',
   [theme.breakpoints.down('md')]: {
-    paddingTop: '64px' // AppBar height
+    paddingTop: '64px'
   }
 }));
 
@@ -129,7 +130,7 @@ const NavItem = styled(Box, {
   }
 }));
 
-// Panel sections - same as before
+// Panel sections
 const PANEL_SECTIONS = {
   ACCOUNT: 'account',
   SETTINGS: 'settings',
@@ -139,11 +140,10 @@ const PANEL_SECTIONS = {
   MY_SUBMISSIONS: 'my-submissions',
   CITY_LIST: 'city-list',
   USER_MANAGEMENT: 'user-management',
-  APPROVAL_QUEUE: 'approval-queue',
   SYSTEM_SETTINGS: 'system-settings'
 };
 
-// Placeholder components - same as before
+// Placeholder components
 const PlaceholderSection = ({ title, description, icon: Icon }) => (
   <Box sx={{ p: 3 }}>
     <Typography variant="h4" sx={{ 
@@ -252,12 +252,6 @@ function PanelPage() {
           category: 'Administration'
         },
         { 
-          id: PANEL_SECTIONS.APPROVAL_QUEUE, 
-          label: 'Approvals', 
-          icon: CheckCircleIcon,
-          category: 'Administration'
-        },
-        { 
           id: PANEL_SECTIONS.SYSTEM_SETTINGS, 
           label: 'System', 
           icon: AdminPanelSettingsIcon,
@@ -271,7 +265,7 @@ function PanelPage() {
 
   const handleNavigation = (sectionId) => {
     setActiveSection(sectionId);
-    setMobileMenuOpen(false); // Close mobile menu after selection
+    setMobileMenuOpen(false);
   };
 
   const renderSectionContent = () => {
@@ -311,17 +305,7 @@ function PanelPage() {
       case PANEL_SECTIONS.CITY_LIST:
         return <CityListSection />;
       case PANEL_SECTIONS.USER_MANAGEMENT:
-        return <PlaceholderSection 
-          title="User Management" 
-          description="Manage users, roles, and permissions"
-          icon={PeopleIcon}
-        />;
-      case PANEL_SECTIONS.APPROVAL_QUEUE:
-        return <PlaceholderSection 
-          title="Approval Queue" 
-          description="Review and approve data submissions"
-          icon={CheckCircleIcon}
-        />;
+        return <UserManagementSection />;
       case PANEL_SECTIONS.SYSTEM_SETTINGS:
         return <PlaceholderSection 
           title="System Settings" 

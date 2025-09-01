@@ -1,4 +1,4 @@
-// src/components/panel/CityEditModal.js
+// src/components/panel/CityEditModal.js - SIMPLE VERSION WITH DATA PRESERVATION
 import React, { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -18,7 +18,8 @@ import {
     Alert,
     Chip,
     useMediaQuery,
-    InputAdornment
+    InputAdornment,
+    Paper
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import SaveIcon from '@mui/icons-material/Save';
@@ -41,7 +42,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     
-    // Form data
+    // Form data - Basic fields only for UI
     const [formData, setFormData] = useState({
         generic_city_name: '',
         country: '',
@@ -54,10 +55,9 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         data_status: 'active'
     });
     
-    // Original data for comparison
+    // Complete city data including JSON fields
+    const [completeCityData, setCompleteCityData] = useState(null);
     const [originalData, setOriginalData] = useState(null);
-    
-    // Form validation errors
     const [validationErrors, setValidationErrors] = useState({});
 
     // Load city data when modal opens
@@ -76,8 +76,12 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         try {
             const result = await citiesApi.getCityDetails(cityId);
             
+            // DEBUG: Let's see what we're getting from backend
+            console.log('🔍 Backend response:', result.data);
+            
             if (result.success) {
-                const cityData = {
+                // Basic form data for UI
+                const formData = {
                     generic_city_name: result.data.name || '',
                     country: result.data.country || '',
                     founded: result.data.founded?.toString() || '',
@@ -89,8 +93,44 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     data_status: result.data.data_status || 'active'
                 };
                 
-                setFormData(cityData);
-                setOriginalData(cityData);
+                // DEBUG: Check what JSON data we have
+                console.log('🔍 Control History:', result.data.controlHistory);
+                console.log('🔍 Population History:', result.data.populationHistory);
+                console.log('🔍 Landmarks History:', result.data.landmarksHistory);
+                
+                // Complete city data including JSON fields (preserve everything)
+                const completeData = {
+                    ...formData,
+                    control_history_json: result.data.controlHistory?.map(c => ({
+                        ruler: c.ruler,
+                        historical_city_name: c.historical_city_name,
+                        startYear: c.startYear,
+                        endYear: c.endYear,
+                        description: c.description
+                    })) || [],
+                    population_history_json: result.data.populationHistory?.map(p => ({
+                        year: p.year,
+                        count: p.count,
+                        source: p.source
+                    })) || [],
+                    landmarks_history_json: result.data.landmarksHistory?.map(l => ({
+                        landmark_name: l.landmark_name,
+                        constructionDate: l.constructionDate,
+                        purpose: l.purpose,
+                        significance: l.significance,
+                        description: l.description
+                    })) || []
+                };
+                
+                // DEBUG: Check final complete data
+                console.log('🔍 Complete data:', completeData);
+                console.log('🔍 Control history JSON length:', completeData.control_history_json.length);
+                console.log('🔍 Population history JSON length:', completeData.population_history_json.length);
+                console.log('🔍 Landmarks history JSON length:', completeData.landmarks_history_json.length);
+                
+                setFormData(formData);
+                setCompleteCityData(completeData);
+                setOriginalData(formData);
             } else {
                 setError(result.error || 'Failed to load city data');
             }
@@ -114,6 +154,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
             city_tier: 1,
             data_status: 'active'
         });
+        setCompleteCityData(null);
         setOriginalData(null);
         setValidationErrors({});
         setError(null);
@@ -182,7 +223,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     };
 
     const handleSave = async () => {
-        if (!validateForm()) {
+        if (!validateForm() || !completeCityData) {
             return;
         }
         
@@ -191,8 +232,12 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         setSuccess(null);
         
         try {
-            // Prepare data for API
+            // Prepare data for API - merge form changes with complete data
             const updateData = {
+                // Start with complete city data (preserves JSON fields)
+                ...completeCityData,
+                
+                // Override with form changes
                 generic_city_name: formData.generic_city_name.trim(),
                 country: formData.country.trim(),
                 founded: parseInt(formData.founded),
@@ -295,6 +340,17 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         <CloseIcon />
                     </Button>
                 </Box>
+                
+                {/* Show data preservation status */}
+                {completeCityData && (
+                    <Box sx={{ mt: 1 }}>
+                        <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
+                            Preserving: {completeCityData.control_history_json?.length || 0} control periods, 
+                            {' '}{completeCityData.population_history_json?.length || 0} population records, 
+                            {' '}{completeCityData.landmarks_history_json?.length || 0} landmarks
+                        </Typography>
+                    </Box>
+                )}
             </DialogTitle>
 
             <DialogContent sx={{ padding: { xs: 2, md: 3 } }}>
@@ -309,7 +365,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     }}>
                         <CircularProgress sx={{ color: COLORS.primary, mb: 2 }} />
                         <Typography variant="body2" sx={{ color: COLORS.texts.muted }}>
-                            Loading city data...
+                            Loading complete city data...
                         </Typography>
                     </Box>
                 ) : (
@@ -327,7 +383,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                             </Alert>
                         )}
 
-                        {/* Form */}
+                        {/* Basic Form - Same as before */}
                         <Grid container spacing={3}>
                             {/* City Name & Tier */}
                             <Grid item xs={12} md={8}>
@@ -494,6 +550,76 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 />
                             </Grid>
                         </Grid>
+
+                        {/* JSON Data Preview */}
+                        {completeCityData && (
+                            <Box sx={{ mt: 4 }}>
+                                <Typography variant="h6" sx={{ color: COLORS.texts.primary, mb: 2 }}>
+                                    Historical Data (Read-Only Preview)
+                                </Typography>
+                                
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} md={4}>
+                                        <Paper sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)' }}>
+                                            <Typography variant="subtitle2" sx={{ color: COLORS.primary, mb: 1 }}>
+                                                Control History ({completeCityData.control_history_json?.length || 0} periods)
+                                            </Typography>
+                                            {completeCityData.control_history_json?.slice(0, 3).map((period, i) => (
+                                                <Typography key={i} variant="caption" sx={{ display: 'block', color: COLORS.texts.secondary }}>
+                                                    {period.startYear}-{period.endYear || 'Present'}: {period.ruler}
+                                                </Typography>
+                                            ))}
+                                            {completeCityData.control_history_json?.length > 3 && (
+                                                <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
+                                                    +{completeCityData.control_history_json.length - 3} more...
+                                                </Typography>
+                                            )}
+                                        </Paper>
+                                    </Grid>
+                                    
+                                    <Grid item xs={12} md={4}>
+                                        <Paper sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)' }}>
+                                            <Typography variant="subtitle2" sx={{ color: COLORS.primary, mb: 1 }}>
+                                                Population ({completeCityData.population_history_json?.length || 0} records)
+                                            </Typography>
+                                            {completeCityData.population_history_json?.slice(0, 3).map((record, i) => (
+                                                <Typography key={i} variant="caption" sx={{ display: 'block', color: COLORS.texts.secondary }}>
+                                                    {record.year}: {record.count?.toLocaleString()} people
+                                                </Typography>
+                                            ))}
+                                            {completeCityData.population_history_json?.length > 3 && (
+                                                <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
+                                                    +{completeCityData.population_history_json.length - 3} more...
+                                                </Typography>
+                                            )}
+                                        </Paper>
+                                    </Grid>
+                                    
+                                    <Grid item xs={12} md={4}>
+                                        <Paper sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)' }}>
+                                            <Typography variant="subtitle2" sx={{ color: COLORS.primary, mb: 1 }}>
+                                                Landmarks ({completeCityData.landmarks_history_json?.length || 0} items)
+                                            </Typography>
+                                            {completeCityData.landmarks_history_json?.slice(0, 3).map((landmark, i) => (
+                                                <Typography key={i} variant="caption" sx={{ display: 'block', color: COLORS.texts.secondary }}>
+                                                    {landmark.constructionDate}: {landmark.landmark_name}
+                                                </Typography>
+                                            ))}
+                                            {completeCityData.landmarks_history_json?.length > 3 && (
+                                                <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
+                                                    +{completeCityData.landmarks_history_json.length - 3} more...
+                                                </Typography>
+                                            )}
+                                        </Paper>
+                                    </Grid>
+                                </Grid>
+                                
+                                <Alert severity="info" sx={{ mt: 2 }}>
+                                    Historical data is preserved when saving. For now, this is a read-only preview. 
+                                    Advanced editing will be available in future updates.
+                                </Alert>
+                            </Box>
+                        )}
                     </Box>
                 )}
             </DialogContent>
@@ -519,7 +645,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 
                 <Button
                     onClick={handleSave}
-                    disabled={loading || saving || !hasUnsavedChanges()}
+                    disabled={loading || saving || !hasUnsavedChanges() || !completeCityData}
                     variant="contained"
                     startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
                     sx={{

@@ -171,6 +171,43 @@ export const authService = {
         error: error.response?.data?.error || 'Profile update failed'
       };
     }
+  },
+
+  // USER MANAGEMENT FUNCTIONS (Admin only)
+  
+  // Get all users
+  async getAllUsers() {
+    try {
+      const response = await authApi.get('/auth/users');
+      return {
+        success: true,
+        users: response.data.users
+      };
+    } catch (error) {
+      console.error('Get all users error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to fetch users'
+      };
+    }
+  },
+
+  // Update user role
+  async updateUserRole(userId, role) {
+    try {
+      const response = await authApi.put(`/auth/users/${userId}/role`, { role });
+      return {
+        success: true,
+        user: response.data.user,
+        message: response.data.message
+      };
+    } catch (error) {
+      console.error('Update user role error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to update user role'
+      };
+    }
   }
 };
 

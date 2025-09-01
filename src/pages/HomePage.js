@@ -35,7 +35,7 @@ const MapContainer = styled(Box)({
 
 // Desktop Sidebar Container
 const DesktopSidebarContainer = styled(Box)(({ theme }) => ({
-  width: 300,
+  width: 360,
   flexShrink: 0,
   overflow: 'hidden',
   display: 'flex',

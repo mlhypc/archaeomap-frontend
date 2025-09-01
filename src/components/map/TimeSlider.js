@@ -154,7 +154,7 @@ function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
     width: isMobile ? 'calc(100% - 32px)' : '600px',
     maxWidth: isMobile ? 'calc(100% - 32px)' : '80%',
     position: 'absolute',
-    bottom: isMobile ? (isLandscape ? 12 : 40) : 20,
+    bottom: isMobile ? (isLandscape ? 12 : 60) : 20,
     left: '50%',
     transform: 'translateX(-50%)',
     height: expanded ? 'auto' : '48px',
