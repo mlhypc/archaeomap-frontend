@@ -122,7 +122,9 @@ function CityListSection() {
                 limit: pagination.per_page,
                 search: newFilters.searchTerm.trim() || undefined,
                 country: newFilters.selectedCountry || undefined,
-                status: newFilters.selectedStatus === 'all' ? undefined : newFilters.selectedStatus
+                status: newFilters.selectedStatus === 'all' 
+                    ? ['active', 'passive', 'draft'] 
+                    : newFilters.selectedStatus
             };
 
             const result = await citiesApi.getCitiesList(options);
