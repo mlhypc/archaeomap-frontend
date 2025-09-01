@@ -91,7 +91,7 @@ function BoundsTracker({ onBoundsChange }) {
   return null;
 }
 
-// RENDER MARKERS - optimized function
+// RENDER MARKERS - optimized function with proper key management for labels
 const renderCityMarkers = (
   cities,
   iconFn,
@@ -104,7 +104,7 @@ const renderCityMarkers = (
   currentYear
 ) => {
   return cities.map((city) => (
-    <React.Fragment key={`fragment-${city.id}`}>
+    <React.Fragment key={`fragment-${city.id}-${currentYear}-${status}`}>
       <Marker
         position={city.coordinates}
         icon={iconFn(city, selectedCity?.id === city.id)}
@@ -112,6 +112,7 @@ const renderCityMarkers = (
       />
       {showLabels && visibleKeys.includes(labelFilter) && (
         <Marker
+          key={`label-${city.id}-${currentYear}-${status}`}
           position={city.coordinates}
           icon={createCityLabel(
             getCurrentCityName(city, currentYear),
