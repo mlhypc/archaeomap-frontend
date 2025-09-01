@@ -56,7 +56,7 @@ function CityListSection() {
     const [filters, setFilters] = useState({
         searchTerm: '',
         selectedCountry: '',
-        selectedStatus: 'all'
+        selectedStatus: 'active' // Changed from 'all' to 'active'
     });
     const [availableCountries, setAvailableCountries] = useState([]);
 
@@ -122,9 +122,7 @@ function CityListSection() {
                 limit: pagination.per_page,
                 search: newFilters.searchTerm.trim() || undefined,
                 country: newFilters.selectedCountry || undefined,
-                status: newFilters.selectedStatus === 'all' 
-                    ? ['active', 'passive', 'draft'] 
-                    : newFilters.selectedStatus
+                status: newFilters.selectedStatus // No need to check for 'all'
             };
 
             const result = await citiesApi.getCitiesList(options);
@@ -305,7 +303,6 @@ function CityListSection() {
                             onChange={(e) => handleFilterChange('selectedStatus', e.target.value)}
                             label="Status"
                         >
-                            <MenuItem value="all">All Status</MenuItem>
                             <MenuItem value="active">Active</MenuItem>
                             <MenuItem value="passive">Passive</MenuItem>
                             <MenuItem value="draft">Draft</MenuItem>
