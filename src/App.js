@@ -1,18 +1,27 @@
-// src/App.js
+// src/App.js - Fixed import for theme
 
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import PanelPage from './pages/PanelPage';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './shared/contexts/AuthContext';
+import Theme from './shared/theme/styles';
+
+import HomePage from './home/pages/HomePage';
+import PanelPage from './panel/pages/PanelPage';
+import ResetPasswordPage from './panel/pages/ResetPasswordPage';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/panel/*" element={<PanelPage />} />
-      </Routes>
-    </BrowserRouter>
+    <Theme>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/panel" element={<PanelPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </Theme>
   );
 }
 

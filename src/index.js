@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import AppTheme from './theme/styles';
-import { AuthProvider } from './contexts/AuthContext';
+import AppTheme from './shared/theme/styles';
+import { AuthProvider } from './shared/contexts/AuthContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
