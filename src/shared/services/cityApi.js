@@ -1,172 +1,91 @@
-// src/services/api.js
+// archaeomap-frontend/src/shared/services/cityApi.js - COMPLETE CONSOLIDATED VERSION
 
-import axios from 'axios';
+import { authService } from './authApi';
 
-// Create axios instance with base configuration
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Request interceptor to add auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('archaeomap_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// ========================================================================
+// HELPER FUNCTIONS
+// ========================================================================
 
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid - handled by AuthContext
+// Helper function to make authenticated requests
+const makeRequest = async (url, options = {}) => {
+  try {
+    const token = localStorage.getItem('archaeomap_token');
+    
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers
+      },
+      ...options
+    };
+
+    const response = await fetch(`${API_BASE_URL}${url}`, config);
+    
+    // Handle token expiration
+    if (response.status === 401) {
+      // Try to refresh token
+      const refreshToken = localStorage.getItem('archaeomap_refresh_token');
+      if (refreshToken) {
+        const refreshResult = await authService.refreshToken(refreshToken);
+        if (refreshResult.success) {
+          // Retry the request with new token
+          const newToken = refreshResult.tokens.accessToken;
+          config.headers.Authorization = `Bearer ${newToken}`;
+          return await fetch(`${API_BASE_URL}${url}`, config);
+        }
+      }
+      
+      // Refresh failed, redirect to login
       localStorage.removeItem('archaeomap_token');
       localStorage.removeItem('archaeomap_refresh_token');
+      window.location.href = '/panel';
+      return { ok: false, status: 401 };
     }
-    return Promise.reject(error);
-  }
-);
 
-// Cities API service
-export const citiesApi = {
-  // Get timeline data for a specific year
-  async getTimeline(year, options = {}) {
-    try {
-      const params = new URLSearchParams();
-
-      if (options.bounds) {
-        params.append('bounds', options.bounds.join(','));
-      }
-
-      if (options.ageFilter && options.ageFilter !== 'all_ages') {
-        params.append('ageFilter', options.ageFilter);
-      }
-
-      const queryString = params.toString();
-      const url = `/cities/timeline/${year}${queryString ? `?${queryString}` : ''}`;
-
-      const response = await api.get(url);
-      return {
-        success: true,
-        data: response.data
-      };
-    } catch (error) {
-      console.error('Timeline API error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to fetch timeline data'
-      };
-    }
-  },
-
-  // Tüm timeline verisini tek seferde çek
-  async getBulkTimelineData() {
-    try {
-      const response = await api.get('/cities/timeline/bulk');
-      return {
-        success: true,
-        data: response.data
-      };
-    } catch (error) {
-      console.error('Bulk timeline API error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to fetch bulk timeline data'
-      };
-    }
-  },
-
-  // Get detailed city information
-  async getCityDetails(cityId) {
-    try {
-      const response = await api.get(`/cities/${cityId}`);
-      return {
-        success: true,
-        data: response.data
-      };
-    } catch (error) {
-      console.error('City details API error:', error);
-      return {
-        success: false,
-        error: error.response?.status === 404
-          ? 'City not found'
-          : error.response?.data?.error || 'Failed to fetch city details'
-      };
-    }
-  },
-
-  // Get system metadata
-  async getMetadata() {
-    try {
-      const response = await api.get('/cities/metadata');
-      return {
-        success: true,
-        data: response.data
-      };
-    } catch (error) {
-      console.error('Metadata API error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to fetch system metadata'
-      };
-    }
-  },
-
-  // Get cities list with filtering
-  async getCitiesList(options = {}) {
-    try {
-      const params = new URLSearchParams();
-
-      Object.entries(options).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          params.append(key, value);
-        }
-      });
-
-      const queryString = params.toString();
-      const url = `/cities${queryString ? `?${queryString}` : ''}`;
-
-      const response = await api.get(url);
-      return {
-        success: true,
-        data: response.data
-      };
-    } catch (error) {
-      console.error('Cities list API error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to fetch cities list'
-      };
-    }
-  },
-
-  // Update basic city information
-  async updateCity(cityId, cityData) {
-    try {
-      const response = await api.put(`/cities/${cityId}`, cityData);
-      return {
-        success: true,
-        data: response.data
-      };
-    } catch (error) {
-      console.error('City update API error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to update city'
-      };
-    }
+    return response;
+  } catch (error) {
+    console.error('API request error:', error);
+    throw error;
   }
 };
 
-// Cache management for frequently accessed data
-class DataCache {
-  constructor(maxSize = 100, ttl = 300000) { // 5 minutes TTL
+// Parse response helper
+const parseResponse = async (response) => {
+  try {
+    const data = await response.json();
+    
+    if (response.ok) {
+      return {
+        success: true,
+        data: data.data || data,
+        message: data.message
+      };
+    } else {
+      return {
+        success: false,
+        error: data.error || 'Request failed',
+        details: data.details,
+        code: data.code
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to parse response',
+      details: error.message
+    };
+  }
+};
+
+// ========================================================================
+// ENHANCED CACHE MANAGEMENT
+// ========================================================================
+
+class EnhancedDataCache {
+  constructor(maxSize = 100, ttl = 300000) { // 5 minutes TTL by default
     this.cache = new Map();
     this.maxSize = maxSize;
     this.ttl = ttl;
@@ -211,173 +130,645 @@ class DataCache {
 
     return true;
   }
+
+  delete(key) {
+    return this.cache.delete(key);
+  }
+
+  size() {
+    return this.cache.size;
+  }
 }
 
-// Create cache instances
-export const timelineCache = new DataCache(50, 600000); // 10 minutes for timeline data
-export const cityDetailsCache = new DataCache(200, 1800000); // 30 minutes for city details
-export const metadataCache = new DataCache(1, 3600000); // 1 hour for metadata
+// Create specialized cache instances
+const timelineCache = new EnhancedDataCache(50, 600000); // 10 minutes for timeline data
+const cityDetailsCache = new EnhancedDataCache(200, 1800000); // 30 minutes for city details
+const metadataCache = new EnhancedDataCache(1, 3600000); // 1 hour for metadata
+const generalCache = new EnhancedDataCache(100, 300000); // 5 minutes for general data
 
-// Enhanced cities API with caching
-export const cachedCitiesApi = {
-  async getTimeline(year, options = {}) {
-    const cacheKey = `timeline_${year}_${JSON.stringify(options)}`;
+// ========================================================================
+// MAIN CITIES API OBJECT
+// ========================================================================
 
-    const cached = timelineCache.get(cacheKey);
-    if (cached) {
-      return { success: true, data: cached };
-    }
+const citiesApi = {
+  // ========================================================================
+  // TIMELINE AND MAP DATA METHODS
+  // ========================================================================
 
-    const result = await citiesApi.getTimeline(year, options);
-    if (result.success) {
-      timelineCache.set(cacheKey, result.data);
-    }
-
-    return result;
-  },
-
-  async getCityDetails(cityId) {
-    const cacheKey = `city_${cityId}`;
-
-    const cached = cityDetailsCache.get(cacheKey);
-    if (cached) {
-      return { success: true, data: cached };
-    }
-
-    const result = await citiesApi.getCityDetails(cityId);
-    if (result.success) {
-      cityDetailsCache.set(cacheKey, result.data);
-    }
-
-    return result;
-  },
-
-  async getMetadata() {
-    const cacheKey = 'metadata';
-
-    const cached = metadataCache.get(cacheKey);
-    if (cached) {
-      return { success: true, data: cached };
-    }
-
-    const result = await citiesApi.getMetadata();
-    if (result.success) {
-      metadataCache.set(cacheKey, result.data);
-    }
-
-    return result;
-  },
-
-  async getBulkTimelineData() {
-    const cacheKey = 'bulk_timeline_data';
-
-    const cached = timelineCache.get(cacheKey);
-    if (cached) {
-      return { success: true, data: cached };
-    }
-
-    const result = await citiesApi.getBulkTimelineData();
-    if (result.success) {
-      // Bulk data'yı 30 dakika cache'le
-      timelineCache.set(cacheKey, result.data);
-    }
-
-    return result;
-  },
-
-  async updateCity(cityId, cityData) {
-    // Update işleminde cache'leri temizle
-    cityDetailsCache.delete(`city_${cityId}`);
-    timelineCache.clear(); // Timeline data etkilenebilir
-    
-    const result = await citiesApi.updateCity(cityId, cityData);
-    return result;
-  },
-  
-  // Create new city
-  async createCity(cityData) {
+  // Get timeline data for a specific year
+  getTimeline: async (year, options = {}) => {
     try {
-      const response = await api.post('/city-creation/create', cityData);
-      return {
-        success: true,
-        data: response.data
-      };
+      const params = new URLSearchParams();
+
+      if (options.bounds) {
+        params.append('bounds', options.bounds.join(','));
+      }
+
+      if (options.ageFilter && options.ageFilter !== 'all_ages') {
+        params.append('ageFilter', options.ageFilter);
+      }
+
+      const queryString = params.toString();
+      const url = `/cityData/timeline/${year}${queryString ? `?${queryString}` : ''}`;
+
+      const response = await makeRequest(url);
+      return await parseResponse(response);
     } catch (error) {
-      console.error('City creation API error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to create city'
-      };
+      return { success: false, error: 'Failed to fetch timeline data' };
     }
   },
+
+  // Get bulk timeline data
+  getBulkTimelineData: async (options = {}) => {
+    try {
+      const params = new URLSearchParams();
+      
+      if (options.bounds) {
+        params.append('bounds', options.bounds.join(','));
+      }
+      if (options.ageFilter && options.ageFilter !== 'all_ages') {
+        params.append('ageFilter', options.ageFilter);
+      }
+
+      const queryString = params.toString();
+      const url = `/cityData/timeline/bulk${queryString ? `?${queryString}` : ''}`;
+
+      const response = await makeRequest(url);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch bulk timeline data' };
+    }
+  },
+
+  // Get system metadata
+  getMetadata: async () => {
+    try {
+      const response = await makeRequest('/cityData/metadata');
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch system metadata' };
+    }
+  },
+
+  // Get timeline range
+  getTimelineRange: async () => {
+    try {
+      const response = await makeRequest('/cityData/timeline/range');
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch timeline range' };
+    }
+  },
+
+  // Get cities for specific time period
+  getCitiesForTimePeriod: async (year, options = {}) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('year', year);
+      
+      if (options.bounds) params.append('bounds', options.bounds.join(','));
+      if (options.limit) params.append('limit', options.limit);
+      if (options.includeInactive) params.append('includeInactive', options.includeInactive);
+      if (options.ageFilter && options.ageFilter !== 'all_ages') {
+        params.append('ageFilter', options.ageFilter);
+      }
+
+      const queryString = params.toString();
+      const url = `/cityData/timeline/period?${queryString}`;
+
+      const response = await makeRequest(url);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch cities for time period' };
+    }
+  },
+
+  // ========================================================================
+  // CITY DATA METHODS
+  // ========================================================================
+
+  // Get cities list with filters
+  getCitiesList: async (options = {}) => {
+    try {
+      const params = new URLSearchParams();
+      
+      if (options.page) params.append('page', options.page);
+      if (options.limit) params.append('limit', options.limit);
+      if (options.search) params.append('search', options.search);
+      if (options.country) params.append('country', options.country);
+      if (options.status) params.append('status', options.status);
+
+      Object.entries(options).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '' && 
+            !['page', 'limit', 'search', 'country', 'status'].includes(key)) {
+          params.append(key, value);
+        }
+      });
+
+      const response = await makeRequest(`/cityData?${params.toString()}`);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch cities' };
+    }
+  },
+
+  // Get city details
+  getCityDetails: async (cityId) => {
+    try {
+      const response = await makeRequest(`/cityData/${cityId}`);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch city details' };
+    }
+  },
+
+  // Update city (now with access control)
+  updateCity: async (cityId, cityData) => {
+    try {
+      const response = await makeRequest(`/city-creation/${cityId}`, {
+        method: 'PUT',
+        body: JSON.stringify(cityData)
+      });
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to update city' };
+    }
+  },
+
+  // ========================================================================
+  // CITY CREATION AND VALIDATION
+  // ========================================================================
 
   // Validate city name
-  async validateCityName(cityName, country = null) {
+  validateCityName: async (cityName, country = null) => {
     try {
       const params = country ? `?country=${encodeURIComponent(country)}` : '';
-      const response = await api.get(`/city-creation/validate/${encodeURIComponent(cityName)}${params}`);
-      return {
-        success: true,
-        data: response.data
-      };
+      const response = await makeRequest(`/city-creation/validate/${encodeURIComponent(cityName)}${params}`);
+      return await parseResponse(response);
     } catch (error) {
-      console.error('City name validation API error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to validate city name'
-      };
+      return { success: false, error: 'Failed to validate city name' };
     }
   },
 
-  // Upload sources ZIP file
-  async uploadCitySources(cityId, zipFile) {
+  // Unified city creation (replaces separate submit/create methods)
+  // Contributors: creates pending+draft, Admins: creates approved+passive
+  createCity: async (cityData) => {
+    try {
+      const response = await makeRequest('/city-creation/create', {
+        method: 'POST',
+        body: JSON.stringify(cityData)
+      });
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to create city' };
+    }
+  },
+
+  // Legacy method - kept for backward compatibility
+  submitCityForApproval: async (cityData) => {
+    return citiesApi.createCity(cityData);
+  },
+
+  // Delete city (Admin only)
+  deleteCity: async (cityId) => {
+    try {
+      const response = await makeRequest(`/city-creation/${cityId}`, {
+        method: 'DELETE'
+      });
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to delete city' };
+    }
+  },
+
+  // ========================================================================
+  // SOURCES MANAGEMENT
+  // ========================================================================
+
+  // Upload city sources
+  uploadCitySources: async (cityId, zipFile) => {
     try {
       const formData = new FormData();
       formData.append('sourcesZip', zipFile);
-      
-      const response = await api.post(`/city-creation/${cityId}/sources`, formData, {
+
+      const token = localStorage.getItem('archaeomap_token');
+      const response = await fetch(`${API_BASE_URL}/city-creation/${cityId}/sources`, {
+        method: 'POST',
         headers: {
-          'Content-Type': 'multipart/form-data'
+          ...(token && { Authorization: `Bearer ${token}` })
         },
-        timeout: 60000 // 1 minute timeout for file upload
+        body: formData
       });
-      
-      return {
-        success: true,
-        data: response.data
-      };
+
+      return await parseResponse(response);
     } catch (error) {
-      console.error('Sources upload API error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to upload sources'
-      };
+      return { success: false, error: 'Failed to upload sources' };
     }
   },
 
   // Get city sources info
-  async getCitySources(cityId) {
+  getCitySources: async (cityId) => {
     try {
-      const response = await api.get(`/city-creation/${cityId}/sources`);
-      return {
-        success: true,
-        data: response.data
-      };
+      const response = await makeRequest(`/city-creation/${cityId}/sources`);
+      return await parseResponse(response);
     } catch (error) {
-      console.error('Get city sources API error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to get city sources'
-      };
+      return { success: false, error: 'Failed to get sources info' };
     }
   },
 
-  // Clear all caches
-  clearCache() {
-    timelineCache.clear();
-    cityDetailsCache.clear();
-    metadataCache.clear();
+  // ========================================================================
+  // MODERATION API METHODS
+  // ========================================================================
+
+  // Get cities for moderation (supports new 3-stage workflow)
+  getModerationCities: async (status = 'pending', options = {}) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('status', status); // pending, awaiting-admin, approved, rejected
+      
+      if (options.page) params.append('page', options.page);
+      if (options.limit) params.append('limit', options.limit);
+      if (options.submitterId) params.append('submitterId', options.submitterId);
+
+      const response = await makeRequest(`/moderation/cities?${params.toString()}`);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: `Failed to fetch ${status} cities` };
+    }
+  },
+
+  // Legacy method - kept for backward compatibility
+  getPendingCities: async (options = {}) => {
+    return citiesApi.getModerationCities('pending', options);
+  },
+
+  // Get city details for moderation review
+  getCityForReview: async (cityId) => {
+    try {
+      const response = await makeRequest(`/moderation/cities/${cityId}`);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch city for review' };
+    }
+  },
+
+  // Review city (unified approve/reject for moderators)
+  reviewCity: async (cityId, action, comments = null) => {
+    try {
+      const response = await makeRequest(`/city-creation/${cityId}/review`, {
+        method: 'PUT',
+        body: JSON.stringify({ action, comments })
+      });
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: `Failed to ${action} city` };
+    }
+  },
+
+  // Legacy methods - kept for backward compatibility
+  approveCity: async (cityId, comments = null) => {
+    return citiesApi.reviewCity(cityId, 'approve', comments);
+  },
+
+  rejectCity: async (cityId, comments) => {
+    return citiesApi.reviewCity(cityId, 'reject', comments);
+  },
+
+  // NEW: Admin activate city (final step)
+  activateCity: async (cityId) => {
+    try {
+      const response = await makeRequest(`/city-creation/${cityId}/activate`, {
+        method: 'PUT'
+      });
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to activate city' };
+    }
+  },
+
+  // Get moderation statistics
+  getModerationStats: async (includeUserStats = false) => {
+    try {
+      const params = includeUserStats ? '?includeUserStats=true' : '';
+      const response = await makeRequest(`/moderation/dashboard${params}`);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch moderation stats' };
+    }
+  },
+
+  // Get user's own submissions (Contributors)
+  getMySubmissions: async (options = {}) => {
+    try {
+      const params = new URLSearchParams();
+      
+      if (options.page) params.append('page', options.page);
+      if (options.limit) params.append('limit', options.limit);
+
+      const response = await makeRequest(`/moderation/my-submissions?${params.toString()}`);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch your submissions' };
+    }
+  },
+
+  // ========================================================================
+  // UTILITY METHODS
+  // ========================================================================
+
+  // Get cities by approval status
+  getCitiesByStatus: async (status, options = {}) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('status', status);
+      
+      if (options.page) params.append('page', options.page);
+      if (options.limit) params.append('limit', options.limit);
+      if (options.search) params.append('search', options.search);
+
+      const response = await makeRequest(`/cityData?${params.toString()}`);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: `Failed to fetch ${status} cities` };
+    }
+  },
+
+  // Search cities with advanced filters
+  searchCities: async (filters = {}) => {
+    try {
+      const params = new URLSearchParams();
+      
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          params.append(key, value);
+        }
+      });
+
+      const response = await makeRequest(`/cityData?${params.toString()}`);
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to search cities' };
+    }
+  },
+
+  // Get workflow overview (for admins/moderators)
+  getWorkflowOverview: async () => {
+    try {
+      const [pendingResult, statsResult] = await Promise.all([
+        citiesApi.getPendingCities({ limit: 5 }),
+        citiesApi.getModerationStats(true)
+      ]);
+
+      return {
+        success: true,
+        data: {
+          pendingCities: pendingResult.success ? pendingResult.data.cities : [],
+          stats: statsResult.success ? statsResult.data : null
+        }
+      };
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch workflow overview' };
+    }
+  },
+
+  // Batch operations (Admin only)
+  batchOperation: async (operation, cityIds, data = {}) => {
+    try {
+      const response = await makeRequest('/moderation/batch', {
+        method: 'POST',
+        body: JSON.stringify({
+          operation,
+          cityIds,
+          ...data
+        })
+      });
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: `Failed to perform ${operation} operation` };
+    }
   }
 };
 
-export default api;
+// ========================================================================
+// ENHANCED CACHED API CLASS
+// ========================================================================
+
+class CachedCitiesApi {
+  constructor() {
+    this.timelineCache = timelineCache;
+    this.cityDetailsCache = cityDetailsCache;
+    this.metadataCache = metadataCache;
+    this.generalCache = generalCache;
+  }
+
+  getCacheKey(method, params) {
+    return `${method}_${JSON.stringify(params)}`;
+  }
+
+  async getCachedResult(cache, key, apiCall) {
+    const cached = cache.get(key);
+    if (cached) {
+      return { success: true, data: cached };
+    }
+
+    const result = await apiCall();
+    if (result.success) {
+      cache.set(key, result.data);
+    }
+
+    return result;
+  }
+
+  // ========================================================================
+  // TIMELINE METHODS WITH SPECIALIZED CACHING
+  // ========================================================================
+
+  async getTimeline(year, options = {}) {
+    const cacheKey = `timeline_${year}_${JSON.stringify(options)}`;
+    return await this.getCachedResult(
+      this.timelineCache,
+      cacheKey,
+      () => citiesApi.getTimeline(year, options)
+    );
+  }
+
+  async getBulkTimelineData(options = {}) {
+    const cacheKey = `bulk_timeline_${JSON.stringify(options)}`;
+    return await this.getCachedResult(
+      this.timelineCache,
+      cacheKey,
+      () => citiesApi.getBulkTimelineData(options)
+    );
+  }
+
+  async getCitiesForTimePeriod(year, options = {}) {
+    const cacheKey = `period_${year}_${JSON.stringify(options)}`;
+    return await this.getCachedResult(
+      this.timelineCache,
+      cacheKey,
+      () => citiesApi.getCitiesForTimePeriod(year, options)
+    );
+  }
+
+  async getTimelineRange() {
+    const cacheKey = 'timeline_range';
+    return await this.getCachedResult(
+      this.metadataCache,
+      cacheKey,
+      () => citiesApi.getTimelineRange()
+    );
+  }
+
+  // ========================================================================
+  // CITY DATA METHODS WITH CACHING
+  // ========================================================================
+
+  async getCitiesList(options = {}) {
+    const cacheKey = this.getCacheKey('getCitiesList', options);
+    return await this.getCachedResult(
+      this.generalCache,
+      cacheKey,
+      () => citiesApi.getCitiesList(options)
+    );
+  }
+
+  async getCityDetails(cityId) {
+    const cacheKey = `city_${cityId}`;
+    return await this.getCachedResult(
+      this.cityDetailsCache,
+      cacheKey,
+      () => citiesApi.getCityDetails(cityId)
+    );
+  }
+
+  async getMetadata() {
+    const cacheKey = 'metadata';
+    return await this.getCachedResult(
+      this.metadataCache,
+      cacheKey,
+      () => citiesApi.getMetadata()
+    );
+  }
+
+  async getModerationStats(includeUserStats = false) {
+    const cacheKey = `moderation_stats_${includeUserStats}`;
+    return await this.getCachedResult(
+      this.generalCache,
+      cacheKey,
+      () => citiesApi.getModerationStats(includeUserStats)
+    );
+  }
+
+  // ========================================================================
+  // CACHE-INVALIDATING METHODS (Clear relevant caches on updates)
+  // ========================================================================
+
+  async submitCityForApproval(cityData) {
+    this.clearCitiesCaches();
+    return await citiesApi.submitCityForApproval(cityData);
+  }
+
+  async createCity(cityData) {
+    this.clearCitiesCaches();
+    return await citiesApi.createCity(cityData);
+  }
+
+  async updateCity(cityId, cityData) {
+    this.cityDetailsCache.delete(`city_${cityId}`);
+    this.clearCitiesCaches();
+    this.timelineCache.clear(); // Timeline data might be affected
+    return await citiesApi.updateCity(cityId, cityData);
+  }
+
+  async reviewCity(cityId, action, comments) {
+    this.clearAllCaches();
+    return await citiesApi.reviewCity(cityId, action, comments);
+  }
+
+  async approveCity(cityId, comments) {
+    this.clearAllCaches();
+    return await citiesApi.approveCity(cityId, comments);
+  }
+
+  async rejectCity(cityId, comments) {
+    this.clearAllCaches();
+    return await citiesApi.rejectCity(cityId, comments);
+  }
+
+  async activateCity(cityId) {
+    this.clearAllCaches();
+    return await citiesApi.activateCity(cityId);
+  }
+
+  async deleteCity(cityId) {
+    this.clearAllCaches();
+    return await citiesApi.deleteCity(cityId);
+  }
+
+  // ========================================================================
+  // CACHE MANAGEMENT METHODS
+  // ========================================================================
+
+  clearCitiesCaches() {
+    this.generalCache.clear();
+    this.timelineCache.clear();
+  }
+
+  clearAllCaches() {
+    this.timelineCache.clear();
+    this.cityDetailsCache.clear();
+    this.metadataCache.clear();
+    this.generalCache.clear();
+  }
+
+  clearTimelineCache() {
+    this.timelineCache.clear();
+  }
+
+  clearCityDetailsCache(cityId = null) {
+    if (cityId) {
+      this.cityDetailsCache.delete(`city_${cityId}`);
+    } else {
+      this.cityDetailsCache.clear();
+    }
+  }
+
+  // ========================================================================
+  // FORWARDED METHODS (Non-cached or rarely used)
+  // ========================================================================
+
+  validateCityName = citiesApi.validateCityName;
+  uploadCitySources = citiesApi.uploadCitySources;
+  getCitySources = citiesApi.getCitySources;
+  getModerationCities = citiesApi.getModerationCities;
+  getPendingCities = citiesApi.getPendingCities;
+  getCityForReview = citiesApi.getCityForReview;
+  reviewCity = citiesApi.reviewCity;
+  activateCity = citiesApi.activateCity;
+  getMySubmissions = citiesApi.getMySubmissions;
+  getCitiesByStatus = citiesApi.getCitiesByStatus;
+  searchCities = citiesApi.searchCities;
+  getWorkflowOverview = citiesApi.getWorkflowOverview;
+  batchOperation = citiesApi.batchOperation;
+
+  // Timeline methods (direct forwards for non-cached access)
+  getTimelineDirect = citiesApi.getTimeline;
+  getBulkTimelineDataDirect = citiesApi.getBulkTimelineData;
+  getCitiesForTimePeriodDirect = citiesApi.getCitiesForTimePeriod;
+  getTimelineRangeDirect = citiesApi.getTimelineRange;
+  getMetadataDirect = citiesApi.getMetadata;
+}
+
+// ========================================================================
+// CREATE INSTANCES AND EXPORTS
+// ========================================================================
+
+// Create the enhanced cached instance
+const cachedCitiesApi = new CachedCitiesApi();
+
+// Export cache instances for external access if needed
+export { timelineCache, cityDetailsCache, metadataCache, generalCache };
+
+// Main exports
+export { citiesApi, cachedCitiesApi };
+export default citiesApi;

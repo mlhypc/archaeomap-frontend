@@ -1,6 +1,6 @@
 // archaeomap-frontend\src\panel\pages\PanelPage.js
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Box, 
@@ -30,13 +30,18 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import ModerationIcon from '@mui/icons-material/Gavel';
 import PeopleIcon from '@mui/icons-material/People';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import HowToVoteIcon from '@mui/icons-material/HowToVote';
 
 import { useAuth } from '../../shared/contexts/AuthContext';
 import useUserRole from '../../shared/hooks/useUserRole';
 import ProfileSection from '../sections/Personal/ProfileSection';
 import SettingsSection from '../sections/Personal/SettingsSection';
-import CityListSection from '../sections/DataManagement/CityListSection';
+import ApplyForContributorSection from '../sections/Personal/ApplyForContributorSection';
+import CityManage from '../sections/Moderation/CityManageSection';
 import UserManagementSection from '../sections/Administration/UserManagementSection';
+import ModerationSection from '../sections/Moderation/ModerationSection';
+import PendingApplicationsSection from '../sections/Moderation/featuresModeration/PendingApplicationsSection';
 
 // MERKEZI STİL SİSTEMİ İMPORT
 import { 
@@ -48,10 +53,12 @@ import {
 // Panel sections
 const PANEL_SECTIONS = {
   PROFILE: 'profile',
-  SETTINGS: 'settings', 
+  SETTINGS: 'settings',
+  APPLY_CONTRIBUTOR: 'apply-contributor',
   CITIES: 'cities',
   MY_SUBMISSIONS: 'my-submissions',
   MODERATION: 'moderation',
+  PENDING_APPLICATIONS: 'pending-applications',
   USER_MANAGEMENT: 'user-management',
   SYSTEM_SETTINGS: 'system-settings'
 };
@@ -91,10 +98,11 @@ function PanelPage() {
   const [activeSection, setActiveSection] = useState(PANEL_SECTIONS.PROFILE);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Navigation items
-  const getNavigationItems = () => {
+  // DÜZELTME: Navigation items'ı useMemo ile optimize et
+  const navigationItems = useMemo(() => {
     const items = [];
     
+    // Personal (herkes için)
     items.push(
       { 
         id: PANEL_SECTIONS.PROFILE, 
@@ -110,32 +118,53 @@ function PanelPage() {
       }
     );
 
+    // Apply for Contributor (sadece standard role için)
+    if (user?.role === 'standard') {
+      items.push({
+        id: PANEL_SECTIONS.APPLY_CONTRIBUTOR,
+        label: 'Apply for Contributor',
+        icon: TrendingUpIcon,
+        category: 'Personal'
+      });
+    }
+
+    // Contribution (contributor+ için)
     if (canManageData) {
       items.push(
-        { 
-          id: PANEL_SECTIONS.CITIES, 
-          label: 'Cities', 
-          icon: LocationCityIcon,
-          category: 'Data Management'
-        },
         { 
           id: PANEL_SECTIONS.MY_SUBMISSIONS, 
           label: 'My Submissions', 
           icon: AssignmentIcon,
-          category: 'Data Management'
+          category: 'Contribution'
         }
       );
     }
 
+    // Moderation (moderator+ için)
     if (canModerate) {
-      items.push({
-        id: PANEL_SECTIONS.MODERATION,
-        label: 'Moderation',
-        icon: ModerationIcon,
-        category: 'Moderation'
-      });
+      items.push(
+        {
+          id: PANEL_SECTIONS.MODERATION,
+          label: 'Moderation',
+          icon: ModerationIcon,
+          category: 'Moderation'
+        },
+        {
+          id: PANEL_SECTIONS.PENDING_APPLICATIONS,
+          label: 'Pending Applications',
+          icon: HowToVoteIcon,
+          category: 'Moderation'
+        },
+        { 
+          id: PANEL_SECTIONS.CITIES, 
+          label: 'Cities', 
+          icon: LocationCityIcon,
+          category: 'Moderation'
+        }
+      );
     }
 
+    // Administration (admin için)
     if (isAdmin) {
       items.push(
         { 
@@ -154,7 +183,7 @@ function PanelPage() {
     }
 
     return items;
-  };
+  }, [canManageData, canModerate, isAdmin, user?.role]);
 
   const handleNavigation = (sectionId) => {
     setActiveSection(sectionId);
@@ -166,43 +195,34 @@ function PanelPage() {
     navigate('/');
   };
 
+  // DÜZELTME: Component'leri persist et, her render'da yeni oluşturma
+  const sectionComponents = useMemo(() => ({
+    [PANEL_SECTIONS.PROFILE]: <ProfileSection />,
+    [PANEL_SECTIONS.SETTINGS]: <SettingsSection />,
+    [PANEL_SECTIONS.APPLY_CONTRIBUTOR]: <ApplyForContributorSection />,
+    [PANEL_SECTIONS.CITIES]: <CityManage />,
+    [PANEL_SECTIONS.MY_SUBMISSIONS]: <PlaceholderSection 
+      title="My Submissions" 
+      description="Track your data submissions and approval status"
+      icon={AssignmentIcon}
+    />,
+    [PANEL_SECTIONS.MODERATION]: <ModerationSection />,
+    [PANEL_SECTIONS.PENDING_APPLICATIONS]: <PendingApplicationsSection />,
+    [PANEL_SECTIONS.USER_MANAGEMENT]: <UserManagementSection />,
+    [PANEL_SECTIONS.SYSTEM_SETTINGS]: <PlaceholderSection 
+      title="System Settings" 
+      description="Application configuration and system management"
+      icon={AdminPanelSettingsIcon}
+    />
+  }), []); // Boş dependency - component'ler sadece bir kez oluşturulur
+
   const renderSectionContent = () => {
-    switch (activeSection) {
-      case PANEL_SECTIONS.PROFILE:
-        return <ProfileSection />;
-      case PANEL_SECTIONS.SETTINGS:
-        return <SettingsSection />;
-      case PANEL_SECTIONS.CITIES:
-        return <CityListSection />;
-      case PANEL_SECTIONS.MY_SUBMISSIONS:
-        return <PlaceholderSection 
-          title="My Submissions" 
-          description="Track your data submissions and approval status"
-          icon={AssignmentIcon}
-        />;
-      case PANEL_SECTIONS.MODERATION:
-        return <PlaceholderSection 
-          title="Moderation" 
-          description="Review and moderate user submissions"
-          icon={ModerationIcon}
-        />;
-      case PANEL_SECTIONS.USER_MANAGEMENT:
-        return <UserManagementSection />;
-      case PANEL_SECTIONS.SYSTEM_SETTINGS:
-        return <PlaceholderSection 
-          title="System Settings" 
-          description="Application configuration and system management"
-          icon={AdminPanelSettingsIcon}
-        />;
-      default:
-        return <ProfileSection />;
-    }
+    return sectionComponents[activeSection] || sectionComponents[PANEL_SECTIONS.PROFILE];
   };
 
-  // Desktop navigation
-  const renderDesktopNavigation = () => {
-    const navItems = getNavigationItems();
-    const categories = [...new Set(navItems.map(item => item.category))];
+  // DÜZELTME: Desktop navigation'ı useMemo ile optimize et
+  const desktopNavigation = useMemo(() => {
+    const categories = [...new Set(navigationItems.map(item => item.category))];
 
     return categories.map(category => (
       <Box key={category}>
@@ -211,7 +231,7 @@ function PanelPage() {
         </Typography>
         
         <Box>
-          {navItems
+          {navigationItems
             .filter(item => item.category === category)
             .map(item => (
               <Box 
@@ -230,12 +250,11 @@ function PanelPage() {
         )}
       </Box>
     ));
-  };
+  }, [navigationItems, activeSection, handleNavigation]);
 
-  // Mobile navigation
-  const renderMobileNavigation = () => {
-    const navItems = getNavigationItems();
-    const categories = [...new Set(navItems.map(item => item.category))];
+  // DÜZELTME: Mobile navigation'ı useMemo ile optimize et
+  const mobileNavigation = useMemo(() => {
+    const categories = [...new Set(navigationItems.map(item => item.category))];
 
     return categories.map(category => (
       <Box key={category}>
@@ -244,7 +263,7 @@ function PanelPage() {
         </Typography>
         
         <List dense>
-          {navItems
+          {navigationItems
             .filter(item => item.category === category)
             .map(item => (
               <ListItem key={item.id} disablePadding>
@@ -268,7 +287,7 @@ function PanelPage() {
         {category !== categories[categories.length - 1] && <Divider sx={{ my: 1 }} />}
       </Box>
     ));
-  };
+  }, [navigationItems, activeSection, handleNavigation]);
 
   return (
     <Box sx={panelStyles.container}>
@@ -333,46 +352,46 @@ function PanelPage() {
         </Box>
 
         {isAuthenticated && (
-  <Box sx={{
-    ...panelStyles.userInfo,
-    display: 'flex',
-    padding: 2
-  }}>
-    <Box sx={{ 
-      flex: 2, 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-        {user?.username}
-      </Typography>
-      <Chip 
-        label={displayRole}
-        size="small"
-        sx={panelComponents.roleChip}
-      />
-    </Box>
-    
-    <Box sx={{ 
-      flex: 1, 
-      display: 'flex', 
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <IconButton
-        onClick={handleLogout}
-        color="error"
-      >
-        <LogoutIcon />
-      </IconButton>
-    </Box>
-  </Box>
+          <Box sx={{
+            ...panelStyles.userInfo,
+            display: 'flex',
+            padding: 2
+          }}>
+            <Box sx={{ 
+              flex: 2, 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                {user?.username}
+              </Typography>
+              <Chip 
+                label={displayRole}
+                size="small"
+                sx={panelComponents.roleChip}
+              />
+            </Box>
+            
+            <Box sx={{ 
+              flex: 1, 
+              display: 'flex', 
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <IconButton
+                onClick={handleLogout}
+                color="error"
+              >
+                <LogoutIcon />
+              </IconButton>
+            </Box>
+          </Box>
         )}
 
         <Box sx={{ overflow: 'auto', flex: 1 }}>
-          {renderMobileNavigation()}
+          {mobileNavigation}
         </Box>
       </Drawer>
 
@@ -433,12 +452,22 @@ function PanelPage() {
       <Box sx={panelStyles.content}>
         {/* Desktop Sidebar */}
         <Box sx={panelStyles.desktopSidebar} className="archaeo-scrollbar">
-          {renderDesktopNavigation()}
+          {desktopNavigation}
         </Box>
 
-        {/* Main Content */}
+        {/* Main Content - DÜZELTME: Section'ları gizle/göster, remount etme */}
         <Box sx={panelStyles.main} className="archaeo-scrollbar">
-          {renderSectionContent()}
+          {Object.entries(sectionComponents).map(([sectionId, component]) => (
+            <Box
+              key={sectionId}
+              sx={{
+                display: activeSection === sectionId ? 'block' : 'none',
+                height: '100%'
+              }}
+            >
+              {component}
+            </Box>
+          ))}
         </Box>
       </Box>
     </Box>

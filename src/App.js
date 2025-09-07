@@ -8,6 +8,7 @@ import Theme from './shared/theme/styles';
 import HomePage from './home/pages/HomePage';
 import PanelPage from './panel/pages/PanelPage';
 import ResetPasswordPage from './panel/pages/ResetPasswordPage';
+import OAuthCallback from './panel/sections/Personal/featuresProfile/OAuthCallback';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/panel" element={<PanelPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth/callback" element={<OAuthCallback />} />
           </Routes>
         </Router>
       </AuthProvider>

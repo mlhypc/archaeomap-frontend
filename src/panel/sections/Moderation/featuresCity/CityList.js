@@ -1,4 +1,4 @@
-// archaeomap-frontend\src\components\panel\DataManagement\CityListSection.js
+// archaeomap-frontend\src\panel\sections\DataManagement\features\CityListSection.js
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -34,12 +34,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import { useTheme } from '@mui/material/styles';
 
-import { COLORS } from '../../../shared/config/generalUtils';
-import { citiesApi } from '../../../shared/services/cityApi';
-import CityEditModal from './CityEditModal';
-import CityCreationModal from './CityCreationModal'; // Import creation modal
+import { COLORS } from '../../../../shared/config/generalUtils';
+import { citiesApi } from '../../../../shared/services/cityApi';
 
-function CityListSection() {
+function CityListSection({ onCreateCity, onEditCity }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -62,11 +60,6 @@ function CityListSection() {
         selectedStatus: 'active'
     });
     const [availableCountries, setAvailableCountries] = useState([]);
-
-    // Modal states
-    const [editModalOpen, setEditModalOpen] = useState(false);
-    const [selectedCityId, setSelectedCityId] = useState(null);
-    const [createModalOpen, setCreateModalOpen] = useState(false); // Add create modal state
 
     const formatDate = (val) => {
         if (!val) return '-';
@@ -115,9 +108,7 @@ function CityListSection() {
         }
     };
 
-    // ... (fetchCities, useEffect, handleFilterChange, handlePageChange aynı kalacak)
-
-    // Optimized fetch cities data - fixed flick issue
+    // Optimized fetch cities data
     const fetchCities = useCallback(async (page = 1, newFilters = filters) => {
         setLoading(true);
         setError(null);
@@ -182,50 +173,22 @@ function CityListSection() {
         fetchCities(newPage, filters);
     };
 
-    // Edit Modal Handlers
+    // Handler functions for parent component
     const handleEditCity = (cityId, event) => {
-        event.stopPropagation();
-        setSelectedCityId(cityId);
-        setEditModalOpen(true);
+        if (event) event.stopPropagation();
+        if (onEditCity) {
+            onEditCity(cityId);
+        }
     };
 
-    const handleEditModalClose = () => {
-        setEditModalOpen(false);
-        setSelectedCityId(null);
-    };
-
-    const handleCityUpdated = (updatedCity) => {
-        setCities(prevCities =>
-            prevCities.map(city =>
-                city.id === updatedCity.id
-                    ? {
-                        ...city,
-                        name: updatedCity.name,
-                        country: updatedCity.country,
-                        status: updatedCity.data_status,
-                        updatedAt: updatedCity.updatedAt
-                    }
-                    : city
-            )
-        );
-        console.log('City updated successfully:', updatedCity);
-    };
-
-    // Create Modal Handlers
     const handleCreateCity = () => {
-        setCreateModalOpen(true);
+        if (onCreateCity) {
+            onCreateCity();
+        }
     };
 
-    const handleCityCreated = (newCity) => {
-        console.log('New city created:', newCity);
-        // Refresh the list
-        fetchCities(1, filters);
-        setCreateModalOpen(false);
-    };
 
-    const handleRowClick = (cityId) => {
-        handleEditCity(cityId, { stopPropagation: () => { } });
-    };
+    // Note: Component will remount when refreshKey changes in parent
 
     return (
         <Box sx={{ p: { xs: 2, md: 3 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -238,43 +201,36 @@ function CityListSection() {
                 paddingBottom: { xs: 1, md: 1.5 },
                 borderBottom: `1px solid ${COLORS.border}`
             }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="sectionTitle" sx={{
-                        fontSize: { xs: '1.5rem', md: '2rem' },
-                        marginBottom: 0
-                    }}>
-                        City List
-                    </Typography>
-
-                    {/* Add City Button - Updated */}
-                    <Button
-                        variant="contained"
-                        size={isMobile ? 'small' : 'medium'}
-                        startIcon={<AddIcon />}
-                        onClick={handleCreateCity} // Changed from navigate
-                        sx={{
-                            backgroundColor: COLORS.primary,
-                            color: 'white',
-                            '&:hover': {
-                                backgroundColor: '#5d3a2a'
-                            },
-                            borderRadius: '8px',
-                            textTransform: 'none',
-                            fontWeight: 'medium'
-                        }}
-                    >
-                        {isMobile ? 'Add' : 'Add City'}
-                    </Button>
-                </Box>
-
-                <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
-                    Click on a city to edit
+                {/* Left side - Title only */}
+                <Typography variant="sectionTitle" sx={{
+                    fontSize: { xs: '1.5rem', md: '2rem' },
+                    marginBottom: 0
+                }}>
+                    City List
                 </Typography>
+
+                {/* Right side - Add City Button */}
+                <Button
+                    variant="contained"
+                    size={isMobile ? 'small' : 'medium'}
+                    startIcon={<AddIcon />}
+                    onClick={handleCreateCity}
+                    sx={{
+                        backgroundColor: COLORS.primary,
+                        color: 'white',
+                        '&:hover': {
+                            backgroundColor: '#5d3a2a'
+                        },
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        fontWeight: 'medium'
+                    }}
+                >
+                    {isMobile ? 'Add' : 'Add City'}
+                </Button>
             </Box>
 
-            {/* ... (Filters, Table, Pagination aynı kalacak) */}
-            
-            {/* Improved Filters */}
+            {/* Filters */}
             <Box sx={{
                 marginBottom: { xs: 2, md: 3 },
                 padding: { xs: 1.5, md: 2 },
@@ -456,10 +412,8 @@ function CityListSection() {
                                 {cities.map((city) => (
                                     <TableRow
                                         key={city.id}
-                                        onClick={() => handleRowClick(city.id)}
                                         sx={{
-                                            '&:hover': { backgroundColor: 'rgba(119, 73, 54, 0.02)' },
-                                            cursor: 'pointer'
+                                            '&:hover': { backgroundColor: 'rgba(119, 73, 54, 0.02)' }
                                         }}
                                     >
                                         <TableCell>
@@ -612,21 +566,6 @@ function CityListSection() {
                     </Typography>
                 </Box>
             )}
-
-            {/* Edit Modal */}
-            <CityEditModal
-                open={editModalOpen}
-                onClose={handleEditModalClose}
-                cityId={selectedCityId}
-                onCityUpdated={handleCityUpdated}
-            />
-
-            {/* Create Modal */}
-            <CityCreationModal
-                open={createModalOpen}
-                onClose={() => setCreateModalOpen(false)}
-                onCityCreated={handleCityCreated}
-            />
         </Box>
     );
 }

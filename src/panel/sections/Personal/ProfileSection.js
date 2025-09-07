@@ -12,19 +12,21 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
-  CardActionArea
+  CardActionArea,
+  CircularProgress
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ListIcon from '@mui/icons-material/List';
 import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import { COLORS } from '../../../shared/config/generalUtils';
+import { likeApi } from '../../../shared/services/userInteractionsApi';
 
 // Import mevcut componentleri
-import ProfileInfo from './features/ProfileInfo';
-import LikedCities from './features/LikedCities';
-import CityLists from './features/CityLists';
-import AuthenticationForm from './features/AuthenticationForm';
+import ProfileInfo from './featuresProfile/ProfileInfo';
+import UserLikedCities from './featuresProfile/UserLikedCities';
+import UserCityLists from './featuresProfile/UserCityLists';
+import AuthenticationForm from './featuresProfile/AuthenticationForm';
 
 function ProfileSection() {
   const [likedCitiesOpen, setLikedCitiesOpen] = useState(false);
@@ -34,20 +36,64 @@ function ProfileSection() {
     cityListsCount: 0,
     totalCitiesInLists: 0
   });
+  const [statsLoading, setStatsLoading] = useState(false);
   
   const { isAuthenticated } = useAuth();
 
-  // Stats yükleme (gerçek API çağrıları ile değiştirilecek)
+  // Stats yükleme - gerçek API ile
   useEffect(() => {
     if (isAuthenticated) {
-      // TODO: API çağrıları ile gerçek istatistikleri yükle
+      fetchStats();
+    } else {
+      // Reset stats when user logs out
       setStats({
-        likedCitiesCount: 12,
-        cityListsCount: 3,
-        totalCitiesInLists: 24
+        likedCitiesCount: 0,
+        cityListsCount: 0,
+        totalCitiesInLists: 0
       });
     }
   }, [isAuthenticated]);
+
+  const fetchStats = async () => {
+    try {
+      setStatsLoading(true);
+      
+      // Get user stats from API
+      const result = await likeApi.getUserStats();
+      
+      if (result.success) {
+        setStats({
+          likedCitiesCount: result.data.stats.totalLikedCities || 0,
+          cityListsCount: result.data.stats.cityCollectionsCount || 0,
+          totalCitiesInLists: result.data.stats.totalCitiesInCollections || 0
+        });
+      } else {
+        console.error('Failed to fetch stats:', result.error);
+        // Keep default stats on error
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      // Keep default stats on error
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  // Refresh stats when liked cities dialog closes (in case user unliked something)
+  const handleLikedCitiesClose = () => {
+    setLikedCitiesOpen(false);
+    if (isAuthenticated) {
+      fetchStats(); // Refresh stats after potential changes
+    }
+  };
+
+  // Refresh stats when city collections dialog closes
+  const handleCityListsClose = () => {
+    setCityListsOpen(false);
+    if (isAuthenticated) {
+      fetchStats(); // Refresh stats after potential changes
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -117,13 +163,17 @@ function ProfileSection() {
                       borderRadius: 2
                     }} />
                     <Box>
-                      <Typography variant="h4" sx={{ 
-                        color: COLORS.texts.primary,
-                        fontFamily: 'Georgia, serif',
-                        fontWeight: 'bold'
-                      }}>
-                        {stats.likedCitiesCount}
-                      </Typography>
+                      {statsLoading ? (
+                        <CircularProgress size={24} sx={{ color: COLORS.primary }} />
+                      ) : (
+                        <Typography variant="h4" sx={{ 
+                          color: COLORS.texts.primary,
+                          fontFamily: 'Georgia, serif',
+                          fontWeight: 'bold'
+                        }}>
+                          {stats.likedCitiesCount}
+                        </Typography>
+                      )}
                       <Typography variant="body2" sx={{ color: COLORS.texts.muted }}>
                         Cities
                       </Typography>
@@ -186,15 +236,19 @@ function ProfileSection() {
                       borderRadius: 2
                     }} />
                     <Box>
-                      <Typography variant="h4" sx={{ 
-                        color: COLORS.texts.primary,
-                        fontFamily: 'Georgia, serif',
-                        fontWeight: 'bold'
-                      }}>
-                        {stats.cityListsCount}
-                      </Typography>
+                      {statsLoading ? (
+                        <CircularProgress size={24} sx={{ color: COLORS.secondary }} />
+                      ) : (
+                        <Typography variant="h4" sx={{ 
+                          color: COLORS.texts.primary,
+                          fontFamily: 'Georgia, serif',
+                          fontWeight: 'bold'
+                        }}>
+                          {stats.cityListsCount}
+                        </Typography>
+                      )}
                       <Typography variant="body2" sx={{ color: COLORS.texts.muted }}>
-                        Lists
+                        Collections
                       </Typography>
                     </Box>
                   </Box>
@@ -208,7 +262,7 @@ function ProfileSection() {
                   </Typography>
                   
                   <Typography variant="body2" sx={{ color: COLORS.texts.secondary }}>
-                    Curated lists with {stats.totalCitiesInLists} cities total
+                    Custom lists of cities organized by theme
                   </Typography>
                   
                   <Typography
@@ -222,7 +276,7 @@ function ProfileSection() {
                       fontSize: '0.875rem'
                     }}
                   >
-                    Manage Lists →
+                    View All →
                   </Typography>
                 </CardContent>
               </CardActionArea>
@@ -233,7 +287,7 @@ function ProfileSection() {
         {/* Beğenilen Şehirler Dialog */}
         <Dialog 
           open={likedCitiesOpen} 
-          onClose={() => setLikedCitiesOpen(false)}
+          onClose={handleLikedCitiesClose}
           maxWidth="md"
           fullWidth
           PaperProps={{
@@ -250,7 +304,7 @@ function ProfileSection() {
           }}>
             Liked Cities
             <IconButton 
-              onClick={() => setLikedCitiesOpen(false)}
+              onClick={handleLikedCitiesClose}
               size="small"
               sx={{ color: COLORS.texts.muted }}
             >
@@ -260,7 +314,7 @@ function ProfileSection() {
           
           <DialogContent sx={{ p: 0 }}>
             <Box sx={{ p: 3 }}>
-              <LikedCities />
+              <UserLikedCities />
             </Box>
           </DialogContent>
         </Dialog>
@@ -268,7 +322,7 @@ function ProfileSection() {
         {/* Şehir Listeleri Dialog */}
         <Dialog 
           open={cityListsOpen} 
-          onClose={() => setCityListsOpen(false)}
+          onClose={handleCityListsClose}
           maxWidth="md"
           fullWidth
           PaperProps={{
@@ -285,7 +339,7 @@ function ProfileSection() {
           }}>
             City Collections
             <IconButton 
-              onClick={() => setCityListsOpen(false)}
+              onClick={handleCityListsClose}
               size="small"
               sx={{ color: COLORS.texts.muted }}
             >
@@ -295,7 +349,7 @@ function ProfileSection() {
           
           <DialogContent sx={{ p: 0 }}>
             <Box sx={{ p: 3 }}>
-              <CityLists />
+              <UserCityLists />
             </Box>
           </DialogContent>
         </Dialog>

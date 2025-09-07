@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.js - Updated with Forgot Password + Change Password features
+// archaeomap-frontend\src\shared\contexts\AuthContext.js
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import authService from '../services/authApi';
@@ -31,7 +31,12 @@ const AUTH_ACTIONS = {
   CHANGE_PASSWORD_REQUEST: 'CHANGE_PASSWORD_REQUEST',
   CHANGE_PASSWORD_SUCCESS: 'CHANGE_PASSWORD_SUCCESS',
   CHANGE_PASSWORD_ERROR: 'CHANGE_PASSWORD_ERROR',
-  CLEAR_CHANGE_PASSWORD: 'CLEAR_CHANGE_PASSWORD'
+  CLEAR_CHANGE_PASSWORD: 'CLEAR_CHANGE_PASSWORD',
+  // Preferences Actions
+  PREFERENCES_REQUEST: 'PREFERENCES_REQUEST',
+  PREFERENCES_SUCCESS: 'PREFERENCES_SUCCESS',
+  PREFERENCES_ERROR: 'PREFERENCES_ERROR',
+  CLEAR_PREFERENCES_STATUS: 'CLEAR_PREFERENCES_STATUS'
 };
 
 const initialState = {
@@ -50,7 +55,11 @@ const initialState = {
   // Change Password State
   changePasswordLoading: false,
   changePasswordError: null,
-  changePasswordSuccess: false
+  changePasswordSuccess: false,
+  // Preferences State
+  preferencesLoading: false,
+  preferencesError: null,
+  preferencesSuccess: false
 };
 
 const authReducer = (state, action) => {
@@ -98,7 +107,11 @@ const authReducer = (state, action) => {
         // Clear change password state on logout
         changePasswordLoading: false,
         changePasswordError: null,
-        changePasswordSuccess: false
+        changePasswordSuccess: false,
+        // Clear preferences state on logout
+        preferencesLoading: false,
+        preferencesError: null,
+        preferencesSuccess: false
       };
 
     case AUTH_ACTIONS.SET_ERROR:
@@ -217,6 +230,40 @@ const authReducer = (state, action) => {
         changePasswordSuccess: false
       };
 
+    // Preferences Cases
+    case AUTH_ACTIONS.PREFERENCES_REQUEST:
+      return {
+        ...state,
+        preferencesLoading: true,
+        preferencesError: null,
+        preferencesSuccess: false
+      };
+
+    case AUTH_ACTIONS.PREFERENCES_SUCCESS:
+      return {
+        ...state,
+        preferencesLoading: false,
+        preferencesSuccess: true,
+        preferencesError: null,
+        user: action.payload.user
+      };
+
+    case AUTH_ACTIONS.PREFERENCES_ERROR:
+      return {
+        ...state,
+        preferencesLoading: false,
+        preferencesError: action.payload,
+        preferencesSuccess: false
+      };
+
+    case AUTH_ACTIONS.CLEAR_PREFERENCES_STATUS:
+      return {
+        ...state,
+        preferencesLoading: false,
+        preferencesError: null,
+        preferencesSuccess: false
+      };
+
     default:
       return state;
   }
@@ -225,14 +272,19 @@ const authReducer = (state, action) => {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Initialize authentication on app start
-  useEffect(() => {
-    if (state.token && !state.user) {
-      getCurrentUser();
+  // DÜZELTME: logout fonksiyonunu useCallback dependency'lerinden çıkardık
+  const logout = useCallback(async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
     }
-  }, []);
+  }, []); // Boş dependency array
 
-  const getCurrentUser = async () => {
+  // DÜZELTME: getCurrentUser'ı logout dependency'sinden kurtardık
+  const getCurrentUser = useCallback(async () => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING });
       
@@ -248,13 +300,34 @@ export const AuthProvider = ({ children }) => {
           }
         });
       } else {
-        logout();
+        // Logout'u direkt dispatch ile yapıyoruz, fonksiyon çağırmıyoruz
+        dispatch({ type: AUTH_ACTIONS.LOGOUT });
       }
     } catch (error) {
       console.error('Failed to get current user:', error);
-      logout();
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
     }
-  };
+  }, [state.token, state.refreshToken]); // logout dependency'si kaldırıldı
+
+  // DÜZELTME: Initialize authentication - sadece bir kez çalışır
+  useEffect(() => {
+    let mounted = true; // Cleanup için flag
+    
+    const initAuth = async () => {
+      // OAuth callback sırasında bu initialization'ı atlayalım
+      const isOAuthCallback = window.location.pathname === '/auth/callback';
+      
+      if (state.token && !state.user && mounted && !isOAuthCallback) {
+        await getCurrentUser();
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, []); // Sadece mount'ta çalışır, dependency yok
 
   const login = async (identifier, password) => {
     try {
@@ -286,6 +359,53 @@ export const AuthProvider = ({ children }) => {
         payload: errorMessage
       });
       return { success: false, error: errorMessage };
+    }
+  };
+
+  const loginWithToken = async (accessToken, refreshToken) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING });
+
+      // Store tokens immediately
+      localStorage.setItem('archaeomap_token', accessToken);
+      localStorage.setItem('archaeomap_refresh_token', refreshToken);
+
+      // Get user info using the OAuth token
+      const result = await authService.getOAuthUserInfo(accessToken);
+
+      if (result.success) {
+        dispatch({
+          type: AUTH_ACTIONS.LOGIN_SUCCESS,
+          payload: {
+            user: result.user,
+            token: accessToken,
+            refreshToken: refreshToken
+          }
+        });
+        return true;
+      } else {
+        // Clear tokens if user info fetch fails
+        localStorage.removeItem('archaeomap_token');
+        localStorage.removeItem('archaeomap_refresh_token');
+        
+        dispatch({
+          type: AUTH_ACTIONS.SET_ERROR,
+          payload: result.error || 'Failed to authenticate with OAuth token'
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('OAuth token login error:', error);
+      
+      // Clear tokens on error
+      localStorage.removeItem('archaeomap_token');
+      localStorage.removeItem('archaeomap_refresh_token');
+      
+      dispatch({
+        type: AUTH_ACTIONS.SET_ERROR,
+        payload: 'OAuth authentication failed'
+      });
+      return false;
     }
   };
 
@@ -322,16 +442,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = useCallback(async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      dispatch({ type: AUTH_ACTIONS.LOGOUT });
-    }
-  }, []);
-
   const updateProfile = async (profileData) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING });
@@ -355,6 +465,82 @@ export const AuthProvider = ({ children }) => {
       const errorMessage = 'Profile update failed';
       dispatch({
         type: AUTH_ACTIONS.SET_ERROR,
+        payload: errorMessage
+      });
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // PREFERENCES FUNCTIONS
+
+  const updateUserPreferences = async (preferences) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.PREFERENCES_REQUEST });
+      
+      const result = await authService.updatePreferences(preferences);
+
+      if (result.success) {
+        dispatch({
+          type: AUTH_ACTIONS.PREFERENCES_SUCCESS,
+          payload: { user: result.user }
+        });
+        
+        // Auto-clear success status after 3 seconds
+        setTimeout(() => {
+          dispatch({ type: AUTH_ACTIONS.CLEAR_PREFERENCES_STATUS });
+        }, 3000);
+        
+        return { success: true, user: result.user, preferences: result.preferences };
+      } else {
+        dispatch({
+          type: AUTH_ACTIONS.PREFERENCES_ERROR,
+          payload: result.error
+        });
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = 'Failed to update preferences';
+      dispatch({
+        type: AUTH_ACTIONS.PREFERENCES_ERROR,
+        payload: errorMessage
+      });
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const updateSinglePreference = async (key, value) => {
+    return await updateUserPreferences({ [key]: value });
+  };
+
+  const updatePrivacySettings = async (privacySettings) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.PREFERENCES_REQUEST });
+      
+      const result = await authService.updatePrivacySettings(privacySettings);
+
+      if (result.success) {
+        dispatch({
+          type: AUTH_ACTIONS.PREFERENCES_SUCCESS,
+          payload: { user: result.user }
+        });
+        
+        // Auto-clear success status after 3 seconds
+        setTimeout(() => {
+          dispatch({ type: AUTH_ACTIONS.CLEAR_PREFERENCES_STATUS });
+        }, 3000);
+        
+        return { success: true, user: result.user };
+      } else {
+        dispatch({
+          type: AUTH_ACTIONS.PREFERENCES_ERROR,
+          payload: result.error
+        });
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      const errorMessage = 'Failed to update privacy settings';
+      dispatch({
+        type: AUTH_ACTIONS.PREFERENCES_ERROR,
         payload: errorMessage
       });
       return { success: false, error: errorMessage };
@@ -468,8 +654,43 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_CHANGE_PASSWORD });
   };
 
-  // Memoize the context value to prevent unnecessary re-renders
-  const contextValue = {
+  // Clear preferences status
+  const clearPreferencesStatus = () => {
+    dispatch({ type: AUTH_ACTIONS.CLEAR_PREFERENCES_STATUS });
+  };
+
+  // Unlink Google account
+  const unlinkGoogleAccount = async () => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING });
+      
+      const result = await authService.unlinkGoogleAccount();
+
+      if (result.success) {
+        dispatch({
+          type: AUTH_ACTIONS.UPDATE_USER,
+          payload: result.user
+        });
+        return { success: true, message: result.message };
+      } else {
+        dispatch({
+          type: AUTH_ACTIONS.SET_ERROR,
+          payload: result.error
+        });
+        return { success: false, error: result.error, requiresPassword: result.requiresPassword };
+      }
+    } catch (error) {
+      const errorMessage = 'Failed to unlink Google account';
+      dispatch({
+        type: AUTH_ACTIONS.SET_ERROR,
+        payload: errorMessage
+      });
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // DÜZELTME: Context value'yu React.useMemo ile optimize ediyoruz
+  const contextValue = React.useMemo(() => ({
     // User state
     user: state.user,
     token: state.token,
@@ -490,12 +711,24 @@ export const AuthProvider = ({ children }) => {
     changePasswordError: state.changePasswordError,
     changePasswordSuccess: state.changePasswordSuccess,
     
+    // Preferences state
+    preferencesLoading: state.preferencesLoading,
+    preferencesError: state.preferencesError,
+    preferencesSuccess: state.preferencesSuccess,
+    
     // Auth functions
     login,
+    loginWithToken,
     register,
     logout,
     updateProfile,
     clearError,
+    
+    // Preferences functions
+    updateUserPreferences,
+    updateSinglePreference,
+    updatePrivacySettings,
+    clearPreferencesStatus,
     
     // Forgot password functions
     requestPasswordReset,
@@ -505,8 +738,11 @@ export const AuthProvider = ({ children }) => {
     
     // Change password functions
     changePassword,
-    clearChangePassword
-  };
+    clearChangePassword,
+    
+    // OAuth functions
+    unlinkGoogleAccount
+  }), [state, login, loginWithToken, register, logout, updateProfile, clearError, updateUserPreferences, updateSinglePreference, updatePrivacySettings, clearPreferencesStatus, requestPasswordReset, resetPassword, verifyResetToken, clearForgotPassword, changePassword, clearChangePassword, unlinkGoogleAccount]);
 
   return (
     <AuthContext.Provider value={contextValue}>

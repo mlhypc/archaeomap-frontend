@@ -30,19 +30,19 @@ import PublicIcon from '@mui/icons-material/Public';
 import EditIcon from '@mui/icons-material/Edit';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
-import { COLORS } from '../../../shared/config/generalUtils';
-import { citiesApi } from '../../../shared/services/cityApi';
+import { COLORS } from '../../../../shared/config/generalUtils';
+import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
 
 const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    
+
     // State management
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    
+
     // Form data - Basic fields only for UI
     const [formData, setFormData] = useState({
         generic_city_name: '',
@@ -55,7 +55,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         city_tier: 1,
         data_status: 'active'
     });
-    
+
     // Complete city data including JSON fields
     const [completeCityData, setCompleteCityData] = useState(null);
     const [originalData, setOriginalData] = useState(null);
@@ -73,13 +73,13 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const loadCityData = async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
             const result = await citiesApi.getCityDetails(cityId);
-            
+
             // DEBUG: Let's see what we're getting from backend
             console.log('🔍 Backend response:', result.data);
-            
+
             if (result.success) {
                 // Basic form data for UI
                 const formData = {
@@ -93,12 +93,12 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     city_tier: result.data.city_tier || 1,
                     data_status: result.data.data_status || 'active'
                 };
-                
+
                 // DEBUG: Check what JSON data we have
                 console.log('🔍 Control History:', result.data.controlHistory);
                 console.log('🔍 Population History:', result.data.populationHistory);
                 console.log('🔍 Landmarks History:', result.data.landmarksHistory);
-                
+
                 // Complete city data including JSON fields (preserve everything)
                 const completeData = {
                     ...formData,
@@ -122,13 +122,13 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         description: l.description
                     })) || []
                 };
-                
+
                 // DEBUG: Check final complete data
                 console.log('🔍 Complete data:', completeData);
                 console.log('🔍 Control history JSON length:', completeData.control_history_json.length);
                 console.log('🔍 Population history JSON length:', completeData.population_history_json.length);
                 console.log('🔍 Landmarks history JSON length:', completeData.landmarks_history_json.length);
-                
+
                 setFormData(formData);
                 setCompleteCityData(completeData);
                 setOriginalData(formData);
@@ -167,7 +167,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
             ...prev,
             [field]: value
         }));
-        
+
         // Clear validation error when user starts typing
         if (validationErrors[field]) {
             setValidationErrors(prev => ({
@@ -175,7 +175,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 [field]: ''
             }));
         }
-        
+
         // Clear success message
         if (success) {
             setSuccess(null);
@@ -184,41 +184,41 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
 
     const validateForm = () => {
         const errors = {};
-        
+
         if (!formData.generic_city_name.trim()) {
             errors.generic_city_name = 'City name is required';
         }
-        
+
         if (!formData.country.trim()) {
             errors.country = 'Country is required';
         }
-        
+
         if (!formData.founded) {
             errors.founded = 'Foundation year is required';
         } else if (isNaN(formData.founded)) {
             errors.founded = 'Foundation year must be a number';
         }
-        
+
         if (formData.end_date && isNaN(formData.end_date)) {
             errors.end_date = 'End year must be a number';
         }
-        
+
         if (!formData.latitude) {
             errors.latitude = 'Latitude is required';
         } else if (isNaN(formData.latitude) || formData.latitude < -90 || formData.latitude > 90) {
             errors.latitude = 'Latitude must be between -90 and 90';
         }
-        
+
         if (!formData.longitude) {
             errors.longitude = 'Longitude is required';
         } else if (isNaN(formData.longitude) || formData.longitude < -180 || formData.longitude > 180) {
             errors.longitude = 'Longitude must be between -180 and 180';
         }
-        
+
         if (formData.founded && formData.end_date && parseInt(formData.founded) >= parseInt(formData.end_date)) {
             errors.end_date = 'End year must be after foundation year';
         }
-        
+
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -227,49 +227,56 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         if (!validateForm() || !completeCityData) {
             return;
         }
-        
+
         setSaving(true);
         setError(null);
         setSuccess(null);
-        
+
         try {
             // Prepare data for API - merge form changes with complete data
             const updateData = {
-                // Start with complete city data (preserves JSON fields)
-                ...completeCityData,
-                
-                // Override with form changes
                 generic_city_name: formData.generic_city_name.trim(),
                 country: formData.country.trim(),
                 founded: parseInt(formData.founded),
-                end_date: formData.end_date ? parseInt(formData.end_date) : null,
-                latitude: parseFloat(formData.latitude),
-                longitude: parseFloat(formData.longitude),
+                end_date: formData.end_date ? parseInt(formData.end_date) : new Date().getFullYear(),
                 description: formData.description.trim() || null,
                 city_tier: parseInt(formData.city_tier),
-                data_status: formData.data_status
+                data_status: formData.data_status,
+                coordinates: [
+                    parseFloat(formData.latitude),
+                    parseFloat(formData.longitude)
+                ],
+                // Send historical data in the format backend expects
+                controlHistory: completeCityData.control_history_json || [],
+                populationHistory: completeCityData.population_history_json || [],
+                landmarksHistory: completeCityData.landmarks_history_json || []
             };
-            
+
+            console.log('🔍 Frontend sending updateData:', updateData);
+            console.log('🔍 City ID:', cityId);
+
             const result = await citiesApi.updateCity(cityId, updateData);
-            
+
             if (result.success) {
                 setSuccess('City updated successfully!');
                 setOriginalData(formData);
-                
+
                 // Notify parent component
                 if (onCityUpdated) {
                     onCityUpdated(result.data.city);
                 }
-                
+
                 // Auto close modal after delay
                 setTimeout(() => {
                     onClose();
                 }, 1500);
-                
+
             } else {
+                console.log('🔍 API Error Response:', result);
                 setError(result.error || 'Failed to update city');
             }
         } catch (err) {
+            console.log('🔍 Network Error:', err);
             setError('Network error occurred');
             console.error('City update error:', err);
         } finally {
@@ -288,9 +295,9 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
             passive: { bg: '#ff9800', color: 'white' },
             draft: { bg: COLORS.texts.muted, color: 'white' }
         };
-        
+
         const colors = statusColors[status] || { bg: '#757575', color: 'white' };
-        
+
         return (
             <Chip
                 label={status.charAt(0).toUpperCase() + status.slice(1)}
@@ -341,13 +348,13 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         <CloseIcon />
                     </Button>
                 </Box>
-                
+
                 {/* Show data preservation status */}
                 {completeCityData && (
                     <Box sx={{ mt: 1 }}>
                         <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
-                            Preserving: {completeCityData.control_history_json?.length || 0} control periods, 
-                            {' '}{completeCityData.population_history_json?.length || 0} population records, 
+                            Preserving: {completeCityData.control_history_json?.length || 0} control periods,
+                            {' '}{completeCityData.population_history_json?.length || 0} population records,
                             {' '}{completeCityData.landmarks_history_json?.length || 0} landmarks
                         </Typography>
                     </Box>
@@ -377,7 +384,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 {error}
                             </Alert>
                         )}
-                        
+
                         {success && (
                             <Alert severity="success" sx={{ mb: 3 }}>
                                 {success}
@@ -558,7 +565,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 <Typography variant="h6" sx={{ color: COLORS.texts.primary, mb: 2 }}>
                                     Historical Data (Read-Only Preview)
                                 </Typography>
-                                
+
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} md={4}>
                                         <Paper sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)' }}>
@@ -577,7 +584,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                             )}
                                         </Paper>
                                     </Grid>
-                                    
+
                                     <Grid item xs={12} md={4}>
                                         <Paper sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)' }}>
                                             <Typography variant="subtitle2" sx={{ color: COLORS.primary, mb: 1 }}>
@@ -595,7 +602,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                             )}
                                         </Paper>
                                     </Grid>
-                                    
+
                                     <Grid item xs={12} md={4}>
                                         <Paper sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)' }}>
                                             <Typography variant="subtitle2" sx={{ color: COLORS.primary, mb: 1 }}>
@@ -614,9 +621,9 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                         </Paper>
                                     </Grid>
                                 </Grid>
-                                
+
                                 <Alert severity="info" sx={{ mt: 2 }}>
-                                    Historical data is preserved when saving. For now, this is a read-only preview. 
+                                    Historical data is preserved when saving. For now, this is a read-only preview.
                                     Advanced editing will be available in future updates.
                                 </Alert>
                             </Box>
@@ -636,14 +643,14 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 <Button
                     onClick={onClose}
                     disabled={saving}
-                    sx={{ 
+                    sx={{
                         color: COLORS.texts.secondary,
                         '&:hover': { backgroundColor: 'rgba(0,0,0,0.05)' }
                     }}
                 >
                     Cancel
                 </Button>
-                
+
                 <Button
                     onClick={handleSave}
                     disabled={loading || saving || !hasUnsavedChanges() || !completeCityData}
@@ -652,7 +659,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     sx={{
                         backgroundColor: COLORS.primary,
                         '&:hover': { backgroundColor: '#5d3a2a' },
-                        '&:disabled': { 
+                        '&:disabled': {
                             backgroundColor: COLORS.texts.muted,
                             color: 'white'
                         }

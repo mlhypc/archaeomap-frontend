@@ -46,7 +46,7 @@ function UserManagementSection() {
   const [updateLoading, setUpdateLoading] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, user: null, newRole: null });
-  
+
   const { user: currentUser } = useAuth();
 
   const roleColors = {
@@ -71,16 +71,29 @@ function UserManagementSection() {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    // Only fetch users if current user is admin
+    if (currentUser && currentUser.role === 'admin') {
+      fetchUsers();
+    } else {
+      setUsers([]);
+      setLoading(false);
+    }
+  }, [currentUser]);
 
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
+      // Check if user is authenticated and admin before making API call
+      if (!currentUser || !localStorage.getItem('archaeomap_token') || currentUser.role !== 'admin') {
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+
       const result = await authService.getAllUsers();
-      
+
       if (result.success) {
         setUsers(result.users);
       } else {
@@ -109,13 +122,13 @@ function UserManagementSection() {
 
     try {
       const result = await authService.updateUserRole(user.id, newRole);
-      
+
       if (result.success) {
         setSuccess(`Successfully updated ${user.username}'s role to ${roleLabels[newRole]}`);
-        
+
         // Update users list
-        setUsers(prevUsers => 
-          prevUsers.map(u => 
+        setUsers(prevUsers =>
+          prevUsers.map(u =>
             u.id === user.id ? { ...u, role: newRole } : u
           )
         );
@@ -163,10 +176,10 @@ function UserManagementSection() {
     <Box sx={{ p: 3, maxWidth: '100%', overflow: 'auto' }}>
       {/* Header */}
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography 
-          variant="h4" 
-          sx={{ 
-            fontFamily: 'Georgia, serif', 
+        <Typography
+          variant="h4"
+          sx={{
+            fontFamily: 'Georgia, serif',
             color: COLORS.primary,
             display: 'flex',
             alignItems: 'center',
@@ -176,7 +189,7 @@ function UserManagementSection() {
           <AdminPanelSettingsIcon sx={{ fontSize: 32 }} />
           User Management
         </Typography>
-        
+
         <Typography variant="body2" sx={{ color: COLORS.texts.muted }}>
           Total Users: {users.length}
         </Typography>
@@ -184,9 +197,9 @@ function UserManagementSection() {
 
       {/* Messages */}
       {error && (
-        <Alert 
-          severity="error" 
-          onClose={() => setError(null)} 
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
           sx={{ mb: 2 }}
         >
           {error}
@@ -194,9 +207,9 @@ function UserManagementSection() {
       )}
 
       {success && (
-        <Alert 
-          severity="success" 
-          onClose={() => setSuccess(null)} 
+        <Alert
+          severity="success"
+          onClose={() => setSuccess(null)}
           sx={{ mb: 2 }}
         >
           {success}
@@ -233,10 +246,10 @@ function UserManagementSection() {
           </TableHead>
           <TableBody>
             {users.map((user) => (
-              <TableRow 
-                key={user.id} 
+              <TableRow
+                key={user.id}
                 hover
-                sx={{ 
+                sx={{
                   '&:hover': { backgroundColor: 'rgba(248, 245, 238, 0.3)' },
                   backgroundColor: user.id === currentUser?.id ? 'rgba(119, 73, 54, 0.05)' : 'transparent'
                 }}
@@ -244,30 +257,23 @@ function UserManagementSection() {
                 {/* User Info */}
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar 
+                    <Avatar
                       src={user.profileImageUrl}
-                      sx={{ 
-                        width: 32, 
+                      sx={{
+                        width: 32,
                         height: 32,
                         backgroundColor: COLORS.primary
                       }}
                     >
                       {user.firstName?.[0]?.toUpperCase() || user.username?.[0]?.toUpperCase() || 'U'}
                     </Avatar>
-                    <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant="body2" sx={{ fontWeight: 'medium', color: COLORS.texts.primary }}>
                         {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}
-                        {user.id === currentUser?.id && (
-                          <Chip 
-                            label="You" 
-                            size="small" 
-                            sx={{ ml: 1, fontSize: '0.65rem', height: '18px' }}
-                          />
-                        )}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
-                        @{user.username}
-                      </Typography>
+                      {user.id === currentUser?.id && (
+                        <Chip label="You" size="small" sx={{ fontSize: '0.65rem', height: '18px' }} />
+                      )}
                     </Box>
                   </Box>
                 </TableCell>
@@ -325,10 +331,10 @@ function UserManagementSection() {
                         value={user.role}
                         onChange={(e) => handleRoleChangeRequest(user, e.target.value)}
                         disabled={updateLoading === user.id}
-                        sx={{ 
-                          '& .MuiSelect-select': { 
-                            py: 0.5, 
-                            fontSize: '0.875rem' 
+                        sx={{
+                          '& .MuiSelect-select': {
+                            py: 0.5,
+                            fontSize: '0.875rem'
                           }
                         }}
                       >
@@ -338,15 +344,15 @@ function UserManagementSection() {
                         <MenuItem value="admin">Administrator</MenuItem>
                       </Select>
                       {updateLoading === user.id && (
-                        <CircularProgress 
-                          size={16} 
-                          sx={{ 
-                            position: 'absolute', 
-                            right: 8, 
-                            top: '50%', 
+                        <CircularProgress
+                          size={16}
+                          sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: '50%',
                             transform: 'translateY(-50%)',
                             color: COLORS.primary
-                          }} 
+                          }}
                         />
                       )}
                     </FormControl>
@@ -365,8 +371,8 @@ function UserManagementSection() {
 
       {/* Empty State */}
       {users.length === 0 && !loading && (
-        <Box sx={{ 
-          textAlign: 'center', 
+        <Box sx={{
+          textAlign: 'center',
           py: 6,
           border: `2px dashed ${COLORS.border}`,
           borderRadius: '8px',
@@ -383,8 +389,8 @@ function UserManagementSection() {
       )}
 
       {/* Confirmation Dialog */}
-      <Dialog 
-        open={confirmDialog.open} 
+      <Dialog
+        open={confirmDialog.open}
         onClose={() => setConfirmDialog({ open: false, user: null, newRole: null })}
         PaperProps={{
           sx: { borderRadius: '8px' }
@@ -403,13 +409,13 @@ function UserManagementSection() {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button 
+          <Button
             onClick={() => setConfirmDialog({ open: false, user: null, newRole: null })}
             sx={{ color: COLORS.texts.secondary }}
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleRoleChangeConfirm}
             variant="contained"
             sx={{

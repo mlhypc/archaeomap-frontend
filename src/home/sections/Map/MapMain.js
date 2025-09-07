@@ -91,7 +91,47 @@ function BoundsTracker({ onBoundsChange }) {
   return null;
 }
 
-// RENDER MARKERS - optimized function with proper key management for labels
+// OPTIMIZED CITY MARKER COMPONENT - Memoized for performance
+const OptimizedCityMarker = React.memo(({ 
+  city, 
+  iconFn, 
+  isSelected, 
+  onSelect, 
+  showLabel,
+  labelText,
+  status,
+  currentYear
+}) => {
+  // Memoize icon creation to prevent unnecessary recreations
+  const icon = useMemo(() => iconFn(city, isSelected), [city, iconFn, isSelected]);
+  
+  // Memoize label icon creation
+  const labelIcon = useMemo(() => {
+    return showLabel ? createCityLabel(labelText, isSelected, status) : null;
+  }, [showLabel, labelText, isSelected, status]);
+
+  // Memoize click handler
+  const handleClick = useCallback(() => onSelect(city), [city, onSelect]);
+
+  return (
+    <>
+      <Marker
+        position={city.coordinates}
+        icon={icon}
+        eventHandlers={{ click: handleClick }}
+      />
+      {showLabel && labelIcon && (
+        <Marker
+          position={city.coordinates}
+          icon={labelIcon}
+          eventHandlers={{ click: handleClick }}
+        />
+      )}
+    </>
+  );
+});
+
+// RENDER MARKERS - now using optimized components
 const renderCityMarkers = (
   cities,
   iconFn,
@@ -103,27 +143,25 @@ const renderCityMarkers = (
   status,
   currentYear
 ) => {
-  return cities.map((city) => (
-    <React.Fragment key={`fragment-${city.id}-${currentYear}-${status}`}>
-      <Marker
-        position={city.coordinates}
-        icon={iconFn(city, selectedCity?.id === city.id)}
-        eventHandlers={{ click: () => handleSelectCity(city) }}
+  return cities.map((city) => {
+    const isSelected = selectedCity?.id === city.id;
+    const showLabel = showLabels && visibleKeys.includes(labelFilter);
+    const labelText = getCurrentCityName(city, currentYear);
+
+    return (
+      <OptimizedCityMarker
+        key={`${city.id}-${status}`}
+        city={city}
+        iconFn={iconFn}
+        isSelected={isSelected}
+        onSelect={handleSelectCity}
+        showLabel={showLabel}
+        labelText={labelText}
+        status={status}
+        currentYear={currentYear}
       />
-      {showLabels && visibleKeys.includes(labelFilter) && (
-        <Marker
-          key={`label-${city.id}-${currentYear}-${status}`}
-          position={city.coordinates}
-          icon={createCityLabel(
-            getCurrentCityName(city, currentYear),
-            selectedCity?.id === city.id,
-            status
-          )}
-          eventHandlers={{ click: () => handleSelectCity(city) }}
-        />
-      )}
-    </React.Fragment>
-  ));
+    );
+  });
 };
 
 // CUSTOM HOOK - extracted map state logic
@@ -276,27 +314,35 @@ function MapComponent(props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uiState.selectedCity?.id]);
 
-  // OPTIMIZED: Visible cities calculation
+  // OPTIMIZED: Visible cities calculation with memoized bounds and filtering
+  const padBounds = useMemo(() => {
+    return mapState.mapBounds?.pad(0.1) || null; // Reduced padding for better performance
+  }, [mapState.mapBounds]);
+
   const visibleCities = useMemo(() => {
-    if (!mapState.mapBounds) return dataState.currentDisplayData;
+    if (!padBounds) return { active: [], ended: [] };
     
-    const padBounds = mapState.mapBounds.pad(0.2);
-    
-    const filterAndEnhance = (cities) => 
-      cities
-        .filter(c => c.coordinates && padBounds.contains(L.latLng(c.coordinates)))
-        .map(city => {
+    // More efficient filtering function
+    const filterAndEnhance = (cities) => {
+      const result = [];
+      for (let i = 0; i < cities.length; i++) {
+        const city = cities[i];
+        if (city.coordinates && padBounds.contains(L.latLng(city.coordinates))) {
+          // Cache icon size calculation for better performance
           const iconSize = city.PeriodIconSize?.find(p => 
             uiState.currentYear >= p.start && uiState.currentYear <= p.end
           )?.iconSize || 5;
-          return { ...city, iconSize };
-        });
+          result.push({ ...city, iconSize });
+        }
+      }
+      return result;
+    };
     
     return {
       active: filterAndEnhance(dataState.currentDisplayData.active),
       ended: filterAndEnhance(dataState.currentDisplayData.ended)
     };
-  }, [dataState.currentDisplayData, mapState.mapBounds, uiState.currentYear]);
+  }, [dataState.currentDisplayData, padBounds, uiState.currentYear]);
 
   // OPTIMIZED: Map resize handler
   useEffect(() => {
@@ -465,6 +511,12 @@ function MapComponent(props) {
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
         whenCreated={handleMapReady}
+        worldCopyJump={false}
+        maxBounds={[
+          [-90, -180], // Southwest corner
+          [90, 180]    // Northeast corner
+        ]}
+        maxBoundsViscosity={1.0}
       >
         <TileLayer
           key={uiState.mapLayerKey}
@@ -498,7 +550,7 @@ function MapComponent(props) {
   );
 }
 
-// EXTRACTED COMPONENT - City markers rendering
+// EXTRACTED COMPONENT - City markers rendering with deep memoization
 const CityMarkers = React.memo(({ 
   visibleCities, 
   selectedCity, 
@@ -513,34 +565,73 @@ const CityMarkers = React.memo(({
     ended: [LABEL_VISIBILITY.SHOW_ALL.key, LABEL_VISIBILITY.SHOW_ENDED_ONLY.key]
   }), []);
 
+  // Memoized icon functions to prevent recreations
+  const activeCityIconFn = useCallback((city, isSelected) => getCityIcon(city, isSelected), []);
+  const endedCityIconFn = useCallback(() => endedCityIcon, []);
+
+  // Memoize active cities rendering
+  const activeMarkers = useMemo(() => 
+    renderCityMarkers(
+      visibleCities.active,
+      activeCityIconFn,
+      labelFilter,
+      visibleKeys.active,
+      selectedCity,
+      handleSelectCity,
+      showLabels,
+      'active',
+      currentYear
+    ), [
+      visibleCities.active, 
+      activeCityIconFn, 
+      labelFilter, 
+      visibleKeys.active, 
+      selectedCity, 
+      handleSelectCity, 
+      showLabels, 
+      currentYear
+    ]);
+
+  // Memoize ended cities rendering  
+  const endedMarkers = useMemo(() => 
+    renderCityMarkers(
+      visibleCities.ended,
+      endedCityIconFn,
+      labelFilter,
+      visibleKeys.ended,
+      selectedCity,
+      handleSelectCity,
+      showLabels,
+      'ended',
+      currentYear
+    ), [
+      visibleCities.ended, 
+      endedCityIconFn, 
+      labelFilter, 
+      visibleKeys.ended, 
+      selectedCity, 
+      handleSelectCity, 
+      showLabels, 
+      currentYear
+    ]);
+
   return (
     <>
       {/* Active Cities */}
-      {renderCityMarkers(
-        visibleCities.active,
-        getCityIcon,
-        labelFilter,
-        visibleKeys.active,
-        selectedCity,
-        handleSelectCity,
-        showLabels,
-        'active',
-        currentYear
-      )}
-
+      {activeMarkers}
       {/* Ended Cities */}
-      {renderCityMarkers(
-        visibleCities.ended,
-        () => endedCityIcon,
-        labelFilter,
-        visibleKeys.ended,
-        selectedCity,
-        handleSelectCity,
-        showLabels,
-        'ended',
-        currentYear
-      )}
+      {endedMarkers}
     </>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison for deep memoization
+  return (
+    prevProps.visibleCities.active.length === nextProps.visibleCities.active.length &&
+    prevProps.visibleCities.ended.length === nextProps.visibleCities.ended.length &&
+    prevProps.selectedCity?.id === nextProps.selectedCity?.id &&
+    prevProps.labelFilter === nextProps.labelFilter &&
+    prevProps.showLabels === nextProps.showLabels &&
+    prevProps.currentYear === nextProps.currentYear
   );
 });
 

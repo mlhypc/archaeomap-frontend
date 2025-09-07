@@ -1,4 +1,4 @@
-// src/services/authApi.js - Updated with Forgot Password features
+// archaeomap-frontend\src\shared\services\authApi.js
 
 import axios from 'axios';
 
@@ -156,13 +156,14 @@ export const authService = {
     }
   },
 
-  // Update user profile
+  // Update user profile (name, bio, etc.)
   async updateProfile(profileData) {
     try {
       const response = await authApi.put('/auth/profile', profileData);
       return {
         success: true,
-        user: response.data.user
+        user: response.data.user,
+        message: response.data.message
       };
     } catch (error) {
       console.error('Profile update error:', error);
@@ -171,6 +172,47 @@ export const authService = {
         error: error.response?.data?.error || 'Profile update failed'
       };
     }
+  },
+
+  // Update user preferences specifically
+  async updatePreferences(preferences) {
+    try {
+      const response = await authApi.put('/auth/preferences', { preferences });
+      return {
+        success: true,
+        user: response.data.user,
+        preferences: response.data.preferences,
+        message: response.data.message
+      };
+    } catch (error) {
+      console.error('Preferences update error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to update preferences'
+      };
+    }
+  },
+
+  // Helper function - update single preference
+  async updateSinglePreference(key, value) {
+    return await this.updatePreferences({ [key]: value });
+  },
+
+  // Helper function - update privacy settings
+  async updatePrivacySettings(privacySettings) {
+    const preferences = {};
+    
+    if (typeof privacySettings.showEmail !== 'undefined') {
+      preferences.showEmail = privacySettings.showEmail;
+    }
+    if (typeof privacySettings.profileVisible !== 'undefined') {
+      preferences.profileVisible = privacySettings.profileVisible;
+    }
+    if (typeof privacySettings.allowCitySharing !== 'undefined') {
+      preferences.allowCitySharing = privacySettings.allowCitySharing;
+    }
+    
+    return await this.updatePreferences(preferences);
   },
 
   // FORGOT PASSWORD FUNCTIONS
@@ -334,6 +376,48 @@ export const authService = {
       return {
         success: false,
         error: error.response?.data?.error || 'Failed to update user role'
+      };
+    }
+  },
+
+  // GOOGLE OAUTH FUNCTIONS
+
+  // Get user info using OAuth token
+  async getOAuthUserInfo(token) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return {
+        success: true,
+        user: response.data.user
+      };
+    } catch (error) {
+      console.error('OAuth user info error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to get OAuth user info'
+      };
+    }
+  },
+
+  // Unlink Google account
+  async unlinkGoogleAccount() {
+    try {
+      const response = await authApi.post('/auth/oauth/unlink');
+      return {
+        success: true,
+        user: response.data.user,
+        message: response.data.message
+      };
+    } catch (error) {
+      console.error('Unlink Google account error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to unlink Google account',
+        requiresPassword: error.response?.data?.requiresPassword || false
       };
     }
   }

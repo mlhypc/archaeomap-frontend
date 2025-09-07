@@ -1,4 +1,4 @@
-// src/panel/sections/DataManagement/CityCreationModal.js
+// src/panel/sections/DataManagement/CityCreationModal.js - UPDATED FOR APPROVAL WORKFLOW
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -22,35 +22,35 @@ import {
     Stepper,
     Step,
     StepLabel,
-    StepContent,
     Card,
     CardContent,
-    CardActions,
-    IconButton,
-    Tooltip,
     Chip,
-    Divider
+    Divider,
+    FormControlLabel,
+    Switch
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 // Icons
 import SaveIcon from '@mui/icons-material/Save';
+import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PublicIcon from '@mui/icons-material/Public';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import UploadIcon from '@mui/icons-material/Upload';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
-import { COLORS } from '../../../shared/config/generalUtils';
-import { cachedCitiesApi as citiesApi } from '../../../shared/services/cityApi';
+import { COLORS } from '../../../../shared/config/generalUtils';
+import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
+import useUserRole from '../../../../shared/hooks/useUserRole';
 
 const CityCreationModal = ({ open, onClose, onCityCreated }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const { isAdmin, isContributor, canManageData } = useUserRole();
 
     // State management
     const [loading, setLoading] = useState(false);
@@ -80,13 +80,19 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
     const [sourcesFile, setSourcesFile] = useState(null);
     const [createdCityId, setCreatedCityId] = useState(null);
 
+    // Admin options
+    const [bypassApproval, setBypassApproval] = useState(false);
+
     // Validation
     const [validationErrors, setValidationErrors] = useState({});
     const [nameAvailable, setNameAvailable] = useState(null);
 
     // Steps
     const [activeStep, setActiveStep] = useState(0);
-    const steps = ['Basic Info', 'Historical Data', 'Sources & Save'];
+    const steps = ['Basic Info', 'Historical Data', 'Sources & Submit'];
+
+    // Submission result
+    const [submissionResult, setSubmissionResult] = useState(null);
 
     // Reset form when modal opens/closes
     useEffect(() => {
@@ -116,6 +122,8 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
         setActiveStep(0);
         setError(null);
         setSuccess(null);
+        setSubmissionResult(null);
+        setBypassApproval(false);
     };
 
     // Handle input changes
@@ -203,69 +211,6 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
         return Object.keys(errors).length === 0;
     };
 
-    // Add historical data helpers
-    const addControlPeriod = () => {
-        setControlHistory([...controlHistory, {
-            ruler: '',
-            historical_city_name: '',
-            startYear: '',
-            endYear: '',
-            description: ''
-        }]);
-    };
-
-    const addPopulationRecord = () => {
-        setPopulationHistory([...populationHistory, {
-            year: '',
-            count: '',
-            source: ''
-        }]);
-    };
-
-    const addLandmark = () => {
-        setLandmarksHistory([...landmarksHistory, {
-            landmark_name: '',
-            constructionDate: '',
-            purpose: '',
-            significance: '',
-            description: ''
-        }]);
-    };
-
-    const updateHistoricalData = (type, index, field, value) => {
-        switch (type) {
-            case 'control':
-                const newControl = [...controlHistory];
-                newControl[index][field] = value;
-                setControlHistory(newControl);
-                break;
-            case 'population':
-                const newPopulation = [...populationHistory];
-                newPopulation[index][field] = value;
-                setPopulationHistory(newPopulation);
-                break;
-            case 'landmark':
-                const newLandmarks = [...landmarksHistory];
-                newLandmarks[index][field] = value;
-                setLandmarksHistory(newLandmarks);
-                break;
-        }
-    };
-
-    const removeHistoricalData = (type, index) => {
-        switch (type) {
-            case 'control':
-                setControlHistory(controlHistory.filter((_, i) => i !== index));
-                break;
-            case 'population':
-                setPopulationHistory(populationHistory.filter((_, i) => i !== index));
-                break;
-            case 'landmark':
-                setLandmarksHistory(landmarksHistory.filter((_, i) => i !== index));
-                break;
-        }
-    };
-
     // File upload
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
@@ -276,8 +221,8 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
         }
     };
 
-    // Main save function
-    const handleSave = async () => {
+    // Main submit function
+    const handleSubmit = async () => {
         if (!validateForm()) {
             setActiveStep(0);
             return;
@@ -293,23 +238,48 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                 generic_city_name: formData.generic_city_name.trim(),
                 country: formData.country.trim(),
                 founded: parseInt(formData.founded),
-                endDate: formData.endDate ? parseInt(formData.endDate) : null,
+                endDate: formData.endDate ? parseInt(formData.endDate) : new Date().getFullYear(),
                 coordinates: [parseFloat(formData.coordinates[0]), parseFloat(formData.coordinates[1])],
                 description: formData.description.trim() || null,
                 city_tier: parseInt(formData.city_tier),
                 data_status: formData.data_status,
-                controlHistory: controlHistory.filter(c => c.ruler.trim()),
+                controlHistory: controlHistory.filter(c => c.ruler && c.ruler.trim()),
                 populationHistory: populationHistory.filter(p => p.year && p.count),
-                landmarksHistory: landmarksHistory.filter(l => l.landmark_name.trim())
+                landmarksHistory: landmarksHistory.filter(l => l.landmark_name && l.landmark_name.trim()),
+                // Admin bypass option
+                bypassApproval: isAdmin && bypassApproval
             };
 
-            // Create city
-            const result = await citiesApi.createCity(cityData);
+            // Choose API endpoint based on user role and bypass option
+            let result;
+            if (isAdmin && bypassApproval) {
+                // Direct creation for admin
+                result = await citiesApi.createCity(cityData);
+            } else {
+                // Submit for approval (contributors and admins choosing normal flow)
+                result = await citiesApi.submitCityForApproval(cityData);
+            }
 
             if (result.success) {
-                const newCityId = result.data.city.id;
+                console.log('🔍 API Response:', result.data);
+                
+                const newCityId = result.data.id || result.data.city?.id;
+                const cityName = result.data.name || result.data.city?.name || result.data.generic_city_name;
+                const approvalStatus = result.data.approval_status || result.data.city?.approval_status;
+                
                 setCreatedCityId(newCityId);
-                setSuccess(`City "${result.data.city.name}" created successfully!`);
+                setSubmissionResult({
+                    cityId: newCityId,
+                    cityName: cityName,
+                    isAutoApproved: result.data.isAutoApproved || bypassApproval,
+                    approvalStatus: approvalStatus
+                });
+
+                const successMessage = result.data.isAutoApproved || bypassApproval
+                    ? `City "${cityName}" created and approved!`
+                    : `City "${cityName}" submitted for review!`;
+
+                setSuccess(successMessage);
 
                 // Upload sources if provided
                 if (sourcesFile) {
@@ -327,27 +297,52 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                 if (onCityCreated) {
                     onCityCreated({
                         id: newCityId,
-                        name: result.data.city.name,
-                        country: result.data.city.country
+                        name: cityName,
+                        country: result.data.country || formData.country,
+                        approvalStatus: approvalStatus
                     });
                 }
 
                 // Auto close after delay
                 setTimeout(() => {
                     onClose();
-                }, 2000);
+                }, 3000);
 
             } else {
-                setError(result.error || 'Failed to create city');
+                setError(result.error || 'Failed to submit city');
             }
 
         } catch (error) {
-            console.error('City creation error:', error);
+            console.error('City submission error:', error);
             setError('Network error occurred');
         } finally {
             setSaving(false);
         }
     };
+
+    // Get submit button text and icon
+    const getSubmitButtonProps = () => {
+        if (saving) {
+            return {
+                text: isAdmin && bypassApproval ? 'Creating...' : 'Submitting...',
+                icon: <CircularProgress size={16} />
+            };
+        }
+
+        if (isAdmin && bypassApproval) {
+            return {
+                text: 'Create City',
+                icon: <SaveIcon />
+            };
+        }
+
+        return {
+            text: 'Submit for Review',
+            icon: <SendIcon />
+        };
+    };
+
+    const submitButtonProps = getSubmitButtonProps();
 
     return (
         <Dialog
@@ -372,16 +367,16 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <AddIcon sx={{ color: COLORS.primary }} />
+                        <SendIcon sx={{ color: COLORS.primary }} />
                         <Typography variant="h6" sx={{ color: COLORS.texts.primary, fontWeight: 'bold' }}>
-                            Create New City
+                            {isAdmin ? 'Create New City' : 'Submit New City'}
                         </Typography>
-                        {createdCityId && (
+                        {submissionResult && (
                             <Chip
-                                label={`ID: ${createdCityId}`}
+                                label={submissionResult.isAutoApproved ? 'Approved' : 'Pending Review'}
                                 size="small"
-                                color="success"
-                                icon={<CheckCircleIcon />}
+                                color={submissionResult.isAutoApproved ? 'success' : 'warning'}
+                                icon={submissionResult.isAutoApproved ? <CheckCircleIcon /> : <HourglassEmptyIcon />}
                             />
                         )}
                     </Box>
@@ -393,6 +388,29 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                         <CloseIcon />
                     </Button>
                 </Box>
+
+                {/* Admin Options */}
+                {isAdmin && (
+                    <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(25, 118, 210, 0.1)', borderRadius: 1 }}>
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={bypassApproval}
+                                    onChange={(e) => setBypassApproval(e.target.checked)}
+                                    color="primary"
+                                />
+                            }
+                            label={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <AdminPanelSettingsIcon sx={{ fontSize: 16 }} />
+                                    <Typography variant="body2">
+                                        Skip approval process (Admin Override)
+                                    </Typography>
+                                </Box>
+                            }
+                        />
+                    </Box>
+                )}
             </DialogTitle>
 
             <DialogContent sx={{ padding: { xs: 2, md: 3 } }}>
@@ -501,6 +519,7 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                                         label="Status"
                                     >
                                         <MenuItem value="draft">Draft</MenuItem>
+                                        {isAdmin && <MenuItem value="active">Active</MenuItem>}
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -590,7 +609,10 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                             </Typography>
 
                             <Alert severity="info" sx={{ mb: 2 }}>
-                                Detailed historical data will be added after careful moderator examination.
+                                {bypassApproval 
+                                    ? "As an admin with approval bypass, you can add detailed historical data now or after creation."
+                                    : "Basic city information is required for submission. Detailed historical data will be added after moderator approval."
+                                }
                             </Alert>
 
                             <Typography variant="body2" sx={{ color: COLORS.texts.muted }}>
@@ -601,7 +623,7 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                         </Box>
                     )}
 
-                    {/* Step 2: Sources & Save */}
+                    {/* Step 2: Sources & Submit */}
                     {activeStep === 2 && (
                         <Box>
                             <Typography variant="h6" sx={{ mb: 2, color: COLORS.primary }}>
@@ -640,12 +662,34 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
 
                             <Divider sx={{ my: 2 }} />
 
-                            <Typography variant="h6" sx={{ mb: 2 }}>Review</Typography>
+                            <Typography variant="h6" sx={{ mb: 2 }}>Review & Submit</Typography>
+                            
+                            {/* Submission Type Info */}
+                            <Card sx={{ mb: 2, backgroundColor: bypassApproval ? 'rgba(25, 118, 210, 0.05)' : 'rgba(255, 152, 0, 0.05)' }}>
+                                <CardContent sx={{ py: 2 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                        {bypassApproval ? <AdminPanelSettingsIcon color="primary" /> : <HourglassEmptyIcon color="warning" />}
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                                            {bypassApproval ? 'Direct Creation (Admin)' : 'Approval Workflow'}
+                                        </Typography>
+                                    </Box>
+                                    <Typography variant="body2" sx={{ color: COLORS.texts.muted }}>
+                                        {bypassApproval 
+                                            ? 'This city will be created and immediately available on the map.'
+                                            : 'This city will be submitted for moderator review before becoming visible on the map.'
+                                        }
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+
                             <Box sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)', borderRadius: 2 }}>
                                 <Typography><strong>City:</strong> {formData.generic_city_name}</Typography>
                                 <Typography><strong>Country:</strong> {formData.country}</Typography>
                                 <Typography><strong>Founded:</strong> {formData.founded}</Typography>
                                 <Typography><strong>Coordinates:</strong> [{formData.coordinates[0]}, {formData.coordinates[1]}]</Typography>
+                                {sourcesFile && (
+                                    <Typography><strong>Sources:</strong> {sourcesFile.name}</Typography>
+                                )}
                             </Box>
                         </Box>
                     )}
@@ -678,16 +722,18 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
 
                 {activeStep === steps.length - 1 ? (
                     <Button
-                        onClick={handleSave}
+                        onClick={handleSubmit}
                         disabled={saving}
                         variant="contained"
-                        startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
+                        startIcon={submitButtonProps.icon}
                         sx={{
-                            backgroundColor: COLORS.primary,
-                            '&:hover': { backgroundColor: '#5d3a2a' }
+                            backgroundColor: bypassApproval ? '#1976d2' : COLORS.primary,
+                            '&:hover': { 
+                                backgroundColor: bypassApproval ? '#1565c0' : '#5d3a2a' 
+                            }
                         }}
                     >
-                        {saving ? 'Creating...' : 'Create City'}
+                        {submitButtonProps.text}
                     </Button>
                 ) : (
                     <Button

@@ -27,6 +27,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../../../../shared/contexts/AuthContext';
 import { COLORS } from '../../../../shared/config/generalUtils';
+import GoogleOAuthButton from './GoogleOAuthButton';
 
 function AuthenticationForm() {
   const [tabValue, setTabValue] = useState(0);
@@ -171,6 +172,28 @@ function AuthenticationForm() {
           {typeof error === 'string' ? error : 'Authentication failed. Please check your inputs.'}
         </Alert>
       )}
+
+      {/* Google OAuth Section */}
+      <Box sx={{ mb: 3 }}>
+        <GoogleOAuthButton type={tabValue === 0 ? 'login' : 'register'} />
+        
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          my: 2,
+          textAlign: 'center'
+        }}>
+          <Divider sx={{ flexGrow: 1 }} />
+          <Typography sx={{ 
+            px: 2, 
+            color: COLORS.texts.muted,
+            fontSize: '0.85rem'
+          }}>
+            or continue with email
+          </Typography>
+          <Divider sx={{ flexGrow: 1 }} />
+        </Box>
+      </Box>
 
       <Box component="form" onSubmit={handleSubmit} noValidate>
         {tabValue === 0 ? (
