@@ -100,13 +100,13 @@ function ApplyForContributor({ open, onClose, onSuccess }) {
       // API call to submit application
       const applicationData = {
         motivation: formData.motivation.trim(),
-        interestAreas: formData.interestAreas,
-        academicBackground: formData.academicBackground.trim(),
-        previousExperience: formData.previousExperience.trim(),
+        interest_areas: formData.interestAreas,
+        academic_background: formData.academicBackground.trim(),
+        previous_experience: formData.previousExperience.trim(),
         languages: formData.languages.trim(),
-        timeCommitment: formData.timeCommitment,
-        contributionTypes: formData.contributionTypes,
-        portfolioLinks: formData.portfolioLinks.trim()
+        time_commitment: formData.timeCommitment,
+        contribution_types: formData.contributionTypes,
+        portfolio_links: formData.portfolioLinks.trim()
       };
 
       const token = localStorage.getItem('archaeomap_token');
