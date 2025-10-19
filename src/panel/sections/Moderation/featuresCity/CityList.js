@@ -23,14 +23,11 @@ import {
     MenuItem,
     useMediaQuery,
     Stack,
-    IconButton,
-    Tooltip,
     Button
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PublicIcon from '@mui/icons-material/Public';
-import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import { useTheme } from '@mui/material/styles';
 
@@ -174,8 +171,7 @@ function CityListSection({ onCreateCity, onEditCity }) {
     };
 
     // Handler functions for parent component
-    const handleEditCity = (cityId, event) => {
-        if (event) event.stopPropagation();
+    const handleCityClick = (cityId) => {
         if (onEditCity) {
             onEditCity(cityId);
         }
@@ -186,7 +182,6 @@ function CityListSection({ onCreateCity, onEditCity }) {
             onCreateCity();
         }
     };
-
 
     // Note: Component will remount when refreshKey changes in parent
 
@@ -399,21 +394,19 @@ function CityListSection({ onCreateCity, onEditCity }) {
                                             Updated At
                                         </TableCell>
                                     )}
-                                    <TableCell sx={{
-                                        backgroundColor: COLORS.background,
-                                        fontWeight: 'bold',
-                                        width: '60px'
-                                    }}>
-                                        Actions
-                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {cities.map((city) => (
                                     <TableRow
                                         key={city.id}
+                                        onClick={() => handleCityClick(city.id)}
                                         sx={{
-                                            '&:hover': { backgroundColor: 'rgba(119, 73, 54, 0.02)' }
+                                            cursor: 'pointer',
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(119, 73, 54, 0.08)',
+                                                transition: 'background-color 0.2s'
+                                            }
                                         }}
                                     >
                                         <TableCell>
@@ -494,23 +487,6 @@ function CityListSection({ onCreateCity, onEditCity }) {
                                                 </Typography>
                                             </TableCell>
                                         )}
-
-                                        <TableCell>
-                                            <Tooltip title="Edit City" arrow>
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={(e) => handleEditCity(city.id, e)}
-                                                    sx={{
-                                                        color: COLORS.primary,
-                                                        '&:hover': {
-                                                            backgroundColor: 'rgba(119, 73, 54, 0.1)'
-                                                        }
-                                                    }}
-                                                >
-                                                    <EditIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

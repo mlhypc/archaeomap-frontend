@@ -21,6 +21,7 @@ import {
 
 import { ControlPanel, AuthenticationPanel } from './features/mapControls';
 import { getCurrentCityName } from '../../../shared/config/generalUtils';
+import CesiumGlobe from './features/CesiumGlobe';
 
 // MAP LAYERS - moved outside component to prevent re-creation
 const MAP_LAYERS = {
@@ -75,11 +76,17 @@ const categorizeCitiesByStatus = (cities, year) => {
 };
 
 // BOUNDS TRACKER - extracted component
-function BoundsTracker({ onBoundsChange }) {
+function BoundsTracker({ onBoundsChange, onCameraChange }) {
   const map = useMap();
   useEffect(() => {
     if (!map) return;
-    const updateBounds = () => onBoundsChange(map.getBounds());
+    const updateBounds = () => {
+      onBoundsChange(map.getBounds());
+      // Also track camera position
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      onCameraChange({ lat: center.lat, lng: center.lng, zoom });
+    };
     updateBounds();
     map.on('moveend', updateBounds);
     map.on('zoomend', updateBounds);
@@ -87,7 +94,7 @@ function BoundsTracker({ onBoundsChange }) {
       map.off('moveend', updateBounds);
       map.off('zoomend', updateBounds);
     };
-  }, [map, onBoundsChange]);
+  }, [map, onBoundsChange, onCameraChange]);
   return null;
 }
 
@@ -181,7 +188,11 @@ function useMapState() {
     ageFilter: HISTORICAL_AGES.ALL_AGES,
     labelFilter: LABEL_VISIBILITY.SHOW_ACTIVE_ONLY.key,
     mapLayerKey: 'arcgis',
-    showLabels: true
+    showLabels: true,
+    enable3D: false, // Toggle for 3D mode
+    pitch: 0, // 0-60 degrees
+    bearing: 0, // 0-360 degrees
+    isTransitioning: false // Track transition state
   });
 
   const [menuState, setMenuState] = useState({
@@ -192,7 +203,8 @@ function useMapState() {
 
   const [mapState, setMapState] = useState({
     map: null,
-    mapBounds: null
+    mapBounds: null,
+    cameraPosition: { lat: 36, lng: 31, zoom: 6 } // Store camera position
   });
 
   return {
@@ -220,6 +232,7 @@ function MapComponent(props) {
   } = useMapState();
 
   const cityDetailsCache = useRef(new Map());
+  const cameraPositionRef = useRef(mapState.cameraPosition); // Ref for camera position (no re-render)
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, isAuthenticated } = useAuth();
@@ -372,24 +385,42 @@ function MapComponent(props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleCameraChange = useCallback((camera) => {
+    // Update ref immediately (no re-render)
+    cameraPositionRef.current = camera;
+
+    // Only update state when switching modes (will be handled by toggle3D)
+    // This prevents constant re-renders during pan/zoom
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleMapReady = useCallback((map) => {
     setMapState(prev => ({ ...prev, map }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // OPTIMIZED: Direct menu handlers (fixed double currying)
+  // OPTIMIZED: Menu toggle handlers (toggle open/close on click)
   const handleAgeMenuOpen = useCallback((event) => {
-    setMenuState(prev => ({ ...prev, ageMenuAnchorEl: event.currentTarget }));
+    setMenuState(prev => ({
+      ...prev,
+      ageMenuAnchorEl: prev.ageMenuAnchorEl ? null : event.currentTarget
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLabelMenuOpen = useCallback((event) => {
-    setMenuState(prev => ({ ...prev, labelMenuAnchorEl: event.currentTarget }));
+    setMenuState(prev => ({
+      ...prev,
+      labelMenuAnchorEl: prev.labelMenuAnchorEl ? null : event.currentTarget
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLayerMenuOpen = useCallback((event) => {
-    setMenuState(prev => ({ ...prev, layerMenuAnchorEl: event.currentTarget }));
+    setMenuState(prev => ({
+      ...prev,
+      layerMenuAnchorEl: prev.layerMenuAnchorEl ? null : event.currentTarget
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -412,6 +443,31 @@ function MapComponent(props) {
     setUiState(prev => ({ ...prev, [filterType]: value }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Simple 3D toggle - sync camera position only when switching
+  const toggle3D = useCallback(() => {
+    // Update state with latest camera position from ref
+    setMapState(prev => ({
+      ...prev,
+      cameraPosition: cameraPositionRef.current
+    }));
+
+    setUiState(prev => ({
+      ...prev,
+      enable3D: !prev.enable3D,
+      pitch: !prev.enable3D ? 45 : 0,
+      bearing: 0, // Reset rotation
+      isTransitioning: true // Start transition
+    }));
+
+    // End transition after 600ms (same as CSS transition duration)
+    setTimeout(() => {
+      setUiState(prev => ({
+        ...prev,
+        isTransitioning: false
+      }));
+    }, 600);
+  }, [setMapState, setUiState]);
 
   // Error display
   if (dataState.error) {
@@ -449,7 +505,15 @@ function MapComponent(props) {
   }
 
   return (
-    <Box sx={{ height: '100%', width: '100%', position: 'relative' }}>
+    <Box sx={{
+      height: '100%',
+      width: '100%',
+      position: 'relative',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      MozUserSelect: 'none',
+      msUserSelect: 'none'
+    }}>
       {/* Initial loading overlay */}
       {dataState.initialLoading && (
         <Box sx={{
@@ -485,6 +549,8 @@ function MapComponent(props) {
 
       {/* Control Panel */}
       <ControlPanel
+        enable3D={uiState.enable3D}
+        toggle3D={toggle3D}
         ageFilter={uiState.ageFilter}
         setAgeFilter={(value) => handleFilterChange('ageFilter', value)}
         ageMenuAnchorEl={menuState.ageMenuAnchorEl}
@@ -503,40 +569,92 @@ function MapComponent(props) {
         mapLayers={MAP_LAYERS}
       />
 
-      <MapContainer
-        center={[36, 31]}
-        zoom={6}
-        minZoom={5}
-        maxZoom={MAP_LAYERS[uiState.mapLayerKey].maxZoom}
-        style={{ height: '100%', width: '100%' }}
-        zoomControl={false}
-        whenCreated={handleMapReady}
-        worldCopyJump={false}
-        maxBounds={[
-          [-90, -180], // Southwest corner
-          [90, 180]    // Northeast corner
-        ]}
-        maxBoundsViscosity={1.0}
-      >
-        <TileLayer
-          key={uiState.mapLayerKey}
-          url={MAP_LAYERS[uiState.mapLayerKey].url}
-          attribution={MAP_LAYERS[uiState.mapLayerKey].attribution}
+      {/* Conditional rendering: 3D Globe or 2D Map with smooth transitions */}
+      {/* Render 3D if enabled OR transitioning FROM 3D */}
+      {(uiState.enable3D || (uiState.isTransitioning && !uiState.enable3D)) && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: uiState.enable3D ? 1 : 0,
+            visibility: uiState.enable3D ? 'visible' : 'hidden',
+            transition: 'opacity 0.6s ease-in-out, visibility 0.6s ease-in-out',
+            zIndex: uiState.enable3D ? 1 : 0
+          }}
+        >
+          {/* 3D GLOBE VIEW */}
+          <CesiumGlobe
+            cities={[...dataState.currentDisplayData.active, ...dataState.currentDisplayData.ended]}
+            selectedCity={uiState.selectedCity}
+            onCityClick={handleSelectCity}
+            onCameraChange={handleCameraChange}
+            currentYear={uiState.currentYear}
+            showLabels={uiState.showLabels}
+            labelFilter={uiState.labelFilter}
+            cameraPosition={mapState.cameraPosition}
+          />
+        </Box>
+      )}
+
+      {/* Render 2D if disabled OR transitioning TO 3D */}
+      {(!uiState.enable3D || (uiState.isTransitioning && uiState.enable3D)) && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: !uiState.enable3D ? 1 : 0,
+            visibility: !uiState.enable3D ? 'visible' : 'hidden',
+            transition: 'opacity 0.6s ease-in-out, visibility 0.6s ease-in-out',
+            zIndex: !uiState.enable3D ? 1 : 0
+          }}
+        >
+          {/* 2D MAP VIEW */}
+          <MapContainer
+          key={`map-${mapState.cameraPosition.lat}-${mapState.cameraPosition.lng}-${mapState.cameraPosition.zoom}`}
+          center={[mapState.cameraPosition.lat, mapState.cameraPosition.lng]}
+          zoom={mapState.cameraPosition.zoom}
+          minZoom={4}
           maxZoom={MAP_LAYERS[uiState.mapLayerKey].maxZoom}
-        />
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={false}
+          whenCreated={handleMapReady}
+          worldCopyJump={false}
+          maxBounds={[
+            [-90, -180], // Southwest corner
+            [90, 180]    // Northeast corner
+          ]}
+          maxBoundsViscosity={1.0}
+        >
+          <TileLayer
+            key={uiState.mapLayerKey}
+            url={MAP_LAYERS[uiState.mapLayerKey].url}
+            attribution={MAP_LAYERS[uiState.mapLayerKey].attribution}
+            maxZoom={MAP_LAYERS[uiState.mapLayerKey].maxZoom}
+          />
 
-        <BoundsTracker onBoundsChange={handleBoundsChange} />
+          <BoundsTracker
+            onBoundsChange={handleBoundsChange}
+            onCameraChange={handleCameraChange}
+          />
 
-        {/* OPTIMIZED: Memoized city markers */}
-        <CityMarkers
-          visibleCities={visibleCities}
-          selectedCity={uiState.selectedCity}
-          handleSelectCity={handleSelectCity}
-          labelFilter={uiState.labelFilter}
-          showLabels={uiState.showLabels}
-          currentYear={uiState.currentYear}
-        />
-      </MapContainer>
+          {/* OPTIMIZED: Memoized 2D city markers */}
+          <CityMarkers
+            visibleCities={visibleCities}
+            selectedCity={uiState.selectedCity}
+            handleSelectCity={handleSelectCity}
+            labelFilter={uiState.labelFilter}
+            showLabels={uiState.showLabels}
+            currentYear={uiState.currentYear}
+          />
+        </MapContainer>
+      </Box>
+      )}
 
       {/* TimeSlider */}
       {!dataState.initialLoading && (

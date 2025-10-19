@@ -209,10 +209,10 @@ function PendingApplicationsSection() {
   };
 
   useEffect(() => {
-    // Only fetch applications if user has moderator+ role
-    if (user && token && (user.role === 'moderator' || user.role === 'admin')) {
+    // Only fetch applications if user has senator+ role
+    if (user && token && (user.role === 'senator' || user.role === 'imperator')) {
       fetchApplications();
-      
+
       // Auto-refresh every 2 minutes
       const interval = setInterval(fetchApplications, 2 * 60 * 1000);
       return () => clearInterval(interval);
@@ -259,7 +259,7 @@ function PendingApplicationsSection() {
 
       {applications.length === 0 && !loading && (
         <Alert severity="info">
-          No pending applications at the moment. New contributor applications will appear here for voting.
+          No pending applications at the moment. New equestrian applications will appear here for voting.
         </Alert>
       )}
 
@@ -280,7 +280,7 @@ function PendingApplicationsSection() {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Box>
                       <Typography variant="h6" gutterBottom>
-                         Contributor Application
+                         Equestrian Application
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                         <Chip 
@@ -450,7 +450,7 @@ function PendingApplicationsSection() {
           {selectedApplication && (
             <Box sx={{ pt: 1 }}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Voting on {selectedApplication.user.firstName} {selectedApplication.user.lastName}'s contributor application
+                Voting on {selectedApplication.user.firstName} {selectedApplication.user.lastName}'s equestrian application
               </Typography>
               
               <FormControl component="fieldset" sx={{ mt: 2, mb: 3 }}>
@@ -459,14 +459,14 @@ function PendingApplicationsSection() {
                   value={voteData.vote}
                   onChange={(e) => setVoteData({ ...voteData, vote: e.target.value })}
                 >
-                  <FormControlLabel 
-                    value="approve" 
-                    control={<Radio />} 
-                    label="✅ Approve - This applicant should become a contributor"
+                  <FormControlLabel
+                    value="approve"
+                    control={<Radio />}
+                    label="✅ Approve - This applicant should become an equestrian"
                   />
-                  <FormControlLabel 
-                    value="reject" 
-                    control={<Radio />} 
+                  <FormControlLabel
+                    value="reject"
+                    control={<Radio />}
                     label="❌ Reject - This applicant is not ready yet"
                   />
                 </RadioGroup>
@@ -479,7 +479,7 @@ function PendingApplicationsSection() {
                 fullWidth
                 value={voteData.reason}
                 onChange={(e) => setVoteData({ ...voteData, reason: e.target.value })}
-                placeholder="Explain your decision (visible to other moderators)..."
+                placeholder="Explain your decision (visible to other senators)..."
                 inputProps={{ maxLength: 500 }}
                 helperText={`${voteData.reason.length}/500 characters`}
               />

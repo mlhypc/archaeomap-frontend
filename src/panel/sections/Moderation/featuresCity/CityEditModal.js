@@ -25,6 +25,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PublicIcon from '@mui/icons-material/Public';
 import EditIcon from '@mui/icons-material/Edit';
@@ -32,14 +33,17 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
+import useUserRole from '../../../../shared/hooks/useUserRole';
 
 const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const { isAdmin } = useUserRole(); // Get imperator status
 
     // State management
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
@@ -287,6 +291,49 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const hasUnsavedChanges = () => {
         if (!originalData) return false;
         return JSON.stringify(formData) !== JSON.stringify(originalData);
+    };
+
+    const handleDelete = async () => {
+        if (!cityId || !formData.generic_city_name) return;
+
+        const confirmed = window.confirm(
+            `⚠️ WARNING: You are about to permanently delete "${formData.generic_city_name}".\n\n` +
+            `This will remove:\n` +
+            `• City data and coordinates\n` +
+            `• ${completeCityData?.control_history_json?.length || 0} control periods\n` +
+            `• ${completeCityData?.population_history_json?.length || 0} population records\n` +
+            `• ${completeCityData?.landmarks_history_json?.length || 0} landmarks\n\n` +
+            `This action CANNOT be undone.\n\n` +
+            `Are you absolutely sure?`
+        );
+
+        if (!confirmed) return;
+
+        setDeleting(true);
+        setError(null);
+
+        try {
+            const result = await citiesApi.deleteCity(cityId);
+
+            if (result.success) {
+                alert(`✅ City "${formData.generic_city_name}" has been permanently deleted.`);
+
+                // Notify parent component
+                if (onCityUpdated) {
+                    onCityUpdated({ deleted: true, cityId });
+                }
+
+                // Close modal
+                onClose();
+            } else {
+                setError(result.error || 'Failed to delete city');
+            }
+        } catch (err) {
+            setError('Failed to delete city: ' + err.message);
+            console.error('City deletion error:', err);
+        } finally {
+            setDeleting(false);
+        }
     };
 
     const getStatusChip = (status) => {
@@ -637,36 +684,67 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     padding: { xs: 2, md: 3 },
                     backgroundColor: COLORS.background,
                     borderTop: `1px solid ${COLORS.border}`,
+                    justifyContent: 'space-between',
                     gap: 1
                 }}
             >
-                <Button
-                    onClick={onClose}
-                    disabled={saving}
-                    sx={{
-                        color: COLORS.texts.secondary,
-                        '&:hover': { backgroundColor: 'rgba(0,0,0,0.05)' }
-                    }}
-                >
-                    Cancel
-                </Button>
+                {/* Left side - Delete button (Imperator only) */}
+                <Box>
+                    {isAdmin && !loading && (
+                        <Button
+                            onClick={handleDelete}
+                            disabled={saving || deleting}
+                            variant="outlined"
+                            color="error"
+                            startIcon={deleting ? <CircularProgress size={16} /> : <DeleteIcon />}
+                            sx={{
+                                borderColor: 'error.main',
+                                color: 'error.main',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(211, 47, 47, 0.04)',
+                                    borderColor: 'error.dark'
+                                },
+                                '&:disabled': {
+                                    borderColor: 'rgba(0, 0, 0, 0.12)',
+                                    color: 'rgba(0, 0, 0, 0.26)'
+                                }
+                            }}
+                        >
+                            {deleting ? 'Deleting...' : 'Delete City'}
+                        </Button>
+                    )}
+                </Box>
 
-                <Button
-                    onClick={handleSave}
-                    disabled={loading || saving || !hasUnsavedChanges() || !completeCityData}
-                    variant="contained"
-                    startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
-                    sx={{
-                        backgroundColor: COLORS.primary,
-                        '&:hover': { backgroundColor: '#5d3a2a' },
-                        '&:disabled': {
-                            backgroundColor: COLORS.texts.muted,
-                            color: 'white'
-                        }
-                    }}
-                >
-                    {saving ? 'Saving...' : 'Save Changes'}
-                </Button>
+                {/* Right side - Cancel and Save buttons */}
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                        onClick={onClose}
+                        disabled={saving || deleting}
+                        sx={{
+                            color: COLORS.texts.secondary,
+                            '&:hover': { backgroundColor: 'rgba(0,0,0,0.05)' }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+
+                    <Button
+                        onClick={handleSave}
+                        disabled={loading || saving || deleting || !hasUnsavedChanges() || !completeCityData}
+                        variant="contained"
+                        startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
+                        sx={{
+                            backgroundColor: COLORS.primary,
+                            '&:hover': { backgroundColor: '#5d3a2a' },
+                            '&:disabled': {
+                                backgroundColor: COLORS.texts.muted,
+                                color: 'white'
+                            }
+                        }}
+                    >
+                        {saving ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                </Box>
             </DialogActions>
         </Dialog>
     );

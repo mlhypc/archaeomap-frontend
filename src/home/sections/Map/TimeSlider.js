@@ -23,28 +23,29 @@ const SliderContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
   paddingTop: theme.spacing(1),
   paddingBottom: theme.spacing(1),
-  backgroundColor: 'rgba(248, 245, 238, 0.9)',
-  borderRadius: theme.shape.borderRadius,
+  backgroundColor: 'rgba(255, 255, 255, 0.55)',
+  borderRadius: '12px',
   maxWidth: '100%',
-  backdropFilter: 'blur(4px)',
-  border: `1px solid ${COLORS.border}`,
-  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  border: '1px solid rgba(255, 255, 255, 0.5)',
+  boxShadow: '0 4px 16px 0 rgba(119, 73, 54, 0.1)',
   transition: 'all 0.2s ease'
 }));
 
 const NavButton = styled(IconButton)(({ theme }) => ({
-  backgroundColor: 'rgba(248, 245, 238, 0.8)',
+  backgroundColor: 'transparent',
   padding: theme.spacing(1),
   borderRadius: '8px',
   color: COLORS.primary,
   '&:hover': {
-    backgroundColor: 'rgba(248, 245, 238, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     color: COLORS.primary,
     transform: 'scale(1.1)'
   },
   '&.Mui-disabled': {
-    opacity: 0.3,
-    backgroundColor: 'rgba(248, 245, 238, 0.5)',
+    opacity: 0.4,
+    backgroundColor: 'transparent',
     color: COLORS.texts.muted
   },
   transition: 'all 0.2s ease',
@@ -152,19 +153,20 @@ function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
   const containerStyles = useMemo(() => ({
     width: isMobile ? 'calc(100% - 32px)' : '600px',
     maxWidth: isMobile ? 'calc(100% - 32px)' : '80%',
-    position: 'absolute',
+    position: 'fixed',
     bottom: isMobile ? (isLandscape ? 12 : 60) : 20,
-    left: '50%',
+    // Center in the map area (excluding sidebar on desktop)
+    left: isMobile ? '50%' : 'calc(360px + (100% - 360px) / 2)',
     transform: 'translateX(-50%)',
     height: expanded ? 'auto' : '48px',
     overflow: 'hidden',
     opacity: expanded ? 1 : 0.9,
     '&:hover': { opacity: 1 },
-    zIndex: 1000
+    zIndex: 9
   }), [isMobile, isLandscape, expanded]);
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative'}}>
       <SliderContainer elevation={3} sx={containerStyles}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: expanded ? 1 : 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>

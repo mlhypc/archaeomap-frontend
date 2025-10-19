@@ -8,6 +8,7 @@
     "@mui/icons-material": "^6.4.7",
     "@mui/material": "^6.4.7",
     "axios": "^1.11.0",
+    "cesium": "^1.134.1",
     "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
     "react": "^19.0.0",
@@ -15,12 +16,13 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.8.2",
     "react-scripts": "5.0.1",
+    "resium": "^1.19.0-beta.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -42,6 +44,8 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "copy-webpack-plugin": "^13.0.1",
     "eslint-config-react-app": "^7.0.1"
   }
 }

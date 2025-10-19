@@ -50,29 +50,29 @@ function UserManagementSection() {
   const { user: currentUser } = useAuth();
 
   const roleColors = {
-    standard: { bg: 'rgba(25, 118, 210, 0.1)', color: '#1976d2' },
-    contributor: { bg: 'rgba(237, 108, 2, 0.1)', color: '#ed6c02' },
-    moderator: { bg: 'rgba(156, 39, 176, 0.1)', color: '#9c27b0' },
-    admin: { bg: 'rgba(211, 47, 47, 0.1)', color: '#d32f2f' }
+    plebeian: { bg: 'rgba(25, 118, 210, 0.1)', color: '#1976d2' },
+    equestrian: { bg: 'rgba(237, 108, 2, 0.1)', color: '#ed6c02' },
+    senator: { bg: 'rgba(156, 39, 176, 0.1)', color: '#9c27b0' },
+    imperator: { bg: 'rgba(211, 47, 47, 0.1)', color: '#d32f2f' }
   };
 
   const roleIcons = {
-    standard: PersonIcon,
-    contributor: GroupIcon,
-    moderator: ManageAccountsIcon,
-    admin: AdminPanelSettingsIcon
+    plebeian: PersonIcon,
+    equestrian: GroupIcon,
+    senator: ManageAccountsIcon,
+    imperator: AdminPanelSettingsIcon
   };
 
   const roleLabels = {
-    standard: 'User',
-    contributor: 'Contributor',
-    moderator: 'Moderator',
-    admin: 'Administrator'
+    plebeian: 'Plebeian',
+    equestrian: 'Equestrian',
+    senator: 'Senator',
+    imperator: 'Imperator'
   };
 
   useEffect(() => {
-    // Only fetch users if current user is admin
-    if (currentUser && currentUser.role === 'admin') {
+    // Only fetch users if current user is imperator
+    if (currentUser && currentUser.role === 'imperator') {
       fetchUsers();
     } else {
       setUsers([]);
@@ -85,8 +85,8 @@ function UserManagementSection() {
     setError(null);
 
     try {
-      // Check if user is authenticated and admin before making API call
-      if (!currentUser || !localStorage.getItem('archaeomap_token') || currentUser.role !== 'admin') {
+      // Check if user is authenticated and imperator before making API call
+      if (!currentUser || !localStorage.getItem('archaeomap_token') || currentUser.role !== 'imperator') {
         setUsers([]);
         setLoading(false);
         return;
@@ -297,8 +297,8 @@ function UserManagementSection() {
                     label={roleLabels[user.role] || user.role}
                     size="small"
                     sx={{
-                      backgroundColor: roleColors[user.role]?.bg || roleColors.standard.bg,
-                      color: roleColors[user.role]?.color || roleColors.standard.color,
+                      backgroundColor: roleColors[user.role]?.bg || roleColors.plebeian.bg,
+                      color: roleColors[user.role]?.color || roleColors.plebeian.color,
                       fontWeight: 'medium'
                     }}
                   />
@@ -338,10 +338,10 @@ function UserManagementSection() {
                           }
                         }}
                       >
-                        <MenuItem value="standard">User</MenuItem>
-                        <MenuItem value="contributor">Contributor</MenuItem>
-                        <MenuItem value="moderator">Moderator</MenuItem>
-                        <MenuItem value="admin">Administrator</MenuItem>
+                        <MenuItem value="plebeian">Plebeian</MenuItem>
+                        <MenuItem value="equestrian">Equestrian</MenuItem>
+                        <MenuItem value="senator">Senator</MenuItem>
+                        <MenuItem value="imperator">Imperator</MenuItem>
                       </Select>
                       {updateLoading === user.id && (
                         <CircularProgress

@@ -118,11 +118,11 @@ function PanelPage() {
       }
     );
 
-    // Apply for Contributor (sadece standard role için)
-    if (user?.role === 'standard') {
+    // Apply for Equestrian (sadece plebeian role için)
+    if (user?.role === 'plebeian') {
       items.push({
         id: PANEL_SECTIONS.APPLY_CONTRIBUTOR,
-        label: 'Apply for Contributor',
+        label: 'Apply for Equestrian',
         icon: TrendingUpIcon,
         category: 'Personal'
       });

@@ -44,6 +44,11 @@ function CityManageSection() {
 
     const handleCityUpdated = (updatedCity) => {
         console.log('City updated in main container:', updatedCity);
+
+        // If city was deleted, force refresh the list
+        if (updatedCity?.deleted) {
+            setRefreshKey(prev => prev + 1);
+        }
         // List will refresh when modal closes
     };
 

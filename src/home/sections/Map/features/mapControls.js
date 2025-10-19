@@ -21,6 +21,7 @@ import LabelIcon from '@mui/icons-material/Label';
 import LayersIcon from '@mui/icons-material/Layers';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import CheckIcon from '@mui/icons-material/Check';
+import ViewInArIcon from '@mui/icons-material/ViewInAr';
 
 import { COLORS } from '../../../../shared/config/generalUtils';
 import {
@@ -45,7 +46,8 @@ const ControlContainer = ({ children, position = 'topRight', sx = {} }) => {
       variant="control"
       sx={{
         position: 'absolute',
-        zIndex: 1000,
+        zIndex: 9,
+        borderRadius: '12px',
         ...positionStyles[position],
         ...sx
       }}
@@ -56,48 +58,65 @@ const ControlContainer = ({ children, position = 'topRight', sx = {} }) => {
 };
 
 // Reusable Control Button with enhanced styling
-const ControlButton = ({ 
-  icon: Icon, 
-  tooltip, 
-  onClick, 
+const ControlButton = ({
+  icon: Icon,
+  tooltip,
+  onClick,
   color = COLORS.primary,
   isActive = false,
-  ...props 
+  disabled = false,
+  ...props
 }) => {
   const theme = useTheme();
-  
+
+  const button = (
+    <IconButton
+      variant="control"
+      onClick={onClick}
+      size="medium"
+      disabled={disabled}
+      sx={{
+        color: isActive ? theme.palette.primary.main : color,
+        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.4)' : 'transparent',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+          transform: 'scale(1.05)'
+        },
+        '&.Mui-disabled': {
+          color: 'rgba(119, 73, 54, 0.4)',
+          backgroundColor: 'transparent',
+          opacity: 0.5
+        },
+        ...props.sx
+      }}
+      {...props}
+    >
+      <Icon />
+    </IconButton>
+  );
+
+  // If disabled, wrap in span for Tooltip to work
   return (
     <MuiTooltip
       title={tooltip}
-      arrow 
+      arrow
       placement="bottom"
       TransitionComponent={Fade}
       TransitionProps={{ timeout: 600 }}
     >
-      <IconButton
-        variant="control"
-        onClick={onClick}
-        size="medium"
-        sx={{
-          color: isActive ? theme.palette.primary.main : color,
-          backgroundColor: isActive ? 'rgba(119, 73, 54, 0.1)' : undefined,
-          ...props.sx
-        }}
-        {...props}
-      >
-        <Icon />
-      </IconButton>
+      {disabled ? <span>{button}</span> : button}
     </MuiTooltip>
   );
 };
 
 // Reusable Control Menu
-const ControlMenu = ({ 
-  anchorEl, 
-  onClose, 
+const ControlMenu = ({
+  anchorEl,
+  onClose,
   children,
   id,
-  ...props 
+  ...props
 }) => (
   <Menu
     id={id}
@@ -106,13 +125,19 @@ const ControlMenu = ({
     open={Boolean(anchorEl)}
     onClose={onClose}
     PaperProps={{
-      elevation: 3,
+      elevation: 0,
       sx: {
-        mt: 0.2,
+        mt: 0.5,
         ml: '4px',
-        backgroundColor: 'rgba(248, 245, 238, 0.95)',
-        backdropFilter: 'blur(4px)',
-        borderRadius: '4px'
+        borderRadius: '8px',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+        boxShadow: '0 8px 32px 0 rgba(119, 73, 54, 0.2)',
+        overflow: 'hidden'
+      }
+    }}
+    MenuListProps={{
+      sx: {
+        padding: '4px'
       }
     }}
     {...props}
@@ -122,30 +147,25 @@ const ControlMenu = ({
 );
 
 // Reusable Menu Item with selection indicator
-const ControlMenuItem = ({ 
-  selected, 
-  onClick, 
-  children, 
+const ControlMenuItem = ({
+  selected,
+  onClick,
+  children,
   color,
   dense = true,
-  ...props 
+  ...props
 }) => (
   <MenuItem
     onClick={onClick}
     dense={dense}
-    sx={{ 
-      minWidth: '220px',
-      '&:hover': {
-        backgroundColor: 'rgba(119, 73, 54, 0.05)'
-      }
-    }}
+    sx={{ minWidth: '220px' }}
     {...props}
   >
     <ListItemIcon sx={{ minWidth: '32px' }}>
       {selected && (
-        <CheckIcon 
-          fontSize="small" 
-          sx={{ color: color || COLORS.primary }} 
+        <CheckIcon
+          fontSize="small"
+          sx={{ color: color || COLORS.primary }}
         />
       )}
     </ListItemIcon>
@@ -226,7 +246,9 @@ export const ControlPanel = ({
   layerMenuAnchorEl,
   setLayerMenuAnchorEl,
   layerMenuClose,
-  mapLayers
+  mapLayers,
+  enable3D,
+  toggle3D
 }) => {
   // Get current configs
   const ageProps = HISTORICAL_AGE_CONFIG[ageFilter];
@@ -258,10 +280,28 @@ export const ControlPanel = ({
           {/* Map Layer Selector */}
           <ControlButton
             icon={LayersIcon}
-            tooltip={`Map layer: ${currentLayer.name}`}
-            onClick={setLayerMenuAnchorEl}
+            tooltip={enable3D ? "Map layers not available in 3D mode" : `Map layer: ${currentLayer.name}`}
+            onClick={enable3D ? undefined : setLayerMenuAnchorEl}
             color="#6d4c41"
             aria-label="Change map base layer"
+            disabled={enable3D}
+            sx={{
+              ...(enable3D && {
+                opacity: 0.5,
+                cursor: 'not-allowed',
+                pointerEvents: 'auto'
+              })
+            }}
+          />
+
+          {/* 3D Toggle - Last button (rightmost) */}
+          <ControlButton
+            icon={ViewInArIcon}
+            tooltip={enable3D ? "Switch to 2D View" : "Switch to 3D View"}
+            onClick={toggle3D}
+            color={COLORS.primary}
+            isActive={enable3D}
+            aria-label={enable3D ? "Switch to 2D" : "Switch to 3D"}
           />
         </Stack>
       </ControlContainer>
@@ -343,6 +383,7 @@ export const LabelMenu = ({ labelFilter, anchorEl, onClose, onFilterSelect }) =>
 // Map Layer Menu
 const MapLayerMenu = ({ mapLayerKey, anchorEl, onClose, onSelect, mapLayers }) => (
   <ControlMenu
+    id="layer-menu"
     anchorEl={anchorEl}
     onClose={onClose}
   >

@@ -100,7 +100,7 @@ function Sidebar({
     loadCityDetails();
   }, [selectedCity, mode]);
 
-  // Responsive container styles
+  // Responsive container styles - Solid background
   const containerSx = {
     width: '100%',
     maxWidth: 'none',

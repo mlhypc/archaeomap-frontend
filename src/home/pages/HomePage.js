@@ -217,7 +217,7 @@ function HomePage() {
         {/* ===== MOBILE HEADER & CONTROL PANEL ===== */}
         {isMobile && (
           <>
-            {/* Mobile Header with Logo - Desktop ile tutarlı */}
+            {/* Mobile Header with Logo - Glassmorphism */}
             <Box sx={{
               position: 'absolute',
               top: 10,
@@ -226,11 +226,13 @@ function HomePage() {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              backgroundColor: 'rgba(248, 245, 238, 0.9)',
-              border: `1px solid ${COLORS.border}`,
-              borderRadius: '4px',
+              backgroundColor: 'rgba(255, 255, 255, 0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              borderRadius: '12px',
               padding: '8px 12px',
-              backdropFilter: 'blur(4px)'
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              boxShadow: '0 4px 16px rgba(119, 73, 54, 0.12)'
             }}>
               <img
                 src="/archaeomap_primary.svg"

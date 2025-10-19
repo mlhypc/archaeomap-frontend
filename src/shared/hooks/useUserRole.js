@@ -27,25 +27,25 @@ const useUserRole = () => {
     const role = user.role;
     
     return {
-      // New role system
-      isStandard: role === 'standard',
-      isContributor: ['contributor', 'moderator', 'admin'].includes(role),
-      isModerator: ['moderator', 'admin'].includes(role),
-      isAdmin: role === 'admin',
+      // New role system (Roman Empire themed)
+      isStandard: role === 'plebeian',
+      isContributor: ['equestrian', 'senator', 'imperator'].includes(role),
+      isModerator: ['senator', 'imperator'].includes(role),
+      isAdmin: role === 'imperator',
       role,
-      canManageData: ['contributor', 'moderator', 'admin'].includes(role),
-      canManageUsers: role === 'admin',
-      canModerate: ['moderator', 'admin'].includes(role),
+      canManageData: ['equestrian', 'senator', 'imperator'].includes(role),
+      canManageUsers: role === 'imperator',
+      canModerate: ['senator', 'imperator'].includes(role),
       displayRole: {
-        'standard': 'User',
-        'contributor': 'Contributor',
-        'moderator': 'Moderator',
-        'admin': 'Administrator'
+        'plebeian': 'Plebeian',
+        'equestrian': 'Equestrian',
+        'senator': 'Senator',
+        'imperator': 'Imperator'
       }[role] || 'Unknown',
-      
+
       // Legacy support for existing code (mapped to new roles)
-      isUser: role === 'standard',
-      isCurator: ['contributor', 'moderator', 'admin'].includes(role)
+      isUser: role === 'plebeian',
+      isCurator: ['equestrian', 'senator', 'imperator'].includes(role)
     };
   }, [user, isAuthenticated]);
 

@@ -130,7 +130,7 @@ function ApplyForContributorSection() {
   return (
     <Box sx={panelStyles.sectionContainer}>
       <Typography sx={panelTypography.sectionTitle}>
-        Apply for Contributor Role
+        Apply for Equestrian Role
       </Typography>
       
       {successMessage && (
@@ -161,7 +161,7 @@ function ApplyForContributorSection() {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Box>
                       <Typography variant="subtitle1" gutterBottom>
-                        Contributor Application
+                        Equestrian Application
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                         <Chip
@@ -216,8 +216,8 @@ function ApplyForContributorSection() {
 
                   {application.status === 'approved' && (
                     <Alert severity="success">
-                      🎉 Congratulations! Your application was approved with {approvalRate}% approval rate. 
-                      You have been promoted to Contributor!
+                      🎉 Congratulations! Your application was approved with {approvalRate}% approval rate.
+                      You have been promoted to Equestrian!
                     </Alert>
                   )}
 
@@ -242,17 +242,17 @@ function ApplyForContributorSection() {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <TrendingUpIcon sx={{ mr: 1, color: 'primary.main' }} />
                 <Typography variant="h6" component="h2">
-                  Become a Contributor
+                  Become an Equestrian
                 </Typography>
               </Box>
-              
+
               <Typography variant="body1" color="text.secondary" paragraph>
-                Join our community of archaeological researchers and enthusiasts! As a contributor, 
+                Join our community of archaeological researchers and enthusiasts! As an equestrian,
                 you'll be able to submit new cities and archaeological sites to expand our global database.
               </Typography>
 
               <Typography variant="body1" color="text.secondary" paragraph>
-                Contributors play a vital role in preserving and sharing historical knowledge. 
+                Equestrians play a vital role in preserving and sharing historical knowledge.
                 Your submissions will be reviewed by our moderation team before being published.
               </Typography>
 
@@ -273,7 +273,7 @@ function ApplyForContributorSection() {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Contributor Benefits
+                Equestrian Benefits
               </Typography>
               
               <List dense>
@@ -311,9 +311,9 @@ function ApplyForContributorSection() {
                   <ListItemIcon>
                     <CheckCircleIcon color="success" fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText 
+                  <ListItemText
                     primary="Educational Resources"
-                    secondary="Access to contributor guides and archaeological resources"
+                    secondary="Access to equestrian guides and archaeological resources"
                   />
                 </ListItem>
               </List>

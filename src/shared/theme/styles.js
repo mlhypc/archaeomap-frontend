@@ -157,15 +157,26 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: '#fbf3e2',
-        },
+          '&.MuiMenu-paper': {
+            backgroundColor: 'transparent'
+          },
+          '&.MuiPopover-paper': {
+            backgroundColor: 'transparent'
+          }
+        }
+      },
+      defaultProps: {
+        elevation: 0
       },
       variants: [
         {
           props: { variant: 'sidebar' },
           style: {
-            backgroundColor: COLORS.background,
-            borderRight: `1px solid ${COLORS.border}`,
-            boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            borderRight: '1px solid rgba(255, 255, 255, 0.5)',
+            boxShadow: '2px 0 16px rgba(119, 73, 54, 0.08)',
             height: '100%',
             display: 'flex',
             flexDirection: 'column'
@@ -174,28 +185,39 @@ const theme = createTheme({
         {
           props: { variant: 'control' },
           style: {
-            backgroundColor: 'rgba(248, 245, 238, 0.9)',
-            border: `1px solid ${COLORS.border}`,
-            backdropFilter: 'blur(4px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 4px 16px 0 rgba(119, 73, 54, 0.12)',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(248, 245, 238, 0.95)'
+              backgroundColor: 'rgba(255, 255, 255, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.6)',
+              boxShadow: '0 4px 16px 0 rgba(119, 73, 54, 0.18)'
             }
           }
         },
         {
           props: { variant: 'infoBox' },
           style: {
-            backgroundColor: '#fbf3e2',
-            border: `1px solid ${COLORS.border}`,
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            borderRadius: '8px',
+            boxShadow: '0 4px 16px rgba(119, 73, 54, 0.08)',
             padding: '1rem'
           }
         },
         {
           props: { variant: 'datesBox' },
           style: {
-            backgroundColor: '#fbf3e2',
-            border: `1px solid ${COLORS.border}`,
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            borderRadius: '8px',
+            boxShadow: '0 4px 16px rgba(119, 73, 54, 0.08)',
             padding: 0,
             overflow: 'hidden'
           }
@@ -460,11 +482,10 @@ const theme = createTheme({
         {
           props: { variant: 'control' },
           style: {
-            backgroundColor: 'rgba(248, 245, 238, 0.9)',
-            backdropFilter: 'blur(4px)',
+            backgroundColor: 'transparent',
             transition: 'all 0.2s ease',
-            '&:hover': { 
-              backgroundColor: 'rgba(248, 245, 238, 0.95)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
               transform: 'scale(1.05)'
             }
           }
@@ -554,6 +575,38 @@ const theme = createTheme({
           }
         }
       }
+    },
+
+    // ENHANCED MENU - Force glassmorphism
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: 'rgba(255, 255, 255, 0.5) !important',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)'
+        },
+        list: {
+          backgroundColor: 'transparent !important'
+        }
+      }
+    },
+
+    // ENHANCED MENUITEM - Force glassmorphism
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'transparent !important',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.4) !important'
+          },
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(255, 255, 255, 0.25) !important',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.4) !important'
+            }
+          }
+        }
+      }
     }
   },
 
@@ -623,7 +676,7 @@ const globalStyles = {
     MozOsxFontSmoothing: 'grayscale',
     backgroundColor: COLORS.background
   },
-  
+
   '*': {
     boxSizing: 'border-box',
   },
@@ -652,12 +705,12 @@ const globalStyles = {
     cursor: 'pointer',
     boxShadow: '0 0 1px rgba(0,0,0,0.2)',
     transition: 'all 0.2s ease',
-    
+
     '&.selected': {
       backgroundColor: '#daa520',
       color: 'rgb(62, 62, 60)',
     },
-    
+
     '&.ended': {
       color: '#a72626',
     }
