@@ -1,4 +1,4 @@
-// src/hooks/useUserRole.js - UPDATED FOR NEW ROLE SYSTEM
+// src/hooks/useUserRole.js
 
 import { useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,25 +27,25 @@ const useUserRole = () => {
     const role = user.role;
     
     return {
-      // New role system (Roman Empire themed)
-      isStandard: role === 'plebeian',
-      isContributor: ['equestrian', 'senator', 'imperator'].includes(role),
-      isModerator: ['senator', 'imperator'].includes(role),
-      isAdmin: role === 'imperator',
+      // New role system
+      isStandard: role === 'user',
+      isContributor: ['contributor', 'moderator', 'admin'].includes(role),
+      isModerator: ['moderator', 'admin'].includes(role),
+      isAdmin: role === 'admin',
       role,
-      canManageData: ['equestrian', 'senator', 'imperator'].includes(role),
-      canManageUsers: role === 'imperator',
-      canModerate: ['senator', 'imperator'].includes(role),
+      canManageData: ['contributor', 'moderator', 'admin'].includes(role),
+      canManageUsers: role === 'admin',
+      canModerate: ['moderator', 'admin'].includes(role),
       displayRole: {
-        'plebeian': 'Plebeian',
-        'equestrian': 'Equestrian',
-        'senator': 'Senator',
-        'imperator': 'Imperator'
+        'user': 'Plebeian',
+        'contributor': 'Equestrian',
+        'moderator': 'Senator',
+        'admin': 'Imperator'
       }[role] || 'Unknown',
 
       // Legacy support for existing code (mapped to new roles)
-      isUser: role === 'plebeian',
-      isCurator: ['equestrian', 'senator', 'imperator'].includes(role)
+      isUser: role === 'user',
+      isCurator: ['contributor', 'moderator', 'admin'].includes(role)
     };
   }, [user, isAuthenticated]);
 

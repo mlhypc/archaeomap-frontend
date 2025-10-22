@@ -20,7 +20,9 @@ import {
     Chip,
     useMediaQuery,
     InputAdornment,
-    Paper
+    Paper,
+    Tabs,
+    Tab
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import SaveIcon from '@mui/icons-material/Save';
@@ -30,15 +32,18 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PublicIcon from '@mui/icons-material/Public';
 import EditIcon from '@mui/icons-material/Edit';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import InfoIcon from '@mui/icons-material/Info';
 
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
 import useUserRole from '../../../../shared/hooks/useUserRole';
+import HistoricalDataEditor from './HistoricalDataEditor';
 
 const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const { isAdmin } = useUserRole(); // Get imperator status
+    const { isAdmin } = useUserRole(); // Get admin status
 
     // State management
     const [loading, setLoading] = useState(false);
@@ -46,6 +51,15 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+
+    // Tab state
+    const [activeTab, setActiveTab] = useState(0);
+
+    // Image state
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [imageCredit, setImageCredit] = useState('');
+    const [imageCreditLink, setImageCreditLink] = useState('');
 
     // Form data - Basic fields only for UI
     const [formData, setFormData] = useState({
@@ -64,6 +78,11 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const [completeCityData, setCompleteCityData] = useState(null);
     const [originalData, setOriginalData] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
+
+    // Historical data states
+    const [controlHistory, setControlHistory] = useState([]);
+    const [populationHistory, setPopulationHistory] = useState([]);
+    const [landmarksHistory, setLandmarksHistory] = useState([]);
 
     // Load city data when modal opens
     useEffect(() => {
@@ -107,23 +126,23 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 const completeData = {
                     ...formData,
                     control_history_json: result.data.controlHistory?.map(c => ({
-                        ruler: c.ruler,
-                        historical_city_name: c.historical_city_name,
-                        startYear: c.startYear,
-                        endYear: c.endYear,
-                        description: c.description
+                        ruler: c.ruler || '',
+                        historical_city_name: c.historical_city_name || '',
+                        startYear: c.startYear || '',
+                        endYear: c.endYear || '',
+                        description: c.description || ''
                     })) || [],
                     population_history_json: result.data.populationHistory?.map(p => ({
-                        year: p.year,
-                        count: p.count,
-                        source: p.source
+                        year: p.year || '',
+                        count: p.count || '',
+                        source: p.source || ''
                     })) || [],
                     landmarks_history_json: result.data.landmarksHistory?.map(l => ({
-                        landmark_name: l.landmark_name,
-                        constructionDate: l.constructionDate,
-                        purpose: l.purpose,
-                        significance: l.significance,
-                        description: l.description
+                        landmark_name: l.landmark_name || '',
+                        constructionDate: l.constructionDate || '',
+                        purpose: l.purpose || '',
+                        significance: l.significance || '',
+                        description: l.description || ''
                     })) || []
                 };
 
@@ -136,6 +155,20 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 setFormData(formData);
                 setCompleteCityData(completeData);
                 setOriginalData(formData);
+
+                // Set historical data states for HistoricalDataEditor
+                setControlHistory(completeData.control_history_json || []);
+                setPopulationHistory(completeData.population_history_json || []);
+                setLandmarksHistory(completeData.landmarks_history_json || []);
+
+                // Set image data
+                if (result.data.image_url) {
+                    // Remove '/api' from API_URL since uploads are served at root level
+                    const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace('/api', '');
+                    setImagePreview(`${baseUrl}${result.data.image_url}`);
+                }
+                setImageCredit(result.data.image_credit || '');
+                setImageCreditLink(result.data.image_credit_link || '');
             } else {
                 setError(result.error || 'Failed to load city data');
             }
@@ -164,6 +197,18 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         setValidationErrors({});
         setError(null);
         setSuccess(null);
+
+        // Reset historical data states
+        setControlHistory([]);
+        setPopulationHistory([]);
+        setLandmarksHistory([]);
+
+        // Reset image states
+        setImageFile(null);
+        setImagePreview(null);
+        setImageCredit('');
+        setImageCreditLink('');
+        setActiveTab(0);
     };
 
     const handleInputChange = (field, value) => {
@@ -184,6 +229,40 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         if (success) {
             setSuccess(null);
         }
+    };
+
+    // Handle image file selection
+    const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                setError('Please select an image file');
+                return;
+            }
+
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setError('Image size must be less than 5MB');
+                return;
+            }
+
+            setImageFile(file);
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+            setError(null);
+        }
+    };
+
+    // Remove image
+    const handleRemoveImage = () => {
+        setImageFile(null);
+        setImagePreview(null);
     };
 
     const validateForm = () => {
@@ -227,7 +306,8 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         return Object.keys(errors).length === 0;
     };
 
-    const handleSave = async () => {
+    // Save handler for Historical Info tab (city data + historical data)
+    const handleSaveHistoricalInfo = async () => {
         if (!validateForm() || !completeCityData) {
             return;
         }
@@ -237,6 +317,29 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         setSuccess(null);
 
         try {
+            // Convert historical data to ensure numbers
+            const sanitizedControlHistory = controlHistory.map(c => ({
+                ruler: c.ruler,
+                historical_city_name: c.historical_city_name,
+                startYear: parseInt(c.startYear) || 0,
+                endYear: c.endYear ? parseInt(c.endYear) : null,
+                description: c.description || ''
+            }));
+
+            const sanitizedPopulationHistory = populationHistory.map(p => ({
+                year: parseInt(p.year) || 0,
+                count: parseInt(p.count) || 0,
+                source: p.source || ''
+            }));
+
+            const sanitizedLandmarksHistory = landmarksHistory.map(l => ({
+                landmark_name: l.landmark_name,
+                constructionDate: parseInt(l.constructionDate) || 0,
+                purpose: l.purpose || '',
+                significance: l.significance || '',
+                description: l.description || ''
+            }));
+
             // Prepare data for API - merge form changes with complete data
             const updateData = {
                 generic_city_name: formData.generic_city_name.trim(),
@@ -250,10 +353,10 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     parseFloat(formData.latitude),
                     parseFloat(formData.longitude)
                 ],
-                // Send historical data in the format backend expects
-                controlHistory: completeCityData.control_history_json || [],
-                populationHistory: completeCityData.population_history_json || [],
-                landmarksHistory: completeCityData.landmarks_history_json || []
+                // Send sanitized historical data
+                controlHistory: sanitizedControlHistory,
+                populationHistory: sanitizedPopulationHistory,
+                landmarksHistory: sanitizedLandmarksHistory
             };
 
             console.log('🔍 Frontend sending updateData:', updateData);
@@ -262,7 +365,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
             const result = await citiesApi.updateCity(cityId, updateData);
 
             if (result.success) {
-                setSuccess('City updated successfully!');
+                setSuccess('City information updated successfully!');
                 setOriginalData(formData);
 
                 // Notify parent component
@@ -283,6 +386,72 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
             console.log('🔍 Network Error:', err);
             setError('Network error occurred');
             console.error('City update error:', err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Save handler for Photos tab (only image and credits)
+    const handleSavePhoto = async () => {
+        if (!cityId) {
+            setError('City ID is missing');
+            return;
+        }
+
+        // Check if there's something to save
+        if (!imageFile && !imageCredit && !imageCreditLink) {
+            setError('No changes to save');
+            return;
+        }
+
+        setSaving(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            // Minimal data for image-only update
+            // Backend will detect this as image-only and skip full validation
+            const updateData = {
+                image_credit: imageCredit || '',
+                image_credit_link: imageCreditLink || ''
+            };
+
+            console.log('📸 Updating photo for City ID:', cityId);
+            console.log('📸 Image file:', imageFile);
+            console.log('📸 Image credit:', imageCredit);
+            console.log('📸 Image credit link:', imageCreditLink);
+
+            let result;
+            if (imageFile) {
+                // If there's a new image file, use updateCityWithImage
+                result = await citiesApi.updateCityWithImage(cityId, updateData, imageFile);
+            } else {
+                // If only updating credits, use regular update
+                result = await citiesApi.updateCity(cityId, updateData);
+            }
+
+            if (result.success) {
+                setSuccess('Photo updated successfully!');
+
+                // Clear the image file state after successful upload
+                setImageFile(null);
+
+                // Notify parent component
+                if (onCityUpdated) {
+                    onCityUpdated(result.data.city);
+                }
+
+                // Reload city data to get the new image URL
+                await loadCityData();
+
+            } else {
+                console.log('🔍 API Error Response:', result);
+                setError(result.error || 'Failed to update photo');
+            }
+        } catch (err) {
+            console.log('🔍 Network Error:', err);
+            setError('Network error occurred');
+            console.error('Photo update error:', err);
         } finally {
             setSaving(false);
         }
@@ -382,9 +551,14 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                             Edit City
                         </Typography>
                         {formData.generic_city_name && (
-                            <Typography variant="body2" sx={{ color: COLORS.texts.secondary, ml: 1 }}>
-                                - {formData.generic_city_name}
-                            </Typography>
+                            <>
+                                <Typography variant="h6" sx={{ color: COLORS.texts.muted, fontWeight: 300, mx: 0.5 }}>
+                                    -
+                                </Typography>
+                                <Typography variant="h6" sx={{ color: COLORS.primary, fontWeight: 600 }}>
+                                    {formData.generic_city_name}
+                                </Typography>
+                            </>
                         )}
                     </Box>
                     <Button
@@ -408,7 +582,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 )}
             </DialogTitle>
 
-            <DialogContent sx={{ padding: { xs: 2, md: 3 } }}>
+            <DialogContent sx={{ padding: 0 }}>
                 {loading ? (
                     <Box sx={{
                         display: 'flex',
@@ -424,21 +598,46 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         </Typography>
                     </Box>
                 ) : (
-                    <Box sx={{ pt: 2 }}>
-                        {/* Alerts */}
-                        {error && (
-                            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-                                {error}
-                            </Alert>
-                        )}
+                    <>
+                        {/* Tabs */}
+                        <Box sx={{ borderBottom: 1, borderColor: COLORS.border, backgroundColor: COLORS.background }}>
+                            <Tabs
+                                value={activeTab}
+                                onChange={(e, newValue) => setActiveTab(newValue)}
+                                sx={{
+                                    '& .MuiTab-root': {
+                                        color: COLORS.texts.secondary,
+                                        '&.Mui-selected': {
+                                            color: COLORS.primary
+                                        }
+                                    },
+                                    '& .MuiTabs-indicator': {
+                                        backgroundColor: COLORS.primary
+                                    }
+                                }}
+                            >
+                                <Tab icon={<InfoIcon />} label="Historical Info" iconPosition="start" />
+                                <Tab icon={<PhotoCameraIcon />} label="Photos" iconPosition="start" />
+                            </Tabs>
+                        </Box>
 
-                        {success && (
-                            <Alert severity="success" sx={{ mb: 3 }}>
-                                {success}
-                            </Alert>
-                        )}
+                        <Box sx={{ padding: { xs: 2, md: 3 } }}>
+                            {/* Alerts */}
+                            {error && (
+                                <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+                                    {error}
+                                </Alert>
+                            )}
 
-                        {/* Basic Form - Same as before */}
+                            {success && (
+                                <Alert severity="success" sx={{ mb: 3 }}>
+                                    {success}
+                                </Alert>
+                            )}
+
+                        {/* Tab 0: Basic Info */}
+                        {activeTab === 0 && (
+                        <>
                         <Grid container spacing={3}>
                             {/* City Name & Tier */}
                             <Grid item xs={12} md={8}>
@@ -606,76 +805,137 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                             </Grid>
                         </Grid>
 
-                        {/* JSON Data Preview */}
+                        {/* Historical Data Editor */}
                         {completeCityData && (
                             <Box sx={{ mt: 4 }}>
                                 <Typography variant="h6" sx={{ color: COLORS.texts.primary, mb: 2 }}>
-                                    Historical Data (Read-Only Preview)
+                                    Historical Data
                                 </Typography>
 
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} md={4}>
-                                        <Paper sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)' }}>
-                                            <Typography variant="subtitle2" sx={{ color: COLORS.primary, mb: 1 }}>
-                                                Control History ({completeCityData.control_history_json?.length || 0} periods)
-                                            </Typography>
-                                            {completeCityData.control_history_json?.slice(0, 3).map((period, i) => (
-                                                <Typography key={i} variant="caption" sx={{ display: 'block', color: COLORS.texts.secondary }}>
-                                                    {period.startYear}-{period.endYear || 'Present'}: {period.ruler}
-                                                </Typography>
-                                            ))}
-                                            {completeCityData.control_history_json?.length > 3 && (
-                                                <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
-                                                    +{completeCityData.control_history_json.length - 3} more...
-                                                </Typography>
-                                            )}
-                                        </Paper>
-                                    </Grid>
-
-                                    <Grid item xs={12} md={4}>
-                                        <Paper sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)' }}>
-                                            <Typography variant="subtitle2" sx={{ color: COLORS.primary, mb: 1 }}>
-                                                Population ({completeCityData.population_history_json?.length || 0} records)
-                                            </Typography>
-                                            {completeCityData.population_history_json?.slice(0, 3).map((record, i) => (
-                                                <Typography key={i} variant="caption" sx={{ display: 'block', color: COLORS.texts.secondary }}>
-                                                    {record.year}: {record.count?.toLocaleString()} people
-                                                </Typography>
-                                            ))}
-                                            {completeCityData.population_history_json?.length > 3 && (
-                                                <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
-                                                    +{completeCityData.population_history_json.length - 3} more...
-                                                </Typography>
-                                            )}
-                                        </Paper>
-                                    </Grid>
-
-                                    <Grid item xs={12} md={4}>
-                                        <Paper sx={{ p: 2, backgroundColor: 'rgba(119, 73, 54, 0.05)' }}>
-                                            <Typography variant="subtitle2" sx={{ color: COLORS.primary, mb: 1 }}>
-                                                Landmarks ({completeCityData.landmarks_history_json?.length || 0} items)
-                                            </Typography>
-                                            {completeCityData.landmarks_history_json?.slice(0, 3).map((landmark, i) => (
-                                                <Typography key={i} variant="caption" sx={{ display: 'block', color: COLORS.texts.secondary }}>
-                                                    {landmark.constructionDate}: {landmark.landmark_name}
-                                                </Typography>
-                                            ))}
-                                            {completeCityData.landmarks_history_json?.length > 3 && (
-                                                <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
-                                                    +{completeCityData.landmarks_history_json.length - 3} more...
-                                                </Typography>
-                                            )}
-                                        </Paper>
-                                    </Grid>
-                                </Grid>
-
-                                <Alert severity="info" sx={{ mt: 2 }}>
-                                    Historical data is preserved when saving. For now, this is a read-only preview.
-                                    Advanced editing will be available in future updates.
+                                <Alert severity="info" sx={{ mb: 3 }}>
+                                    Edit historical data below. Changes will be saved when you click "Save Changes".
                                 </Alert>
+
+                                <HistoricalDataEditor
+                                    controlHistory={controlHistory}
+                                    onControlHistoryChange={setControlHistory}
+                                    populationHistory={populationHistory}
+                                    onPopulationHistoryChange={setPopulationHistory}
+                                    landmarksHistory={landmarksHistory}
+                                    onLandmarksHistoryChange={setLandmarksHistory}
+                                />
                             </Box>
                         )}
-                    </Box>
+                        </>
+                        )}
+
+                        {/* Tab 1: Photos */}
+                        {activeTab === 1 && (
+                            <Box sx={{ pt: 2 }}>
+                                <Typography variant="h6" sx={{ color: COLORS.texts.primary, mb: 3 }}>
+                                    City Image
+                                </Typography>
+
+                                {/* Current Image Preview */}
+                                {imagePreview && (
+                                    <Paper
+                                        elevation={2}
+                                        sx={{
+                                            p: 2,
+                                            mb: 3,
+                                            borderRadius: '8px',
+                                            backgroundColor: COLORS.background
+                                        }}
+                                    >
+                                        <Typography variant="subtitle2" sx={{ color: COLORS.texts.secondary, mb: 2 }}>
+                                            Current Image
+                                        </Typography>
+                                        <Box
+                                            component="img"
+                                            src={imagePreview}
+                                            alt="City preview"
+                                            sx={{
+                                                width: '100%',
+                                                maxHeight: '300px',
+                                                objectFit: 'cover',
+                                                borderRadius: '8px',
+                                                mb: 2
+                                            }}
+                                        />
+                                        <Button
+                                            variant="outlined"
+                                            color="error"
+                                            size="small"
+                                            onClick={handleRemoveImage}
+                                            startIcon={<DeleteIcon />}
+                                        >
+                                            Remove Image
+                                        </Button>
+                                    </Paper>
+                                )}
+
+                                {/* Upload New Image */}
+                                <Paper
+                                    elevation={1}
+                                    sx={{
+                                        p: 3,
+                                        mb: 3,
+                                        borderRadius: '8px',
+                                        border: `2px dashed ${COLORS.border}`
+                                    }}
+                                >
+                                    <Typography variant="subtitle2" sx={{ color: COLORS.texts.primary, mb: 2 }}>
+                                        Upload New Image
+                                    </Typography>
+                                    <Button
+                                        variant="contained"
+                                        component="label"
+                                        startIcon={<PhotoCameraIcon />}
+                                        sx={{
+                                            backgroundColor: COLORS.primary,
+                                            '&:hover': { backgroundColor: '#5d3a2a' }
+                                        }}
+                                    >
+                                        Choose Image
+                                        <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*"
+                                            onChange={handleImageChange}
+                                        />
+                                    </Button>
+                                    <Typography variant="caption" sx={{ display: 'block', mt: 1, color: COLORS.texts.muted }}>
+                                        Supported: JPG, PNG, WebP (Max 5MB)
+                                    </Typography>
+                                </Paper>
+
+                                {/* Image Credit Fields */}
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Image Credit (Photographer Name)"
+                                            value={imageCredit}
+                                            onChange={(e) => setImageCredit(e.target.value)}
+                                            fullWidth
+                                            placeholder="e.g., John Doe"
+                                            helperText="Optional: Credit the photographer"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Credit Link (URL)"
+                                            value={imageCreditLink}
+                                            onChange={(e) => setImageCreditLink(e.target.value)}
+                                            fullWidth
+                                            placeholder="e.g., https://unsplash.com/@johndoe"
+                                            helperText="Optional: Link to photographer's profile"
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </Box>
+                        )}
+                        </Box>
+                    </>
                 )}
             </DialogContent>
 
@@ -715,7 +975,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     )}
                 </Box>
 
-                {/* Right side - Cancel and Save buttons */}
+                {/* Right side - Cancel and Save buttons (tab-specific) */}
                 <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                         onClick={onClose}
@@ -728,22 +988,45 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         Cancel
                     </Button>
 
-                    <Button
-                        onClick={handleSave}
-                        disabled={loading || saving || deleting || !hasUnsavedChanges() || !completeCityData}
-                        variant="contained"
-                        startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
-                        sx={{
-                            backgroundColor: COLORS.primary,
-                            '&:hover': { backgroundColor: '#5d3a2a' },
-                            '&:disabled': {
-                                backgroundColor: COLORS.texts.muted,
-                                color: 'white'
-                            }
-                        }}
-                    >
-                        {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
+                    {/* Historical Info Tab - Save Button */}
+                    {activeTab === 0 && (
+                        <Button
+                            onClick={handleSaveHistoricalInfo}
+                            disabled={loading || saving || deleting || !hasUnsavedChanges() || !completeCityData}
+                            variant="contained"
+                            startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
+                            sx={{
+                                backgroundColor: COLORS.primary,
+                                '&:hover': { backgroundColor: '#5d3a2a' },
+                                '&:disabled': {
+                                    backgroundColor: COLORS.texts.muted,
+                                    color: 'white'
+                                }
+                            }}
+                        >
+                            {saving ? 'Saving...' : 'Save City Info'}
+                        </Button>
+                    )}
+
+                    {/* Photos Tab - Save Button */}
+                    {activeTab === 1 && (
+                        <Button
+                            onClick={handleSavePhoto}
+                            disabled={loading || saving || deleting || (!imageFile && !imageCredit && !imageCreditLink)}
+                            variant="contained"
+                            startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
+                            sx={{
+                                backgroundColor: COLORS.primary,
+                                '&:hover': { backgroundColor: '#5d3a2a' },
+                                '&:disabled': {
+                                    backgroundColor: COLORS.texts.muted,
+                                    color: 'white'
+                                }
+                            }}
+                        >
+                            {saving ? 'Uploading...' : 'Save Photo'}
+                        </Button>
+                    )}
                 </Box>
             </DialogActions>
         </Dialog>

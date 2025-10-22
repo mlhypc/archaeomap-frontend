@@ -47,17 +47,6 @@ const DesktopSidebarContainer = styled(Box)(({ theme }) => ({
   }
 }));
 
-// Desktop Header Component
-const DesktopSidebarHeader = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: theme.spacing(2),
-  borderBottom: `1px solid ${COLORS.border}`,
-  backgroundColor: 'rgba(248, 245, 238, 0.5)',
-  minHeight: '64px'
-}));
-
 function HomePage() {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState(null);
@@ -107,7 +96,15 @@ function HomePage() {
       {/* ===== DESKTOP SIDEBAR ===== */}
       <DesktopSidebarContainer>
         {/* Desktop Header - Sadece Logo + Title */}
-        <DesktopSidebarHeader>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: 2,
+          borderBottom: `1px solid ${COLORS.border}`,
+          backgroundColor: 'rgba(248, 245, 238, 0.5)',
+          minHeight: '64px'
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'center' }}>
             <img
               src="/archaeomap_primary.svg"
@@ -125,7 +122,7 @@ function HomePage() {
               ArchaeoMap
             </Typography>
           </Box>
-        </DesktopSidebarHeader>
+        </Box>
 
         {/* Desktop Sidebar Content */}
         <Box sx={{ flex: 1, overflow: 'hidden' }}>
@@ -181,7 +178,7 @@ function HomePage() {
               ArchaeoMap
             </Typography>
           </Box>
-          
+
           <IconButton
             onClick={closeLeftDrawer}
             sx={{
@@ -255,7 +252,7 @@ function HomePage() {
             {/* Mobile Control Panel - Sağ tarafta */}
             <Box sx={{
               position: 'absolute',
-              top: 70, // Header'ın altında
+              top: 64,
               right: 12,
               zIndex: 1000,
               display: 'flex',
@@ -266,22 +263,34 @@ function HomePage() {
               <Tooltip
                 title={isAuthenticated ? `Panel - ${user?.username}` : "Panel - Login"}
                 placement="left"
+                arrow
               >
                 <Badge
-                  color="error"
                   variant="dot"
+                  color="error"
                   invisible={isAuthenticated}
                   sx={{
                     '& .MuiBadge-badge': {
-                      backgroundColor: '#c91818ff'
+                      backgroundColor: '#d32f2f',
+                      width: 8,
+                      height: 8,
+                      minWidth: 8,
+                      minHeight: 8,
+                      right: 4,
+                      top: 4,
+                      animation: !isAuthenticated ? 'mobilePulse 2s infinite' : 'none',
+                      '@keyframes mobilePulse': {
+                        '0%, 100%': { opacity: 1 },
+                        '50%': { opacity: 0.6 }
+                      }
                     }
                   }}
                 >
                   <IconButton
-                    variant="control"
+                    variant="mobileControl"
                     onClick={navigateToPanel}
                     sx={{
-                      color: isAuthenticated ? '#2e7d32' : COLORS.primary,
+                      color: isAuthenticated ? '#2e7d32' : COLORS.primary
                     }}
                   >
                     <AccountCircleIcon />
@@ -292,34 +301,36 @@ function HomePage() {
               {/* Context-Aware FAB - Info/Explore Combined */}
               {(() => {
                 const isExploreMode = selectedCity !== null;
-                const fabColor = isExploreMode ? '#daa520' : COLORS.texts.muted; // gold vs grey
-                const fabAction = isExploreMode ? openCitySidebar : openInfoSidebar; // Updated actions
+                const fabColor = isExploreMode ? '#daa520' : COLORS.texts.muted;
+                const fabAction = isExploreMode ? openCitySidebar : openInfoSidebar;
                 const fabIcon = isExploreMode ? <ExploreIcon /> : <InfoIcon />;
                 const fabTooltip = isExploreMode ? `Explore ${selectedCity.name}` : 'About ArchaeoMap';
-                
+                const showBadge = isExploreMode && !leftDrawerOpen;
+
                 return (
                   <Badge
-                    color="secondary"
                     variant="dot"
-                    invisible={!isExploreMode || leftDrawerOpen}
+                    color="secondary"
+                    invisible={!showBadge}
                     sx={{
                       '& .MuiBadge-badge': {
-                        backgroundColor: '#e66b13ff'
+                        backgroundColor: '#ff9800',
+                        width: 8,
+                        height: 8,
+                        minWidth: 8,
+                        minHeight: 8,
+                        right: 4,
+                        top: 4
                       }
                     }}
                   >
-                    <Tooltip title={fabTooltip} placement="left">
+                    <Tooltip title={fabTooltip} placement="left" arrow>
                       <IconButton
-                        variant="control"
+                        variant="mobileControl"
                         onClick={fabAction}
                         sx={{
                           color: fabColor,
-                          transition: 'all 0.3s ease', // Smooth color/icon transition
-                          position: 'relative',
-                          // Icon transition effect
-                          '& svg': {
-                            transition: 'all 0.2s ease'
-                          }
+                          transition: 'all 0.3s ease'
                         }}
                       >
                         {fabIcon}

@@ -118,8 +118,8 @@ function PanelPage() {
       }
     );
 
-    // Apply for Equestrian (sadece plebeian role için)
-    if (user?.role === 'plebeian') {
+    // Apply for Equestrian (sadece user role için)
+    if (user?.role === 'user') {
       items.push({
         id: PANEL_SECTIONS.APPLY_CONTRIBUTOR,
         label: 'Apply for Equestrian',

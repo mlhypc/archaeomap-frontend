@@ -36,30 +36,14 @@ function CityDetails({ cityDetails, currentYear }) {
     setImageLoaded(false);
   }, []);
 
-  // Load image credits
+  // Set image credit from backend data
   React.useEffect(() => {
-    const loadImageCredits = async () => {
-      if (cityDetails?.id) {
-        setImageLoaded(false);
-        setImageCredit(null);
-
-        try {
-          const response = await fetch('/images/city/image_credit.json');
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-          const data = await response.json();
-          const imageName = `${cityDetails.id}.jpg`;
-          if (data[imageName]) {
-            setImageCredit(data[imageName]);
-          }
-        } catch (error) {
-          console.error('Error loading image credits:', error);
-        }
-      }
-    };
-
-    loadImageCredits();
-  }, [cityDetails?.id]);
+    if (cityDetails?.image_credit) {
+      setImageCredit(cityDetails.image_credit);
+    } else {
+      setImageCredit(null);
+    }
+  }, [cityDetails?.image_credit]);
 
   if (!cityDetails) return null;
 
@@ -91,7 +75,7 @@ function CityDetails({ cityDetails, currentYear }) {
       </Box>
 
       {/* City Image */}
-      {cityDetails.id && (
+      {cityDetails.image_url && (
         <Box sx={{ position: 'relative' }}>
           <Box sx={{
             width: '100%',
@@ -103,7 +87,7 @@ function CityDetails({ cityDetails, currentYear }) {
             display: imageLoaded ? 'block' : 'none'
           }}>
             <img
-              src={`/images/city/${cityDetails.id}.jpg`}
+              src={`${(process.env.REACT_APP_API_URL || 'http://localhost:5000').replace('/api', '')}${cityDetails.image_url}`}
               alt={`${cityDetails.name}`}
               onError={handleImageError}
               onLoad={handleImageLoad}
@@ -115,9 +99,13 @@ function CityDetails({ cityDetails, currentYear }) {
             <Box sx={{ width: '100%', textAlign: 'right', mb: 1, mt: -1 }}>
               <Typography variant="caption" sx={{ fontSize: '0.6rem', color: COLORS.texts.muted, fontStyle: 'italic' }}>
                 Photo by{' '}
-                <a href={`https://unsplash.com/@${imageCredit}`} target="_blank" rel="noopener noreferrer" style={{ color: COLORS.secondary, textDecoration: 'none' }}>
-                  {imageCredit}
-                </a>
+                {cityDetails.image_credit_link ? (
+                  <a href={cityDetails.image_credit_link} target="_blank" rel="noopener noreferrer" style={{ color: COLORS.secondary, textDecoration: 'none' }}>
+                    {imageCredit}
+                  </a>
+                ) : (
+                  <span style={{ color: COLORS.secondary }}>{imageCredit}</span>
+                )}
               </Typography>
             </Box>
           )}

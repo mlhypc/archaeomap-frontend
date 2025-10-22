@@ -472,19 +472,19 @@ function MapComponent(props) {
   // Error display
   if (dataState.error) {
     return (
-      <Box sx={{ 
-        height: '100%', 
-        width: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
+      <Box sx={{
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
         p: 2
       }}>
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="info"
           sx={{ maxWidth: 400 }}
           action={
-            <button 
+            <button
               onClick={() => window.location.reload()}
               style={{
                 background: 'none',
@@ -498,7 +498,12 @@ function MapComponent(props) {
             </button>
           }
         >
-          {dataState.error}
+          <Box sx={{ fontWeight: 'medium', mb: 0.5 }}>
+            We're currently offline
+          </Box>
+          <Box sx={{ fontSize: '0.875rem', opacity: 0.9 }}>
+            We'll be back soon. Please check back later or try refreshing the page.
+          </Box>
         </Alert>
       </Box>
     );

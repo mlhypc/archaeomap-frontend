@@ -209,8 +209,8 @@ function PendingApplicationsSection() {
   };
 
   useEffect(() => {
-    // Only fetch applications if user has senator+ role
-    if (user && token && (user.role === 'senator' || user.role === 'imperator')) {
+    // Only fetch applications if user has moderator+ role
+    if (user && token && (user.role === 'moderator' || user.role === 'admin')) {
       fetchApplications();
 
       // Auto-refresh every 2 minutes

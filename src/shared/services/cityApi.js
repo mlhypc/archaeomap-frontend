@@ -295,6 +295,41 @@ const citiesApi = {
     }
   },
 
+  // Update city with image upload (multipart/form-data)
+  updateCityWithImage: async (cityId, cityData, imageFile) => {
+    try {
+      const formData = new FormData();
+
+      // Add image file if provided
+      if (imageFile) {
+        formData.append('cityImage', imageFile);
+      }
+
+      // Add all other fields as JSON strings or direct values
+      Object.keys(cityData).forEach(key => {
+        if (Array.isArray(cityData[key]) || typeof cityData[key] === 'object') {
+          formData.append(key, JSON.stringify(cityData[key]));
+        } else if (cityData[key] !== null && cityData[key] !== undefined) {
+          formData.append(key, cityData[key]);
+        }
+      });
+
+      const token = localStorage.getItem('archaeomap_token');
+      const response = await fetch(`${API_BASE_URL}/city-creation/${cityId}`, {
+        method: 'PUT',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` })
+          // Don't set Content-Type, browser will set it with boundary
+        },
+        body: formData
+      });
+
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to update city with image' };
+    }
+  },
+
   // ========================================================================
   // CITY CREATION AND VALIDATION
   // ========================================================================
@@ -678,6 +713,13 @@ class CachedCitiesApi {
     this.clearCitiesCaches();
     this.timelineCache.clear(); // Timeline data might be affected
     return await citiesApi.updateCity(cityId, cityData);
+  }
+
+  async updateCityWithImage(cityId, cityData, imageFile) {
+    this.cityDetailsCache.delete(`city_${cityId}`);
+    this.clearCitiesCaches();
+    this.timelineCache.clear(); // Timeline data might be affected
+    return await citiesApi.updateCityWithImage(cityId, cityData, imageFile);
   }
 
   async reviewCity(cityId, action, comments) {

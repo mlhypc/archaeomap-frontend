@@ -46,6 +46,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
 import useUserRole from '../../../../shared/hooks/useUserRole';
+import HistoricalDataEditor from './HistoricalDataEditor';
 
 const CityCreationModal = ({ open, onClose, onCityCreated }) => {
     const theme = useTheme();
@@ -233,6 +234,35 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
         setSuccess(null);
 
         try {
+            // Sanitize and convert historical data to ensure numbers
+            const sanitizedControlHistory = controlHistory
+                .filter(c => c.ruler && c.ruler.trim())
+                .map(c => ({
+                    ruler: c.ruler,
+                    historical_city_name: c.historical_city_name || '',
+                    startYear: parseInt(c.startYear) || 0,
+                    endYear: c.endYear ? parseInt(c.endYear) : null,
+                    description: c.description || ''
+                }));
+
+            const sanitizedPopulationHistory = populationHistory
+                .filter(p => p.year && p.count)
+                .map(p => ({
+                    year: parseInt(p.year) || 0,
+                    count: parseInt(p.count) || 0,
+                    source: p.source || ''
+                }));
+
+            const sanitizedLandmarksHistory = landmarksHistory
+                .filter(l => l.landmark_name && l.landmark_name.trim())
+                .map(l => ({
+                    landmark_name: l.landmark_name,
+                    constructionDate: parseInt(l.constructionDate) || 0,
+                    purpose: l.purpose || '',
+                    significance: l.significance || '',
+                    description: l.description || ''
+                }));
+
             // Prepare city data
             const cityData = {
                 generic_city_name: formData.generic_city_name.trim(),
@@ -243,9 +273,9 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                 description: formData.description.trim() || null,
                 city_tier: parseInt(formData.city_tier),
                 data_status: formData.data_status,
-                controlHistory: controlHistory.filter(c => c.ruler && c.ruler.trim()),
-                populationHistory: populationHistory.filter(p => p.year && p.count),
-                landmarksHistory: landmarksHistory.filter(l => l.landmark_name && l.landmark_name.trim()),
+                controlHistory: sanitizedControlHistory,
+                populationHistory: sanitizedPopulationHistory,
+                landmarksHistory: sanitizedLandmarksHistory,
                 // Admin bypass option
                 bypassApproval: isAdmin && bypassApproval
             };
@@ -442,7 +472,7 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                 <Box sx={{ minHeight: '400px' }}>
                     {/* Step 0: Basic Information */}
                     {activeStep === 0 && (
-                        <Grid container spacing={3}>
+                        <Grid container spacing={2}>
                             {/* City Name & Tier */}
                             <Grid item xs={12} md={8}>
                                 <TextField
@@ -588,20 +618,19 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                             {/* Description */}
                             <Grid item xs={12}>
                                 <TextField
-                                    label="Description"
+                                    label="Description (Optional)"
                                     value={formData.description}
                                     onChange={(e) => handleInputChange('description', e.target.value)}
                                     fullWidth
                                     multiline
-                                    rows={3}
+                                    rows={2}
                                     placeholder="Enter a brief description of the city..."
-                                    helperText="Optional field for additional city information"
                                 />
                             </Grid>
                         </Grid>
                     )}
 
-                    {/* Step 1: Historical Data (Simplified) */}
+                    {/* Step 1: Historical Data (Interactive) */}
                     {activeStep === 1 && (
                         <Box>
                             <Typography variant="h6" sx={{ mb: 2, color: COLORS.primary }}>
@@ -609,17 +638,20 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                             </Typography>
 
                             <Alert severity="info" sx={{ mb: 2 }}>
-                                {bypassApproval 
+                                {bypassApproval
                                     ? "As an admin with approval bypass, you can add detailed historical data now or after creation."
-                                    : "Basic city information is required for submission. Detailed historical data will be added after moderator approval."
+                                    : "You can add detailed historical data here. All data will be synced to the database after moderator approval."
                                 }
                             </Alert>
 
-                            <Typography variant="body2" sx={{ color: COLORS.texts.muted }}>
-                                • Control History: {controlHistory.length} periods<br />
-                                • Population History: {populationHistory.length} records<br />
-                                • Landmarks: {landmarksHistory.length} landmarks
-                            </Typography>
+                            <HistoricalDataEditor
+                                controlHistory={controlHistory}
+                                onControlHistoryChange={setControlHistory}
+                                populationHistory={populationHistory}
+                                onPopulationHistoryChange={setPopulationHistory}
+                                landmarksHistory={landmarksHistory}
+                                onLandmarksHistoryChange={setLandmarksHistory}
+                            />
                         </Box>
                     )}
 

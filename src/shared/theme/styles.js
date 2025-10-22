@@ -1,6 +1,5 @@
 // frontend\src\theme\styles.js - OPTIMIZED & ENHANCED VERSION
 
-import React from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { GlobalStyles } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -158,10 +157,10 @@ const theme = createTheme({
         root: {
           backgroundColor: '#fbf3e2',
           '&.MuiMenu-paper': {
-            backgroundColor: 'transparent'
+            backgroundColor: '#fbf3e2'
           },
           '&.MuiPopover-paper': {
-            backgroundColor: 'transparent'
+            backgroundColor: '#fbf3e2'
           }
         }
       },
@@ -172,10 +171,8 @@ const theme = createTheme({
         {
           props: { variant: 'sidebar' },
           style: {
-            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.5)',
+            backgroundColor: '#fbf3e2',
+            borderRight: '1px solid rgba(119, 73, 54, 0.1)',
             boxShadow: '2px 0 16px rgba(119, 73, 54, 0.08)',
             height: '100%',
             display: 'flex',
@@ -306,6 +303,49 @@ const theme = createTheme({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center'
+          }
+        },
+        {
+          props: { variant: 'mobileHeader' },
+          style: {
+            position: 'absolute',
+            top: 10,
+            left: 12,
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            borderRadius: '12px',
+            padding: '8px 12px',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            boxShadow: '0 4px 16px rgba(119, 73, 54, 0.12)'
+          }
+        },
+        {
+          props: { variant: 'mobileControlPanel' },
+          style: {
+            position: 'absolute',
+            top: 64,
+            right: 12,
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }
+        },
+        {
+          props: { variant: 'sidebarHeader' },
+          style: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px',
+            borderBottom: `1px solid ${COLORS.border}`,
+            backgroundColor: 'rgba(248, 245, 238, 0.5)',
+            minHeight: '64px'
           }
         },
         {
@@ -508,6 +548,30 @@ const theme = createTheme({
               color: COLORS.texts.muted
             }
           }
+        },
+        {
+          props: { variant: 'mobileControl' },
+          style: {
+            backgroundColor: 'rgba(255, 255, 255, 0.6)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            borderRadius: '10px',
+            padding: '8px',
+            boxShadow: '0 2px 8px rgba(119, 73, 54, 0.1)',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.75)',
+              transform: 'scale(1.05)',
+              boxShadow: '0 4px 12px rgba(119, 73, 54, 0.15)'
+            },
+            '&:active': {
+              transform: 'scale(0.98)'
+            },
+            '& svg': {
+              fontSize: 22
+            }
+          }
         }
       ]
     },
@@ -528,6 +592,44 @@ const theme = createTheme({
               '&.Mui-focused fieldset': {
                 borderColor: COLORS.primary,
               },
+            }
+          }
+        }
+      ]
+    },
+
+    // ENHANCED BADGE
+    MuiBadge: {
+      styleOverrides: {
+        badge: {
+          minWidth: '8px',
+          minHeight: '8px',
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+        }
+      },
+      variants: [
+        {
+          props: { variant: 'mobilePulse' },
+          style: {
+            '& .MuiBadge-badge': {
+              backgroundColor: '#d32f2f !important',
+              border: '2px solid white',
+              animation: 'mobilePulse 2s infinite',
+              '@keyframes mobilePulse': {
+                '0%, 100%': { opacity: 1 },
+                '50%': { opacity: 0.6 }
+              }
+            }
+          }
+        },
+        {
+          props: { variant: 'mobileBounce' },
+          style: {
+            '& .MuiBadge-badge': {
+              backgroundColor: '#ff9800 !important',
+              border: '2px solid white'
             }
           }
         }
@@ -577,13 +679,11 @@ const theme = createTheme({
       }
     },
 
-    // ENHANCED MENU - Force glassmorphism
+    // ENHANCED MENU - Solid background
     MuiMenu: {
       styleOverrides: {
         paper: {
-          backgroundColor: 'rgba(255, 255, 255, 0.5) !important',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)'
+          backgroundColor: '#fbf3e2 !important'
         },
         list: {
           backgroundColor: 'transparent !important'
@@ -591,18 +691,18 @@ const theme = createTheme({
       }
     },
 
-    // ENHANCED MENUITEM - Force glassmorphism
+    // ENHANCED MENUITEM - Solid background
     MuiMenuItem: {
       styleOverrides: {
         root: {
           backgroundColor: 'transparent !important',
           '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.4) !important'
+            backgroundColor: 'rgba(119, 73, 54, 0.08) !important'
           },
           '&.Mui-selected': {
-            backgroundColor: 'rgba(255, 255, 255, 0.25) !important',
+            backgroundColor: 'rgba(119, 73, 54, 0.12) !important',
             '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.4) !important'
+              backgroundColor: 'rgba(119, 73, 54, 0.16) !important'
             }
           }
         }

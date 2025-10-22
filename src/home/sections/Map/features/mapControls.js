@@ -130,14 +130,18 @@ const ControlMenu = ({
         mt: 0.5,
         ml: '4px',
         borderRadius: '8px',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
-        boxShadow: '0 8px 32px 0 rgba(119, 73, 54, 0.2)',
+        backgroundColor: 'rgba(255, 255, 255, 0.5) !important',
+        border: '1px solid rgba(255, 255, 255, 0.5)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow: '0 4px 16px 0 rgba(119, 73, 54, 0.12)',
         overflow: 'hidden'
       }
     }}
     MenuListProps={{
       sx: {
-        padding: '4px'
+        padding: '4px',
+        backgroundColor: 'transparent !important'
       }
     }}
     {...props}
@@ -158,7 +162,19 @@ const ControlMenuItem = ({
   <MenuItem
     onClick={onClick}
     dense={dense}
-    sx={{ minWidth: '220px' }}
+    sx={{
+      minWidth: '220px',
+      backgroundColor: 'transparent !important',
+      '&:hover': {
+        backgroundColor: 'rgba(119, 73, 54, 0.08) !important'
+      },
+      '&.Mui-selected': {
+        backgroundColor: 'rgba(119, 73, 54, 0.12) !important',
+        '&:hover': {
+          backgroundColor: 'rgba(119, 73, 54, 0.16) !important'
+        }
+      }
+    }}
     {...props}
   >
     <ListItemIcon sx={{ minWidth: '32px' }}>
