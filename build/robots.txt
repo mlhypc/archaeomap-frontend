@@ -1,6 +1,0 @@
-# Allow all bots full access
-User-agent: *
-Disallow:
-
-# Optional: Point to sitemap for better indexing
-Sitemap: https://archaeomap.com/sitemap.xml
