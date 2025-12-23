@@ -1,0 +1,131 @@
+{
+  "generic_city_name": "Istanbul",
+  "country": "Turkey",
+  "founded": -660,
+  "end_date": null,
+  "coordinates": [41.0082, 28.9784],
+  "description": "Istanbul, formerly known as Byzantium and Constantinople, is one of the world's oldest continuously inhabited cities. Founded as Byzantium by Greek colonists in 660 BCE, it became the capital of the Roman, Byzantine, and Ottoman Empires.",
+  "city_tier": 10,
+  "data_status": "active",
+  "controlHistory": [
+    {
+      "ruler": "Greek Colony",
+      "historical_city_name": "Byzantium",
+      "startYear": -660,
+      "endYear": 330,
+      "description": "Founded by Greek colonists from Megara"
+    },
+    {
+      "ruler": "Roman Empire",
+      "historical_city_name": "Constantinople",
+      "startYear": 330,
+      "endYear": 1204,
+      "description": "Capital of the Eastern Roman Empire (Byzantine Empire)"
+    },
+    {
+      "ruler": "Latin Empire",
+      "historical_city_name": "Constantinople",
+      "startYear": 1204,
+      "endYear": 1261,
+      "description": "Briefly controlled by Crusaders"
+    },
+    {
+      "ruler": "Byzantine Empire",
+      "historical_city_name": "Constantinople",
+      "startYear": 1261,
+      "endYear": 1453,
+      "description": "Restored Byzantine control"
+    },
+    {
+      "ruler": "Ottoman Empire",
+      "historical_city_name": "Konstantiniyye",
+      "startYear": 1453,
+      "endYear": 1922,
+      "description": "Capital of the Ottoman Empire after the conquest by Mehmed II"
+    },
+    {
+      "ruler": "Republic of Turkey",
+      "historical_city_name": "Istanbul",
+      "startYear": 1923,
+      "endYear": null,
+      "description": "Modern Turkish Republic, capital moved to Ankara"
+    }
+  ],
+  "populationHistory": [
+    {
+      "year": -500,
+      "count": 10000,
+      "source": "Archaeological estimates"
+    },
+    {
+      "year": 100,
+      "count": 150000,
+      "source": "Roman census records"
+    },
+    {
+      "year": 500,
+      "count": 400000,
+      "source": "Byzantine chronicles"
+    },
+    {
+      "year": 1000,
+      "count": 450000,
+      "source": "Historical estimates"
+    },
+    {
+      "year": 1500,
+      "count": 500000,
+      "source": "Ottoman records"
+    },
+    {
+      "year": 1800,
+      "count": 570000,
+      "source": "Ottoman census"
+    },
+    {
+      "year": 1900,
+      "count": 850000,
+      "source": "Census data"
+    },
+    {
+      "year": 2000,
+      "count": 9500000,
+      "source": "Official census"
+    },
+    {
+      "year": 2024,
+      "count": 15900000,
+      "source": "TUIK official statistics"
+    }
+  ],
+  "landmarksHistory": [
+    {
+      "landmark_name": "Hagia Sophia",
+      "constructionDate": 537,
+      "purpose": "Cathedral/Mosque/Museum",
+      "significance": "Architectural masterpiece of Byzantine architecture",
+      "description": "Built by Emperor Justinian I, served as Orthodox cathedral for 916 years, mosque for 481 years, museum for 86 years, and currently a mosque again"
+    },
+    {
+      "landmark_name": "Theodosian Walls",
+      "constructionDate": 413,
+      "purpose": "City Fortification",
+      "significance": "Protected the city for over 1000 years",
+      "description": "Massive defensive walls that protected Constantinople from numerous sieges"
+    },
+    {
+      "landmark_name": "Topkapi Palace",
+      "constructionDate": 1478,
+      "purpose": "Imperial Palace",
+      "significance": "Primary residence of Ottoman sultans for 400 years",
+      "description": "Built by Mehmed II, served as the administrative center of the Ottoman Empire"
+    },
+    {
+      "landmark_name": "Blue Mosque",
+      "constructionDate": 1616,
+      "purpose": "Imperial Mosque",
+      "significance": "Iconic Ottoman architecture",
+      "description": "Built by Sultan Ahmed I, famous for its blue tiles and six minarets"
+    }
+  ]
+}

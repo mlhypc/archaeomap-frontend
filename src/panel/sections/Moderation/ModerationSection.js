@@ -25,7 +25,7 @@ import CityReviewModal from './featuresModeration/CityReviewModal';
 function ModerationSection() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const { isModerator, isAdmin, canModerate } = useUserRole();
+    const { isAdmin, canModerate } = useUserRole();
     
     // State management
     const [activeTab, setActiveTab] = useState(0);

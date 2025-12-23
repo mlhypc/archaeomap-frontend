@@ -15,7 +15,6 @@ import {
     Alert,
     useMediaQuery,
     Chip,
-    Divider,
     Card,
     CardContent,
     CardHeader,
@@ -23,7 +22,6 @@ import {
     Stack,
     Tabs,
     Tab,
-    Paper,
     List,
     ListItem,
     ListItemText,
@@ -36,15 +34,12 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CloseIcon from '@mui/icons-material/Close';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PublicIcon from '@mui/icons-material/Public';
 import HistoryIcon from '@mui/icons-material/History';
 import PeopleIcon from '@mui/icons-material/People';
 import LandmarkIcon from '@mui/icons-material/AccountBalance';
 import SourceIcon from '@mui/icons-material/Source';
-import MapIcon from '@mui/icons-material/Map';
-import InfoIcon from '@mui/icons-material/Info';
 
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
@@ -89,6 +84,7 @@ const CityReviewModal = ({ open, onClose, cityId, onReviewComplete }) => {
         } else if (!open) {
             resetModal();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, cityId]);
 
     const resetModal = () => {

@@ -54,7 +54,7 @@ function CityListSection({ onCreateCity, onEditCity }) {
     const [filters, setFilters] = useState({
         searchTerm: '',
         selectedCountry: '',
-        selectedStatus: 'active'
+        selectedStatus: 'all'
     });
     const [availableCountries, setAvailableCountries] = useState([]);
 
@@ -123,7 +123,7 @@ function CityListSection({ onCreateCity, onEditCity }) {
 
             if (result.success) {
                 setCities(result.data.cities || []);
-                setPagination(result.data.pagination || pagination);
+                setPagination(prev => result.data.pagination || prev);
 
                 if (page === 1 && !newFilters.selectedCountry && availableCountries.length === 0) {
                     const countries = [...new Set((result.data.cities || []).map(city => city.country))];
@@ -146,10 +146,12 @@ function CityListSection({ onCreateCity, onEditCity }) {
         } finally {
             setLoading(false);
         }
-    }, [filters, pagination.per_page, availableCountries.length]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pagination.per_page, availableCountries.length]);
 
     useEffect(() => {
         fetchCities(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -284,6 +286,7 @@ function CityListSection({ onCreateCity, onEditCity }) {
                             onChange={(e) => handleFilterChange('selectedStatus', e.target.value)}
                             label="Status"
                         >
+                            <MenuItem value="all">All</MenuItem>
                             <MenuItem value="active">Active</MenuItem>
                             <MenuItem value="passive">Passive</MenuItem>
                             <MenuItem value="draft">Draft</MenuItem>

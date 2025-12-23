@@ -85,7 +85,6 @@ const PlaceholderSection = ({ title, description, icon: Icon }) => (
 function PanelPage() {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { isAuthenticated, user, logout } = useAuth();
   
   const { 
@@ -185,10 +184,10 @@ function PanelPage() {
     return items;
   }, [canManageData, canModerate, isAdmin, user?.role]);
 
-  const handleNavigation = (sectionId) => {
+  const handleNavigation = React.useCallback((sectionId) => {
     setActiveSection(sectionId);
     setMobileMenuOpen(false);
-  };
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -201,24 +200,20 @@ function PanelPage() {
     [PANEL_SECTIONS.SETTINGS]: <SettingsSection />,
     [PANEL_SECTIONS.APPLY_CONTRIBUTOR]: <ApplyForContributorSection />,
     [PANEL_SECTIONS.CITIES]: <CityManage />,
-    [PANEL_SECTIONS.MY_SUBMISSIONS]: <PlaceholderSection 
-      title="My Submissions" 
+    [PANEL_SECTIONS.MY_SUBMISSIONS]: <PlaceholderSection
+      title="My Submissions"
       description="Track your data submissions and approval status"
       icon={AssignmentIcon}
     />,
     [PANEL_SECTIONS.MODERATION]: <ModerationSection />,
     [PANEL_SECTIONS.PENDING_APPLICATIONS]: <PendingApplicationsSection />,
     [PANEL_SECTIONS.USER_MANAGEMENT]: <UserManagementSection />,
-    [PANEL_SECTIONS.SYSTEM_SETTINGS]: <PlaceholderSection 
-      title="System Settings" 
+    [PANEL_SECTIONS.SYSTEM_SETTINGS]: <PlaceholderSection
+      title="System Settings"
       description="Application configuration and system management"
       icon={AdminPanelSettingsIcon}
     />
   }), []); // Boş dependency - component'ler sadece bir kez oluşturulur
-
-  const renderSectionContent = () => {
-    return sectionComponents[activeSection] || sectionComponents[PANEL_SECTIONS.PROFILE];
-  };
 
   // DÜZELTME: Desktop navigation'ı useMemo ile optimize et
   const desktopNavigation = useMemo(() => {
@@ -229,12 +224,12 @@ function PanelPage() {
         <Typography sx={panelStyles.categoryHeader}>
           {category}
         </Typography>
-        
+
         <Box>
           {navigationItems
             .filter(item => item.category === category)
             .map(item => (
-              <Box 
+              <Box
                 key={item.id}
                 onClick={() => handleNavigation(item.id)}
                 sx={activeSection === item.id ? panelStyles.navItemActive : panelStyles.navItem}
@@ -244,7 +239,7 @@ function PanelPage() {
               </Box>
             ))}
         </Box>
-        
+
         {category !== categories[categories.length - 1] && (
           <Box sx={panelStyles.categoryDivider} />
         )}
@@ -261,7 +256,7 @@ function PanelPage() {
         <Typography sx={{ ...panelStyles.categoryHeader, px: 2, mt: 2, mb: 1 }}>
           {category}
         </Typography>
-        
+
         <List dense>
           {navigationItems
             .filter(item => item.category === category)
@@ -275,7 +270,7 @@ function PanelPage() {
                   <ListItemIcon>
                     <item.icon fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText 
+                  <ListItemText
                     primary={item.label}
                     primaryTypographyProps={{ variant: 'body2' }}
                   />
@@ -283,7 +278,7 @@ function PanelPage() {
               </ListItem>
             ))}
         </List>
-        
+
         {category !== categories[categories.length - 1] && <Divider sx={{ my: 1 }} />}
       </Box>
     ));

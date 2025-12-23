@@ -59,7 +59,6 @@ function HomePage() {
   const { user, isAuthenticated } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isSmallMobile = useMediaQuery('(max-width:360px)');
 
   // Handle city selection
   const handleSelectCity = useCallback((city) => {

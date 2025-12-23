@@ -739,9 +739,10 @@ export const AuthProvider = ({ children }) => {
     // Change password functions
     changePassword,
     clearChangePassword,
-    
+
     // OAuth functions
     unlinkGoogleAccount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [state, login, loginWithToken, register, logout, updateProfile, clearError, updateUserPreferences, updateSinglePreference, updatePrivacySettings, clearPreferencesStatus, requestPasswordReset, resetPassword, verifyResetToken, clearForgotPassword, changePassword, clearChangePassword, unlinkGoogleAccount]);
 
   return (

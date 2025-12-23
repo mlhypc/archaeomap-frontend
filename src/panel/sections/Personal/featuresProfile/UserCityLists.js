@@ -1,6 +1,6 @@
 // archaeomap-frontend/src/panel/sections/Personal/featuresInteractions/CityLists.js
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -16,7 +16,6 @@ import {
     Chip,
     CircularProgress,
     Alert,
-    Autocomplete,
     Tooltip,
     Menu,
     MenuItem,
@@ -41,12 +40,9 @@ import {
     Delete as DeleteIcon,
     Public as PublicIcon,
     Lock as PrivateIcon,
-    Share as ShareIcon,
-    Map as MapIcon,
     MoreVert as MoreIcon,
     Visibility as ViewIcon,
     LocationCity as CityIcon,
-    Search as SearchIcon,
     Close as CloseIcon,
     BookmarkAdd as BookmarkAddIcon
 } from '@mui/icons-material';
@@ -94,6 +90,7 @@ function CityLists() {
             setCollections([]);
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, token]);
 
     const fetchCollections = async () => {

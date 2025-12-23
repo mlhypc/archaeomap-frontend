@@ -117,7 +117,7 @@ function ApplyForContributorSection() {
   useEffect(() => {
     if (user && token) {
       fetchMyApplications();
-      
+
       // Auto-refresh every 2 minutes for active applications
       const interval = setInterval(fetchMyApplications, 2 * 60 * 1000);
       return () => clearInterval(interval);
@@ -125,6 +125,7 @@ function ApplyForContributorSection() {
       setMyApplications([]);
       setLoadingApplications(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token]);
 
   return (

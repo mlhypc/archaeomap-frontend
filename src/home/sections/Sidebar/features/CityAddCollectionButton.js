@@ -51,6 +51,7 @@ function CityAddCollectionButton({ cityId }) {
     if (isOpen && isAuthenticated) {
       fetchCollections();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isAuthenticated, cityId]);
 
   const fetchCollections = async () => {

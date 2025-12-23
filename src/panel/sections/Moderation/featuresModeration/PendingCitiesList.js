@@ -38,7 +38,6 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import SearchIcon from '@mui/icons-material/Search';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import HistoryIcon from '@mui/icons-material/History';
@@ -49,7 +48,6 @@ import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityAp
 function PendingCitiesList({ onCityReview, onDataUpdate }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // State management
     const [cities, setCities] = useState([]);
@@ -186,12 +184,14 @@ function PendingCitiesList({ onCityReview, onDataUpdate }) {
         } finally {
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Boş dependency array artık güvenli
 
     // İlk yükleme ve status filter değişikliği
     useEffect(() => {
         fetchPendingCities();
-    }, [fetchPendingCities, statusFilter]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statusFilter]);
 
     // Debounced search için ayrı useEffect'ler - DÜZELTILDI
     useEffect(() => {

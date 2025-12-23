@@ -90,6 +90,9 @@ function ApplyForContributor({ open, onClose, onSuccess }) {
       if (!formData.motivation.trim()) {
         throw new Error('Please provide your motivation');
       }
+      if (formData.motivation.trim().length < 50) {
+        throw new Error('Motivation must be at least 50 characters');
+      }
       if (formData.interestAreas.length === 0) {
         throw new Error('Please select at least one area of interest');
       }
@@ -206,8 +209,9 @@ function ApplyForContributor({ open, onClose, onSuccess }) {
           value={formData.motivation}
           onChange={(e) => handleInputChange('motivation', e.target.value)}
           placeholder="Share your passion for archaeology, history, or heritage preservation..."
-          inputProps={{ maxLength: 500 }}
-          helperText={`${formData.motivation.length}/500 characters`}
+          inputProps={{ maxLength: 1000 }}
+          helperText={`${formData.motivation.length}/1000 characters (minimum 50)`}
+          error={formData.motivation.length > 0 && formData.motivation.length < 50}
           sx={{ mb: 3 }}
         />
 
@@ -335,10 +339,10 @@ function ApplyForContributor({ open, onClose, onSuccess }) {
         >
           Cancel
         </Button>
-        <Button 
+        <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || !formData.motivation.trim() || formData.interestAreas.length === 0 || !formData.timeCommitment}
+          disabled={loading || formData.motivation.trim().length < 50 || formData.interestAreas.length === 0 || !formData.timeCommitment}
           startIcon={loading && <CircularProgress size={16} />}
         >
           {loading ? 'Submitting...' : 'Submit Application'}

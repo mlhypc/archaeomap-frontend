@@ -1,7 +1,7 @@
 // archaeomap-frontend\src\panel\sections\DataManagement\CityManageSection.js
 
 import React, { useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 
 import { COLORS } from '../../../shared/config/generalUtils';
 import CityListSection from './featuresCity/CityList';

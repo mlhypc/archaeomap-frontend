@@ -91,6 +91,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         } else if (!open) {
             resetForm();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, cityId]);
 
     const loadCityData = async () => {
@@ -163,9 +164,15 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
 
                 // Set image data
                 if (result.data.image_url) {
-                    // Remove '/api' from API_URL since uploads are served at root level
-                    const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace('/api', '');
-                    setImagePreview(`${baseUrl}${result.data.image_url}`);
+                    // Check if it's a full URL (B2) or relative path (local)
+                    if (result.data.image_url.startsWith('http')) {
+                        // B2 full URL - use directly
+                        setImagePreview(result.data.image_url);
+                    } else {
+                        // Local path - prepend base URL
+                        const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace('/api', '');
+                        setImagePreview(`${baseUrl}${result.data.image_url}`);
+                    }
                 }
                 setImageCredit(result.data.image_credit || '');
                 setImageCreditLink(result.data.image_credit_link || '');

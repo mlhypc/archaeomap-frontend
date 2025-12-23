@@ -785,8 +785,6 @@ class CachedCitiesApi {
   getModerationCities = citiesApi.getModerationCities;
   getPendingCities = citiesApi.getPendingCities;
   getCityForReview = citiesApi.getCityForReview;
-  reviewCity = citiesApi.reviewCity;
-  activateCity = citiesApi.activateCity;
   getMySubmissions = citiesApi.getMySubmissions;
   getCitiesByStatus = citiesApi.getCitiesByStatus;
   searchCities = citiesApi.searchCities;

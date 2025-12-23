@@ -1,7 +1,7 @@
 // src/pages/ResetPasswordPage.js - Password reset page for email links
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -40,7 +40,6 @@ function ResetPasswordPage() {
 
   const {
     resetPassword,
-    verifyResetToken,
     resetPasswordLoading,
     resetPasswordError,
     resetPasswordSuccess,
@@ -58,9 +57,10 @@ function ResetPasswordPage() {
     // Simple token existence check - no API call needed
     setIsTokenValid(true);
     setTokenValidating(false);
-    
+
     // Clear any previous forgot password state once
     clearForgotPassword();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]); // Only token dependency
 
   // Navigate to login after successful reset
@@ -114,13 +114,13 @@ function ResetPasswordPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
-    const result = await resetPassword(token, formData.password);
-    
+    await resetPassword(token, formData.password);
+
     // Form will be disabled and success message shown via resetPasswordSuccess state
   };
 

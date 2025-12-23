@@ -40,6 +40,7 @@ function LikedCities() {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   const fetchLikedCities = async (page = 1) => {

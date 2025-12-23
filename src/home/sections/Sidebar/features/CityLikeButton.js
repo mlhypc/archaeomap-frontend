@@ -22,6 +22,7 @@ function UserInteractions({ cityId }) {
     if (cityId) {
       fetchLikeStatus();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityId]);
 
   const fetchLikeStatus = async () => {

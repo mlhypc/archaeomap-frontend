@@ -715,10 +715,12 @@ export const cachedLikeApi = {
 // EXPORT DEFAULT
 // ============================================================================
 
-export default {
+const userInteractionsExports = {
   likeApi,
   collectionsApi,
   popularityApi,
   cachedLikeApi,
   userInteractionsCache
 };
+
+export default userInteractionsExports;

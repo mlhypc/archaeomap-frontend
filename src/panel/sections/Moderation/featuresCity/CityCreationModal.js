@@ -42,19 +42,21 @@ import UploadIcon from '@mui/icons-material/Upload';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import DescriptionIcon from '@mui/icons-material/Description';
+import DownloadIcon from '@mui/icons-material/Download';
 
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
 import useUserRole from '../../../../shared/hooks/useUserRole';
 import HistoricalDataEditor from './HistoricalDataEditor';
+import exampleCityJson from '../../../../data/city_example.json';
 
 const CityCreationModal = ({ open, onClose, onCityCreated }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const { isAdmin, isContributor, canManageData } = useUserRole();
+    const { isAdmin } = useUserRole();
 
     // State management
-    const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [validatingName, setValidatingName] = useState(false);
     const [error, setError] = useState(null);
@@ -79,7 +81,7 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
 
     // File upload
     const [sourcesFile, setSourcesFile] = useState(null);
-    const [createdCityId, setCreatedCityId] = useState(null);
+    const [jsonFile, setJsonFile] = useState(null);
 
     // Admin options
     const [bypassApproval, setBypassApproval] = useState(false);
@@ -117,7 +119,6 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
         setPopulationHistory([]);
         setLandmarksHistory([]);
         setSourcesFile(null);
-        setCreatedCityId(null);
         setValidationErrors({});
         setNameAvailable(null);
         setActiveStep(0);
@@ -222,6 +223,82 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
         }
     };
 
+    // JSON file upload and parsing
+    const handleJsonUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.json')) {
+            setError('Please select a valid JSON file');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const jsonData = JSON.parse(e.target.result);
+
+                // Populate basic fields
+                if (jsonData.generic_city_name) {
+                    setFormData(prev => ({
+                        ...prev,
+                        generic_city_name: jsonData.generic_city_name || '',
+                        country: jsonData.country || '',
+                        founded: jsonData.founded || '',
+                        endDate: jsonData.endDate || jsonData.end_date || '',
+                        coordinates: jsonData.coordinates || ['', ''],
+                        description: jsonData.description || '',
+                        city_tier: jsonData.city_tier || 1,
+                        data_status: jsonData.data_status || 'draft'
+                    }));
+                }
+
+                // Populate historical data
+                if (jsonData.controlHistory) {
+                    setControlHistory(jsonData.controlHistory);
+                }
+
+                if (jsonData.populationHistory) {
+                    setPopulationHistory(jsonData.populationHistory);
+                }
+
+                if (jsonData.landmarksHistory) {
+                    setLandmarksHistory(jsonData.landmarksHistory);
+                }
+
+                setJsonFile(file);
+                setSuccess(`JSON file "${file.name}" loaded successfully!`);
+                setError(null);
+
+            } catch (error) {
+                console.error('JSON parsing error:', error);
+                setError('Invalid JSON format. Please check your file.');
+                setJsonFile(null);
+            }
+        };
+
+        reader.onerror = () => {
+            setError('Failed to read JSON file');
+            setJsonFile(null);
+        };
+
+        reader.readAsText(file);
+    };
+
+    // Download example JSON
+    const handleDownloadExample = () => {
+        const dataStr = JSON.stringify(exampleCityJson, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'city_example.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     // Main submit function
     const handleSubmit = async () => {
         if (!validateForm()) {
@@ -296,8 +373,7 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                 const newCityId = result.data.id || result.data.city?.id;
                 const cityName = result.data.name || result.data.city?.name || result.data.generic_city_name;
                 const approvalStatus = result.data.approval_status || result.data.city?.approval_status;
-                
-                setCreatedCityId(newCityId);
+
                 setSubmissionResult({
                     cityId: newCityId,
                     cityName: cityName,
@@ -473,6 +549,67 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                     {/* Step 0: Basic Information */}
                     {activeStep === 0 && (
                         <Grid container spacing={2}>
+                            {/* JSON Upload Section */}
+                            <Grid item xs={12}>
+                                <Card sx={{ p: 2, backgroundColor: 'rgba(25, 118, 210, 0.05)', border: '1px dashed #1976d2' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <DescriptionIcon sx={{ color: '#1976d2' }} />
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                                                Quick Fill with JSON
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                            <Button
+                                                variant="text"
+                                                size="small"
+                                                startIcon={<DownloadIcon />}
+                                                onClick={handleDownloadExample}
+                                                sx={{
+                                                    color: '#1976d2',
+                                                    textTransform: 'none',
+                                                    fontSize: '0.8rem'
+                                                }}
+                                            >
+                                                Download Example
+                                            </Button>
+                                            <input
+                                                type="file"
+                                                accept=".json"
+                                                onChange={handleJsonUpload}
+                                                style={{ display: 'none' }}
+                                                id="json-upload"
+                                            />
+                                            <label htmlFor="json-upload">
+                                                <Button
+                                                    component="span"
+                                                    variant="outlined"
+                                                    size="small"
+                                                    startIcon={<UploadIcon />}
+                                                    sx={{
+                                                        borderColor: '#1976d2',
+                                                        color: '#1976d2',
+                                                        '&:hover': { borderColor: '#1565c0', backgroundColor: 'rgba(25, 118, 210, 0.1)' }
+                                                    }}
+                                                >
+                                                    Upload JSON
+                                                </Button>
+                                            </label>
+                                            {jsonFile && (
+                                                <Chip
+                                                    label={jsonFile.name}
+                                                    size="small"
+                                                    color="primary"
+                                                    onDelete={() => setJsonFile(null)}
+                                                />
+                                            )}
+                                        </Box>
+                                    </Box>
+                                    <Typography variant="caption" sx={{ color: COLORS.texts.muted, mt: 1, display: 'block' }}>
+                                        Download the example template, modify it with your city data, then upload to auto-fill all fields
+                                    </Typography>
+                                </Card>
+                            </Grid>
                             {/* City Name & Tier */}
                             <Grid item xs={12} md={8}>
                                 <TextField
@@ -733,6 +870,7 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                     padding: { xs: 2, md: 3 },
                     backgroundColor: COLORS.background,
                     borderTop: `1px solid ${COLORS.border}`,
+                    justifyContent: 'flex-end',
                     gap: 1
                 }}
             >
@@ -744,14 +882,6 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                     Back
                 </Button>
 
-                <Button
-                    onClick={onClose}
-                    disabled={saving}
-                    sx={{ color: COLORS.texts.secondary }}
-                >
-                    Cancel
-                </Button>
-
                 {activeStep === steps.length - 1 ? (
                     <Button
                         onClick={handleSubmit}
@@ -760,8 +890,8 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                         startIcon={submitButtonProps.icon}
                         sx={{
                             backgroundColor: bypassApproval ? '#1976d2' : COLORS.primary,
-                            '&:hover': { 
-                                backgroundColor: bypassApproval ? '#1565c0' : '#5d3a2a' 
+                            '&:hover': {
+                                backgroundColor: bypassApproval ? '#1565c0' : '#5d3a2a'
                             }
                         }}
                     >

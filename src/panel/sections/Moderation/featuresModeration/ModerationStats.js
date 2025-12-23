@@ -10,8 +10,6 @@ import {
     CircularProgress,
     Alert,
     LinearProgress,
-    useTheme,
-    useMediaQuery,
     Stack,
     Chip,
     Paper,
@@ -87,9 +85,7 @@ function StatCard({ title, value, subtitle, icon, color, progress }) {
 }
 
 function ModerationStats({ pendingCount }) {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const { isModerator, isAdmin } = useUserRole();
+    useUserRole();
 
     // State management
     const [loading, setLoading] = useState(true);

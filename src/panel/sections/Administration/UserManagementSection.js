@@ -17,8 +17,6 @@ import {
   Alert,
   CircularProgress,
   Chip,
-  IconButton,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -27,9 +25,7 @@ import {
   Avatar
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
-import EditIcon from '@mui/icons-material/Edit';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import GroupIcon from '@mui/icons-material/Group';
 import { format } from 'date-fns';
@@ -44,7 +40,6 @@ function UserManagementSection() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [updateLoading, setUpdateLoading] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, user: null, newRole: null });
 
   const { user: currentUser } = useAuth();
@@ -78,7 +73,8 @@ function UserManagementSection() {
       setUsers([]);
       setLoading(false);
     }
-  }, [currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id, currentUser?.role]); // Only re-run if user ID or role changes
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -247,7 +243,7 @@ function UserManagementSection() {
           <TableBody>
             {users.map((user) => (
               <TableRow
-                key={user.id}
+                key={user.id || user._id}
                 hover
                 sx={{
                   '&:hover': { backgroundColor: 'rgba(248, 245, 238, 0.3)' },
