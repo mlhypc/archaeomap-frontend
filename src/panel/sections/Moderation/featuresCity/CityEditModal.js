@@ -793,7 +793,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 />
                             </Grid>
 
-                            <Grid item xs={12}>
+                            <Grid item xs={12} sx={{ width: '100%', maxWidth: '100%' }}>
                                 <TextField
                                     label="Description"
                                     value={formData.description}
@@ -803,6 +803,12 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                     rows={6}
                                     placeholder="Enter a brief description of the city..."
                                     helperText="Optional field for additional city information"
+                                    sx={{
+                                        width: '100%',
+                                        '& .MuiInputBase-root': {
+                                            width: '100%'
+                                        }
+                                    }}
                                 />
                             </Grid>
                         </Grid>
