@@ -101,8 +101,8 @@ const ControlHistorySection = React.memo(({ data, onChange }) => {
                             <Paper
                                 key={index}
                                 sx={{
-                                    p: 2,
-                                    pt: 1,
+                                    p: { xs: 1.5, md: 2 },
+                                    pt: { xs: 0.5, md: 1 },
                                     mb: 1.5,
                                     backgroundColor: 'rgba(248, 245, 238, 0.5)',
                                     border: `1px solid ${COLORS.border}`
@@ -121,7 +121,7 @@ const ControlHistorySection = React.memo(({ data, onChange }) => {
                                     </IconButton>
                                 </Box>
 
-                                <Grid container spacing={1.5}>
+                                <Grid container spacing={{ xs: 1.5, md: 2 }}>
                                     <Grid item xs={12} md={7}>
                                         <TextField
                                             label="Ruler / Empire"
@@ -188,9 +188,8 @@ const ControlHistorySection = React.memo(({ data, onChange }) => {
                                             value={period.description || ''}
                                             onChange={(e) => updatePeriod(index, 'description', e.target.value)}
                                             fullWidth
-                                            size="small"
                                             multiline
-                                            rows={2}
+                                            rows={4}
                                             placeholder="Additional notes about this period..."
                                         />
                                     </Grid>
@@ -289,8 +288,8 @@ const PopulationHistorySection = React.memo(({ data, onChange }) => {
                             <Paper
                                 key={index}
                                 sx={{
-                                    p: 2,
-                                    pt: 1,
+                                    p: { xs: 1.5, md: 2 },
+                                    pt: { xs: 0.5, md: 1 },
                                     mb: 1.5,
                                     backgroundColor: 'rgba(248, 245, 238, 0.5)',
                                     border: `1px solid ${COLORS.border}`
@@ -309,7 +308,7 @@ const PopulationHistorySection = React.memo(({ data, onChange }) => {
                                     </IconButton>
                                 </Box>
 
-                                <Grid container spacing={1.5}>
+                                <Grid container spacing={{ xs: 1.5, md: 2 }}>
                                     <Grid item xs={6} md={3}>
                                         <TextField
                                             label="Year"
@@ -455,8 +454,8 @@ const LandmarksSection = React.memo(({ data, onChange }) => {
                             <Paper
                                 key={index}
                                 sx={{
-                                    p: 2,
-                                    pt: 1,
+                                    p: { xs: 1.5, md: 2 },
+                                    pt: { xs: 0.5, md: 1 },
                                     mb: 1.5,
                                     backgroundColor: 'rgba(248, 245, 238, 0.5)',
                                     border: `1px solid ${COLORS.border}`
@@ -475,7 +474,7 @@ const LandmarksSection = React.memo(({ data, onChange }) => {
                                     </IconButton>
                                 </Box>
 
-                                <Grid container spacing={1.5}>
+                                <Grid container spacing={{ xs: 1.5, md: 2 }}>
                                     <Grid item xs={12} md={9}>
                                         <TextField
                                             label="Landmark Name"
@@ -534,9 +533,8 @@ const LandmarksSection = React.memo(({ data, onChange }) => {
                                             value={landmark.description || ''}
                                             onChange={(e) => updateLandmark(index, 'description', e.target.value)}
                                             fullWidth
-                                            size="small"
                                             multiline
-                                            rows={2}
+                                            rows={4}
                                             placeholder="Additional details about the landmark..."
                                         />
                                     </Grid>

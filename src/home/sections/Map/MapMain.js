@@ -29,13 +29,13 @@ const MAP_LAYERS = {
     name: 'Ancient World Map',
     url: 'https://cawm.lib.uiowa.edu/tiles/{z}/{x}/{y}.png',
     attribution: '&copy; Consortium of Ancient World Mappers (CAWM)',
-    maxZoom: 11  // Override default
+    maxZoom: 13  // Override default
   },
   arcgis: {
     name: 'ArcGIS',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
     attribution: 'Tiles &copy; Esri — Source: US National Park Service',
-    maxZoom: 11  // Override default
+    maxZoom: 13  // Override default
   },
   nasa: {
     name: 'ESRI Satellite',

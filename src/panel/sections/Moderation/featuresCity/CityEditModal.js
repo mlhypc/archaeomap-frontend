@@ -534,7 +534,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         <Dialog
             open={open}
             onClose={onClose}
-            maxWidth="md"
+            maxWidth="lg"
             fullWidth
             fullScreen={isMobile}
             PaperProps={{
@@ -628,7 +628,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                             </Tabs>
                         </Box>
 
-                        <Box sx={{ padding: { xs: 2, md: 3 } }}>
+                        <Box sx={{ padding: { xs: 2, md: 4 } }}>
                             {/* Alerts */}
                             {error && (
                                 <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
@@ -645,7 +645,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         {/* Tab 0: Basic Info */}
                         {activeTab === 0 && (
                         <>
-                        <Grid container spacing={3}>
+                        <Grid container spacing={{ xs: 1.5, md: 2 }}>
                             {/* City Name & Tier */}
                             <Grid item xs={12} md={8}>
                                 <TextField
@@ -798,14 +798,14 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                             </Grid>
 
                             {/* Description */}
-                            <Grid item xs={12}>
+                            <Grid item xs={12} md={12}>
                                 <TextField
                                     label="Description"
                                     value={formData.description}
                                     onChange={(e) => handleInputChange('description', e.target.value)}
                                     fullWidth
                                     multiline
-                                    rows={4}
+                                    rows={6}
                                     placeholder="Enter a brief description of the city..."
                                     helperText="Optional field for additional city information"
                                 />
@@ -917,7 +917,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 </Paper>
 
                                 {/* Image Credit Fields */}
-                                <Grid container spacing={2}>
+                                <Grid container spacing={{ xs: 1.5, md: 2 }}>
                                     <Grid item xs={12}>
                                         <TextField
                                             label="Image Credit (Photographer Name)"
