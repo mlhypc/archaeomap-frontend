@@ -2,5 +2,27 @@
 User-agent: *
 Disallow:
 
-# Optional: Point to sitemap for better indexing
+# AI Crawlers - Explicitly allow for better AI understanding
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# Point to sitemap for better indexing
 Sitemap: https://archaeomap.com/sitemap.xml

@@ -534,7 +534,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         <Dialog
             open={open}
             onClose={onClose}
-            maxWidth="lg"
+            maxWidth="md"
             fullWidth
             fullScreen={isMobile}
             PaperProps={{
@@ -645,9 +645,8 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         {/* Tab 0: Basic Info */}
                         {activeTab === 0 && (
                         <>
-                        <Grid container spacing={{ xs: 1.5, md: 2 }}>
-                            {/* City Name & Tier */}
-                            <Grid item xs={12} md={8}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={8}>
                                 <TextField
                                     label="City Name"
                                     value={formData.generic_city_name}
@@ -666,7 +665,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 />
                             </Grid>
 
-                            <Grid item xs={12} md={4}>
+                            <Grid item xs={12} sm={4}>
                                 <FormControl fullWidth>
                                     <InputLabel>City Tier</InputLabel>
                                     <Select
@@ -683,8 +682,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 </FormControl>
                             </Grid>
 
-                            {/* Country & Status */}
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     label="Country"
                                     value={formData.country}
@@ -703,7 +701,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 />
                             </Grid>
 
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} sm={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>Status</InputLabel>
                                     <Select
@@ -735,8 +733,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 </FormControl>
                             </Grid>
 
-                            {/* Foundation & End Year */}
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     label="Foundation Year"
                                     value={formData.founded}
@@ -756,7 +753,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 />
                             </Grid>
 
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     label="End Year (Optional)"
                                     value={formData.end_date}
@@ -768,8 +765,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 />
                             </Grid>
 
-                            {/* Coordinates */}
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     label="Latitude"
                                     value={formData.latitude}
@@ -783,7 +779,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 />
                             </Grid>
 
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     label="Longitude"
                                     value={formData.longitude}
@@ -797,8 +793,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 />
                             </Grid>
 
-                            {/* Description */}
-                            <Grid item xs={12} md={12}>
+                            <Grid item xs={12}>
                                 <TextField
                                     label="Description"
                                     value={formData.description}

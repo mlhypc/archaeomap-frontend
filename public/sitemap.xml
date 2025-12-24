@@ -2,8 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://archaeomap.com/</loc>
-    <lastmod>2025-05-02</lastmod>
+    <lastmod>2025-12-25</lastmod>
     <priority>1.00</priority>
     <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://archaeomap.com/about.html</loc>
+    <lastmod>2025-12-25</lastmod>
+    <priority>0.80</priority>
+    <changefreq>monthly</changefreq>
   </url>
 </urlset>

@@ -181,19 +181,20 @@ const ControlHistorySection = React.memo(({ data, onChange }) => {
                                             }}
                                         />
                                     </Grid>
-
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Description (Optional)"
-                                            value={period.description || ''}
-                                            onChange={(e) => updatePeriod(index, 'description', e.target.value)}
-                                            fullWidth
-                                            multiline
-                                            rows={4}
-                                            placeholder="Additional notes about this period..."
-                                        />
-                                    </Grid>
                                 </Grid>
+
+                                {/* Description outside Grid for full width */}
+                                <Box sx={{ mt: 2 }}>
+                                    <TextField
+                                        label="Description (Optional)"
+                                        value={period.description || ''}
+                                        onChange={(e) => updatePeriod(index, 'description', e.target.value)}
+                                        fullWidth
+                                        multiline
+                                        rows={4}
+                                        placeholder="Additional notes about this period..."
+                                    />
+                                </Box>
                             </Paper>
                         ))}
                     </Box>
@@ -526,19 +527,20 @@ const LandmarksSection = React.memo(({ data, onChange }) => {
                                             placeholder="e.g., UNESCO World Heritage"
                                         />
                                     </Grid>
-
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Description (Optional)"
-                                            value={landmark.description || ''}
-                                            onChange={(e) => updateLandmark(index, 'description', e.target.value)}
-                                            fullWidth
-                                            multiline
-                                            rows={4}
-                                            placeholder="Additional details about the landmark..."
-                                        />
-                                    </Grid>
                                 </Grid>
+
+                                {/* Description outside Grid for full width */}
+                                <Box sx={{ mt: 2 }}>
+                                    <TextField
+                                        label="Description (Optional)"
+                                        value={landmark.description || ''}
+                                        onChange={(e) => updateLandmark(index, 'description', e.target.value)}
+                                        fullWidth
+                                        multiline
+                                        rows={4}
+                                        placeholder="Additional details about the landmark..."
+                                    />
+                                </Box>
                             </Paper>
                         ))}
                     </Box>
