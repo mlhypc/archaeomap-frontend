@@ -25,25 +25,33 @@ import CesiumGlobe from './features/CesiumGlobe';
 
 // MAP LAYERS - moved outside component to prevent re-creation
 const MAP_LAYERS = {
+  cawm: {
+    name: 'Ancient World Map',
+    url: 'https://cawm.lib.uiowa.edu/tiles/{z}/{x}/{y}.png',
+    attribution: '&copy; Consortium of Ancient World Mappers (CAWM)',
+    maxZoom: 11  // Override default
+  },
   arcgis: {
     name: 'ArcGIS',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri â€" Source: US National Park Service',
-    maxZoom: 17
-  },
-  osm: {
-    name: 'OpenStreetMap',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 17
+    attribution: 'Tiles &copy; Esri — Source: US National Park Service',
+    maxZoom: 11  // Override default
   },
   nasa: {
     name: 'ESRI Satellite',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles Â© Esri â€" Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-    maxZoom: 17
+    attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+  },
+  osm: {
+    name: 'OpenStreetMap',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors'
   }
 };
+
+// Global zoom settings
+const MAP_MIN_ZOOM = 1;
+const MAP_MAX_ZOOM = 17;
 
 // TIMELINE YEARS - moved outside to prevent re-generation
 const generateTimelineYears = () => {
@@ -187,7 +195,7 @@ function useMapState() {
     currentYear: -5000,
     ageFilter: HISTORICAL_AGES.ALL_AGES,
     labelFilter: LABEL_VISIBILITY.SHOW_ACTIVE_ONLY.key,
-    mapLayerKey: 'arcgis',
+    mapLayerKey: 'cawm',
     showLabels: true,
     enable3D: false, // Toggle for 3D mode
     pitch: 0, // 0-60 degrees
@@ -624,8 +632,8 @@ function MapComponent(props) {
           key={`map-${mapState.cameraPosition.lat}-${mapState.cameraPosition.lng}-${mapState.cameraPosition.zoom}`}
           center={[mapState.cameraPosition.lat, mapState.cameraPosition.lng]}
           zoom={mapState.cameraPosition.zoom}
-          minZoom={4}
-          maxZoom={MAP_LAYERS[uiState.mapLayerKey].maxZoom}
+          minZoom={MAP_MIN_ZOOM}
+          maxZoom={MAP_LAYERS[uiState.mapLayerKey].maxZoom || MAP_MAX_ZOOM}
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
           whenCreated={handleMapReady}
@@ -640,7 +648,6 @@ function MapComponent(props) {
             key={uiState.mapLayerKey}
             url={MAP_LAYERS[uiState.mapLayerKey].url}
             attribution={MAP_LAYERS[uiState.mapLayerKey].attribution}
-            maxZoom={MAP_LAYERS[uiState.mapLayerKey].maxZoom}
           />
 
           <BoundsTracker
