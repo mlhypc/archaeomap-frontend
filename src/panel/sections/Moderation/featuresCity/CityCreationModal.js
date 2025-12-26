@@ -8,7 +8,6 @@ import {
     DialogActions,
     TextField,
     Button,
-    Grid,
     FormControl,
     InputLabel,
     Select,
@@ -49,6 +48,7 @@ import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
 import useUserRole from '../../../../shared/hooks/useUserRole';
 import HistoricalDataEditor from './HistoricalDataEditor';
+import { COUNTRIES } from '../../../../data/country_list';
 import exampleCityJson from '../../../../data/city_example.json';
 
 const CityCreationModal = ({ open, onClose, onCityCreated }) => {
@@ -457,6 +457,7 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
             maxWidth="lg"
             fullWidth
             fullScreen={isMobile}
+            transitionDuration={50}
             PaperProps={{
                 sx: {
                     borderRadius: isMobile ? 0 : '12px',
@@ -519,22 +520,26 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                 )}
             </DialogTitle>
 
-            <DialogContent sx={{ padding: { xs: 2, md: 3 } }}>
+            <DialogContent sx={{
+                padding: { xs: 2, sm: 2.5, md: 3 },
+                overflow: 'auto',
+                backgroundColor: COLORS.sectionBackground
+            }}>
                 {/* Alerts */}
                 {error && (
-                    <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+                    <Alert severity="error" sx={{ mb: { xs: 2, md: 3 } }} onClose={() => setError(null)}>
                         {error}
                     </Alert>
                 )}
 
                 {success && (
-                    <Alert severity="success" sx={{ mb: 3 }}>
+                    <Alert severity="success" sx={{ mb: { xs: 2, md: 3 } }}>
                         {success}
                     </Alert>
                 )}
 
                 {/* Progress Stepper */}
-                <Box sx={{ mb: 3 }}>
+                <Box sx={{ mt: { xs: 1, md: 2 }, mb: { xs: 2, md: 3 } }}>
                     <Stepper activeStep={activeStep} orientation={isMobile ? 'vertical' : 'horizontal'}>
                         {steps.map((label) => (
                             <Step key={label}>
@@ -545,226 +550,295 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                 </Box>
 
                 {/* Step Content */}
-                <Box sx={{ minHeight: '400px' }}>
+                <Box sx={{ minHeight: { xs: '300px', md: '400px' }, width: '100%' }}>
                     {/* Step 0: Basic Information */}
                     {activeStep === 0 && (
-                        <Grid container spacing={2}>
-                            {/* JSON Upload Section */}
-                            <Grid item xs={12}>
-                                <Card sx={{ p: 2, backgroundColor: 'rgba(25, 118, 210, 0.05)', border: '1px dashed #1976d2' }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <DescriptionIcon sx={{ color: '#1976d2' }} />
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-                                                Quick Fill with JSON
-                                            </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 2.5, md: 3 }, width: '100%' }}>
+                            {/* JSON Upload Section - Full Width */}
+                            <Card sx={{
+                                p: { xs: 1.5, sm: 2 },
+                                backgroundColor: 'rgba(25, 118, 210, 0.05)',
+                                border: '1px dashed #1976d2'
+                            }}>
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    flexWrap: 'wrap',
+                                    gap: { xs: 1.5, sm: 2 },
+                                    flexDirection: { xs: 'column', sm: 'row' }
+                                }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+                                        <DescriptionIcon sx={{ color: '#1976d2', fontSize: { xs: '1.2rem', sm: '1.5rem' } }} />
+                                        <Typography variant="subtitle2" sx={{
+                                            fontWeight: 'bold',
+                                            color: '#1976d2',
+                                            fontSize: { xs: '0.9rem', sm: '1rem' }
+                                        }}>
+                                            Quick Fill with JSON
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: { xs: 1, sm: 1.5 },
+                                        flexWrap: 'wrap',
+                                        width: { xs: '100%', sm: 'auto' },
+                                        justifyContent: { xs: 'space-between', sm: 'flex-end' }
+                                    }}>
+                                        <Button
+                                            variant="text"
+                                            size="small"
+                                            startIcon={<DownloadIcon />}
+                                            onClick={handleDownloadExample}
+                                            sx={{
+                                                color: '#1976d2',
+                                                textTransform: 'none',
+                                                fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                                                minWidth: 'auto',
+                                                padding: { xs: '4px 8px', sm: '6px 16px' }
+                                            }}
+                                        >
+                                            Download
+                                        </Button>
+                                        <input
+                                            type="file"
+                                            accept=".json"
+                                            onChange={handleJsonUpload}
+                                            style={{ display: 'none' }}
+                                            id="json-upload"
+                                        />
+                                        <label htmlFor="json-upload">
                                             <Button
-                                                variant="text"
+                                                component="span"
+                                                variant="outlined"
                                                 size="small"
-                                                startIcon={<DownloadIcon />}
-                                                onClick={handleDownloadExample}
+                                                startIcon={<UploadIcon />}
                                                 sx={{
+                                                    borderColor: '#1976d2',
                                                     color: '#1976d2',
-                                                    textTransform: 'none',
-                                                    fontSize: '0.8rem'
+                                                    '&:hover': { borderColor: '#1565c0', backgroundColor: 'rgba(25, 118, 210, 0.1)' },
+                                                    fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                                                    minWidth: 'auto',
+                                                    padding: { xs: '4px 8px', sm: '6px 16px' }
                                                 }}
                                             >
-                                                Download Example
+                                                Upload
                                             </Button>
-                                            <input
-                                                type="file"
-                                                accept=".json"
-                                                onChange={handleJsonUpload}
-                                                style={{ display: 'none' }}
-                                                id="json-upload"
+                                        </label>
+                                        {jsonFile && (
+                                            <Chip
+                                                label={jsonFile.name}
+                                                size="small"
+                                                color="primary"
+                                                onDelete={() => setJsonFile(null)}
+                                                sx={{
+                                                    maxWidth: { xs: '150px', sm: '200px' },
+                                                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                                                }}
                                             />
-                                            <label htmlFor="json-upload">
-                                                <Button
-                                                    component="span"
-                                                    variant="outlined"
-                                                    size="small"
-                                                    startIcon={<UploadIcon />}
-                                                    sx={{
-                                                        borderColor: '#1976d2',
-                                                        color: '#1976d2',
-                                                        '&:hover': { borderColor: '#1565c0', backgroundColor: 'rgba(25, 118, 210, 0.1)' }
-                                                    }}
-                                                >
-                                                    Upload JSON
-                                                </Button>
-                                            </label>
-                                            {jsonFile && (
-                                                <Chip
-                                                    label={jsonFile.name}
-                                                    size="small"
-                                                    color="primary"
-                                                    onDelete={() => setJsonFile(null)}
-                                                />
-                                            )}
-                                        </Box>
+                                        )}
                                     </Box>
-                                    <Typography variant="caption" sx={{ color: COLORS.texts.muted, mt: 1, display: 'block' }}>
-                                        Download the example template, modify it with your city data, then upload to auto-fill all fields
-                                    </Typography>
-                                </Card>
-                            </Grid>
-                            {/* City Name & Tier */}
-                            <Grid item xs={12} md={8}>
-                                <TextField
-                                    label="City Name"
-                                    value={formData.generic_city_name}
-                                    onChange={(e) => handleInputChange('generic_city_name', e.target.value)}
-                                    fullWidth
-                                    required
-                                    error={!!validationErrors.generic_city_name}
-                                    helperText={
-                                        validationErrors.generic_city_name ||
-                                        (validatingName ? 'Checking availability...' :
-                                            nameAvailable === false ? 'Name already exists' :
-                                                nameAvailable === true ? 'Name is available' : '')
-                                    }
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <LocationOnIcon sx={{ color: COLORS.primary }} />
-                                            </InputAdornment>
-                                        ),
-                                        endAdornment: validatingName ? (
-                                            <InputAdornment position="end">
-                                                <CircularProgress size={16} />
-                                            </InputAdornment>
-                                        ) : null
-                                    }}
-                                />
-                            </Grid>
+                                </Box>
+                                <Typography variant="caption" sx={{
+                                    color: COLORS.texts.muted,
+                                    mt: { xs: 1, sm: 1.5 },
+                                    display: 'block',
+                                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                    lineHeight: 1.4
+                                }}>
+                                    Download the example template, modify it with your city data, then upload to auto-fill all fields
+                                </Typography>
+                            </Card>
 
-                            <Grid item xs={12} md={4}>
-                                <FormControl fullWidth>
-                                    <InputLabel>City Tier</InputLabel>
-                                    <Select
-                                        value={formData.city_tier}
-                                        onChange={(e) => handleInputChange('city_tier', e.target.value)}
-                                        label="City Tier"
-                                    >
-                                        {[...Array(10)].map((_, i) => (
-                                            <MenuItem key={i + 1} value={i + 1}>
-                                                Tier {i + 1}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
+                            {/* Row 1: City Name - City Tier */}
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', md: 'row' },
+                                gap: { xs: 2, md: 2 }
+                            }}>
+                                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 66%' } }}>
+                                    <TextField
+                                        label="City Name"
+                                        value={formData.generic_city_name}
+                                        onChange={(e) => handleInputChange('generic_city_name', e.target.value)}
+                                        fullWidth
+                                        required
+                                        error={!!validationErrors.generic_city_name}
+                                        helperText={
+                                            validationErrors.generic_city_name ||
+                                            (validatingName ? 'Checking availability...' :
+                                                nameAvailable === false ? 'Name already exists' :
+                                                    nameAvailable === true ? 'Name is available' : '')
+                                        }
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <LocationOnIcon sx={{ color: COLORS.primary }} />
+                                                </InputAdornment>
+                                            ),
+                                            endAdornment: validatingName ? (
+                                                <InputAdornment position="end">
+                                                    <CircularProgress size={16} />
+                                                </InputAdornment>
+                                            ) : null
+                                        }}
+                                    />
+                                </Box>
 
-                            {/* Country & Status */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Country"
-                                    value={formData.country}
-                                    onChange={(e) => handleInputChange('country', e.target.value)}
-                                    fullWidth
-                                    required
-                                    error={!!validationErrors.country}
-                                    helperText={validationErrors.country}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <PublicIcon sx={{ color: COLORS.primary }} />
-                                            </InputAdornment>
-                                        )
-                                    }}
-                                />
-                            </Grid>
+                                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 33%' } }}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>City Tier</InputLabel>
+                                        <Select
+                                            value={formData.city_tier}
+                                            onChange={(e) => handleInputChange('city_tier', e.target.value)}
+                                            label="City Tier"
+                                        >
+                                            {[...Array(10)].map((_, i) => (
+                                                <MenuItem key={i + 1} value={i + 1}>
+                                                    Tier {i + 1}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            </Box>
 
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Status</InputLabel>
-                                    <Select
-                                        value={formData.data_status}
-                                        onChange={(e) => handleInputChange('data_status', e.target.value)}
-                                        label="Status"
-                                    >
-                                        <MenuItem value="draft">Draft</MenuItem>
-                                        {isAdmin && <MenuItem value="active">Active</MenuItem>}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
+                            {/* Row 2: Country - Status */}
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', md: 'row' },
+                                gap: { xs: 2, md: 2 }
+                            }}>
+                                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
+                                    <FormControl fullWidth required error={!!validationErrors.country}>
+                                        <InputLabel>Country</InputLabel>
+                                        <Select
+                                            value={formData.country}
+                                            onChange={(e) => handleInputChange('country', e.target.value)}
+                                            label="Country"
+                                            startAdornment={
+                                                <InputAdornment position="start">
+                                                    <PublicIcon sx={{ color: COLORS.primary }} />
+                                                </InputAdornment>
+                                            }
+                                        >
+                                            {COUNTRIES.map((country) => (
+                                                <MenuItem key={country} value={country}>
+                                                    {country}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                        {validationErrors.country && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                                                {validationErrors.country}
+                                            </Typography>
+                                        )}
+                                    </FormControl>
+                                </Box>
 
-                            {/* Foundation & End Year */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Foundation Year"
-                                    value={formData.founded}
-                                    onChange={(e) => handleInputChange('founded', e.target.value)}
-                                    fullWidth
-                                    required
-                                    type="number"
-                                    error={!!validationErrors.founded}
-                                    helperText={validationErrors.founded || "Use negative numbers for BC (e.g., -753 for 753 BC)"}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <CalendarTodayIcon sx={{ color: COLORS.primary }} />
-                                            </InputAdornment>
-                                        )
-                                    }}
-                                />
-                            </Grid>
+                                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Status</InputLabel>
+                                        <Select
+                                            value={formData.data_status}
+                                            onChange={(e) => handleInputChange('data_status', e.target.value)}
+                                            label="Status"
+                                        >
+                                            <MenuItem value="draft">Draft</MenuItem>
+                                            {isAdmin && <MenuItem value="active">Active</MenuItem>}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            </Box>
 
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="End Year (Optional)"
-                                    value={formData.endDate}
-                                    onChange={(e) => handleInputChange('endDate', e.target.value)}
-                                    fullWidth
-                                    type="number"
-                                    helperText="Must be greater than foundation year (leave empty if still exists)"
-                                />
-                            </Grid>
+                            {/* Row 3: Foundation Year - End Year */}
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', md: 'row' },
+                                gap: { xs: 2, md: 2 }
+                            }}>
+                                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
+                                    <TextField
+                                        label="Foundation Year"
+                                        value={formData.founded}
+                                        onChange={(e) => handleInputChange('founded', e.target.value)}
+                                        fullWidth
+                                        required
+                                        type="number"
+                                        error={!!validationErrors.founded}
+                                        helperText={validationErrors.founded || "Use negative numbers for BC (e.g., -753 for 753 BC)"}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <CalendarTodayIcon sx={{ color: COLORS.primary }} />
+                                                </InputAdornment>
+                                            )
+                                        }}
+                                    />
+                                </Box>
 
-                            {/* Coordinates */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Latitude"
-                                    value={formData.coordinates[0]}
-                                    onChange={(e) => handleCoordinateChange(0, e.target.value)}
-                                    fullWidth
-                                    required
-                                    type="number"
-                                    inputProps={{ step: "any" }}
-                                    error={!!validationErrors.latitude}
-                                    helperText={validationErrors.latitude || "Range: -90 to 90"}
-                                />
-                            </Grid>
+                                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
+                                    <TextField
+                                        label="End Year (Optional)"
+                                        value={formData.endDate}
+                                        onChange={(e) => handleInputChange('endDate', e.target.value)}
+                                        fullWidth
+                                        type="number"
+                                        helperText="Leave empty if city still exists"
+                                    />
+                                </Box>
+                            </Box>
 
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Longitude"
-                                    value={formData.coordinates[1]}
-                                    onChange={(e) => handleCoordinateChange(1, e.target.value)}
-                                    fullWidth
-                                    required
-                                    type="number"
-                                    inputProps={{ step: "any" }}
-                                    error={!!validationErrors.longitude}
-                                    helperText={validationErrors.longitude || "Range: -180 to 180"}
-                                />
-                            </Grid>
+                            {/* Row 4: Latitude - Longitude */}
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', md: 'row' },
+                                gap: { xs: 2, md: 2 }
+                            }}>
+                                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
+                                    <TextField
+                                        label="Latitude"
+                                        value={formData.coordinates[0]}
+                                        onChange={(e) => handleCoordinateChange(0, e.target.value)}
+                                        fullWidth
+                                        required
+                                        type="number"
+                                        inputProps={{ step: "any" }}
+                                        error={!!validationErrors.latitude}
+                                        helperText={validationErrors.latitude || "Range: -90 to 90"}
+                                    />
+                                </Box>
 
-                            {/* Description */}
-                            <Grid item xs={12}>
+                                <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
+                                    <TextField
+                                        label="Longitude"
+                                        value={formData.coordinates[1]}
+                                        onChange={(e) => handleCoordinateChange(1, e.target.value)}
+                                        fullWidth
+                                        required
+                                        type="number"
+                                        inputProps={{ step: "any" }}
+                                        error={!!validationErrors.longitude}
+                                        helperText={validationErrors.longitude || "Range: -180 to 180"}
+                                    />
+                                </Box>
+                            </Box>
+
+                            {/* Row 5: Description */}
+                            <Box>
                                 <TextField
                                     label="Description (Optional)"
                                     value={formData.description}
                                     onChange={(e) => handleInputChange('description', e.target.value)}
                                     fullWidth
                                     multiline
-                                    rows={2}
+                                    minRows={5}
+                                    maxRows={20}
                                     placeholder="Enter a brief description of the city..."
                                 />
-                            </Grid>
-                        </Grid>
+                            </Box>
+                        </Box>
                     )}
 
                     {/* Step 1: Historical Data (Interactive) */}
@@ -867,17 +941,22 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
 
             <DialogActions
                 sx={{
-                    padding: { xs: 2, md: 3 },
+                    padding: { xs: 2, sm: 2.5, md: 3 },
                     backgroundColor: COLORS.background,
                     borderTop: `1px solid ${COLORS.border}`,
                     justifyContent: 'flex-end',
-                    gap: 1
+                    gap: { xs: 1, md: 1.5 },
+                    flexDirection: { xs: 'column-reverse', sm: 'row' }
                 }}
             >
                 <Button
                     onClick={() => setActiveStep(Math.max(0, activeStep - 1))}
                     disabled={activeStep === 0 || saving}
-                    sx={{ color: COLORS.texts.secondary }}
+                    sx={{
+                        color: COLORS.texts.secondary,
+                        width: { xs: '100%', sm: 'auto' },
+                        minWidth: { sm: '100px' }
+                    }}
                 >
                     Back
                 </Button>
@@ -892,7 +971,9 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                             backgroundColor: bypassApproval ? '#1976d2' : COLORS.primary,
                             '&:hover': {
                                 backgroundColor: bypassApproval ? '#1565c0' : '#5d3a2a'
-                            }
+                            },
+                            width: { xs: '100%', sm: 'auto' },
+                            minWidth: { sm: '150px' }
                         }}
                     >
                         {submitButtonProps.text}
@@ -903,7 +984,9 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                         variant="contained"
                         sx={{
                             backgroundColor: COLORS.primary,
-                            '&:hover': { backgroundColor: '#5d3a2a' }
+                            '&:hover': { backgroundColor: '#5d3a2a' },
+                            width: { xs: '100%', sm: 'auto' },
+                            minWidth: { sm: '100px' }
                         }}
                     >
                         Next

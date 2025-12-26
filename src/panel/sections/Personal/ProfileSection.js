@@ -7,7 +7,6 @@ import {
   Paper,
   Card,
   CardContent,
-  Grid,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -136,9 +135,9 @@ function ProfileSection() {
         </Paper>
 
         {/* İstatistik Kartları */}
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
           {/* Beğenilen Şehirler Kartı */}
-          <Grid item xs={12} md={6}>
+          <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
             <Card 
               elevation={1} 
               sx={{ 
@@ -208,10 +207,10 @@ function ProfileSection() {
                 </CardContent>
               </CardActionArea>
             </Card>
-          </Grid>
+          </Box>
 
           {/* Şehir Listeleri Kartı */}
-          <Grid item xs={12} md={6}>
+          <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
             <Card 
               elevation={1} 
               sx={{ 
@@ -281,8 +280,8 @@ function ProfileSection() {
                 </CardContent>
               </CardActionArea>
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         {/* Beğenilen Şehirler Dialog */}
         <Dialog 

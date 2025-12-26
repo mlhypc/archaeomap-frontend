@@ -191,7 +191,8 @@ const ControlHistorySection = React.memo(({ data, onChange }) => {
                                         onChange={(e) => updatePeriod(index, 'description', e.target.value)}
                                         fullWidth
                                         multiline
-                                        rows={4}
+                                        minRows={2}
+                                        maxRows={20}
                                         placeholder="Additional notes about this period..."
                                     />
                                 </Box>
@@ -537,7 +538,8 @@ const LandmarksSection = React.memo(({ data, onChange }) => {
                                         onChange={(e) => updateLandmark(index, 'description', e.target.value)}
                                         fullWidth
                                         multiline
-                                        rows={4}
+                                        minRows={2}
+                                        maxRows={20}
                                         placeholder="Additional details about the landmark..."
                                     />
                                 </Box>

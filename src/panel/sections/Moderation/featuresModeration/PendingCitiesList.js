@@ -303,8 +303,8 @@ function PendingCitiesList({ onCityReview, onDataUpdate }) {
                             label="Filter by Submitter"
                         >
                             <MenuItem value="">All Submitters</MenuItem>
-                            {uniqueSubmitters.map(submitter => (
-                                <MenuItem key={submitter.id} value={submitter.id}>
+                            {uniqueSubmitters.map((submitter, index) => (
+                                <MenuItem key={submitter.id || `submitter-${index}`} value={submitter.id}>
                                     {submitter.name || submitter.username}
                                 </MenuItem>
                             ))}
@@ -366,8 +366,8 @@ function PendingCitiesList({ onCityReview, onDataUpdate }) {
                         {isMobile ? (
                             <Box sx={{ flex: 1, overflow: 'auto' }}>
                                 <Stack spacing={2}>
-                                    {cities.map((city) => (
-                                        <Card key={city.id} sx={{ border: `1px solid ${COLORS.border}` }}>
+                                    {cities.map((city, index) => (
+                                        <Card key={city.id || `city-card-${index}`} sx={{ border: `1px solid ${COLORS.border}` }}>
                                             <CardContent sx={{ pb: 1 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
                                                     <Avatar sx={{ backgroundColor: COLORS.primary }}>
@@ -460,9 +460,9 @@ function PendingCitiesList({ onCityReview, onDataUpdate }) {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {cities.map((city) => (
+                                        {cities.map((city, index) => (
                                             <TableRow
-                                                key={city.id}
+                                                key={city.id || `city-${index}`}
                                                 sx={{
                                                     '&:hover': { backgroundColor: 'rgba(119, 73, 54, 0.02)' }
                                                 }}
@@ -484,10 +484,21 @@ function PendingCitiesList({ onCityReview, onDataUpdate }) {
                                                 <TableCell>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem', backgroundColor: COLORS.primary }}>
-                                                            {city.submitter.name.charAt(0).toUpperCase()}
+                                                            {(() => {
+                                                                const firstName = city.submitter?.id?.firstName;
+                                                                const username = city.submitter?.username;
+                                                                return (firstName?.charAt(0) || username?.charAt(0) || '?').toUpperCase();
+                                                            })()}
                                                         </Avatar>
                                                         <Typography variant="body2" sx={{ color: COLORS.texts.secondary }}>
-                                                            {city.submitter.name}
+                                                            {(() => {
+                                                                const firstName = city.submitter?.id?.firstName;
+                                                                const lastName = city.submitter?.id?.lastName;
+                                                                const username = city.submitter?.username;
+                                                                if (firstName && lastName) return `${firstName} ${lastName}`;
+                                                                if (firstName) return firstName;
+                                                                return username || 'Unknown';
+                                                            })()}
                                                         </Typography>
                                                     </Box>
                                                 </TableCell>

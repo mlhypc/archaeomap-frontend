@@ -8,7 +8,6 @@ import {
     DialogActions,
     TextField,
     Button,
-    Grid,
     FormControl,
     InputLabel,
     Select,
@@ -39,6 +38,7 @@ import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
 import useUserRole from '../../../../shared/hooks/useUserRole';
 import HistoricalDataEditor from './HistoricalDataEditor';
+import { COUNTRIES } from '../../../../data/country_list';
 
 const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const theme = useTheme();
@@ -537,6 +537,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
             maxWidth="md"
             fullWidth
             fullScreen={isMobile}
+            transitionDuration={150}
             PaperProps={{
                 sx: {
                     borderRadius: isMobile ? 0 : '12px',
@@ -645,173 +646,189 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         {/* Tab 0: Basic Info */}
                         {activeTab === 0 && (
                         <>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} sm={8}>
-                                <TextField
-                                    label="City Name"
-                                    value={formData.generic_city_name}
-                                    onChange={(e) => handleInputChange('generic_city_name', e.target.value)}
-                                    fullWidth
-                                    required
-                                    error={!!validationErrors.generic_city_name}
-                                    helperText={validationErrors.generic_city_name}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <LocationOnIcon sx={{ color: COLORS.primary }} />
-                                            </InputAdornment>
-                                        )
-                                    }}
-                                />
-                            </Grid>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {/* Row 1: City Name - City Tier */}
+                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 66%' } }}>
+                                    <TextField
+                                        label="City Name"
+                                        value={formData.generic_city_name}
+                                        onChange={(e) => handleInputChange('generic_city_name', e.target.value)}
+                                        fullWidth
+                                        required
+                                        error={!!validationErrors.generic_city_name}
+                                        helperText={validationErrors.generic_city_name}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <LocationOnIcon sx={{ color: COLORS.primary }} />
+                                                </InputAdornment>
+                                            )
+                                        }}
+                                    />
+                                </Box>
 
-                            <Grid item xs={12} sm={4}>
-                                <FormControl fullWidth>
-                                    <InputLabel>City Tier</InputLabel>
-                                    <Select
-                                        value={formData.city_tier}
-                                        onChange={(e) => handleInputChange('city_tier', e.target.value)}
-                                        label="City Tier"
-                                    >
-                                        {[...Array(10)].map((_, i) => (
-                                            <MenuItem key={i + 1} value={i + 1}>
-                                                Tier {i + 1}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
+                                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 33%' } }}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>City Tier</InputLabel>
+                                        <Select
+                                            value={formData.city_tier}
+                                            onChange={(e) => handleInputChange('city_tier', e.target.value)}
+                                            label="City Tier"
+                                        >
+                                            {[...Array(10)].map((_, i) => (
+                                                <MenuItem key={i + 1} value={i + 1}>
+                                                    Tier {i + 1}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            </Box>
 
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Country"
-                                    value={formData.country}
-                                    onChange={(e) => handleInputChange('country', e.target.value)}
-                                    fullWidth
-                                    required
-                                    error={!!validationErrors.country}
-                                    helperText={validationErrors.country}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <PublicIcon sx={{ color: COLORS.primary }} />
-                                            </InputAdornment>
-                                        )
-                                    }}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} sm={6}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Status</InputLabel>
-                                    <Select
-                                        value={formData.data_status}
-                                        onChange={(e) => handleInputChange('data_status', e.target.value)}
-                                        label="Status"
-                                        renderValue={(value) => (
-                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                {getStatusChip(value)}
-                                            </Box>
+                            {/* Row 2: Country - Status */}
+                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
+                                    <FormControl fullWidth required error={!!validationErrors.country}>
+                                        <InputLabel>Country</InputLabel>
+                                        <Select
+                                            value={formData.country}
+                                            onChange={(e) => handleInputChange('country', e.target.value)}
+                                            label="Country"
+                                            startAdornment={
+                                                <InputAdornment position="start">
+                                                    <PublicIcon sx={{ color: COLORS.primary }} />
+                                                </InputAdornment>
+                                            }
+                                        >
+                                            {COUNTRIES.map((country) => (
+                                                <MenuItem key={country} value={country}>
+                                                    {country}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                        {validationErrors.country && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                                                {validationErrors.country}
+                                            </Typography>
                                         )}
-                                    >
-                                        <MenuItem value="active">
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                {getStatusChip('active')} Active
-                                            </Box>
-                                        </MenuItem>
-                                        <MenuItem value="passive">
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                {getStatusChip('passive')} Passive
-                                            </Box>
-                                        </MenuItem>
-                                        <MenuItem value="draft">
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                {getStatusChip('draft')} Draft
-                                            </Box>
-                                        </MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
+                                    </FormControl>
+                                </Box>
 
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Foundation Year"
-                                    value={formData.founded}
-                                    onChange={(e) => handleInputChange('founded', e.target.value)}
-                                    fullWidth
-                                    required
-                                    type="number"
-                                    error={!!validationErrors.founded}
-                                    helperText={validationErrors.founded || "Use negative numbers for BC (e.g., -753 for 753 BC)"}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <CalendarTodayIcon sx={{ color: COLORS.primary }} />
-                                            </InputAdornment>
-                                        )
-                                    }}
-                                />
-                            </Grid>
+                                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Status</InputLabel>
+                                        <Select
+                                            value={formData.data_status}
+                                            onChange={(e) => handleInputChange('data_status', e.target.value)}
+                                            label="Status"
+                                            renderValue={(value) => (
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    {getStatusChip(value)}
+                                                </Box>
+                                            )}
+                                        >
+                                            <MenuItem value="active">
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    {getStatusChip('active')} Active
+                                                </Box>
+                                            </MenuItem>
+                                            <MenuItem value="passive">
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    {getStatusChip('passive')} Passive
+                                                </Box>
+                                            </MenuItem>
+                                            <MenuItem value="draft">
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    {getStatusChip('draft')} Draft
+                                                </Box>
+                                            </MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            </Box>
 
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="End Year (Optional)"
-                                    value={formData.end_date}
-                                    onChange={(e) => handleInputChange('end_date', e.target.value)}
-                                    fullWidth
-                                    type="number"
-                                    error={!!validationErrors.end_date}
-                                    helperText={validationErrors.end_date || "Leave empty if city still exists"}
-                                />
-                            </Grid>
+                            {/* Row 3: Foundation Year - End Year */}
+                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
+                                    <TextField
+                                        label="Foundation Year"
+                                        value={formData.founded}
+                                        onChange={(e) => handleInputChange('founded', e.target.value)}
+                                        fullWidth
+                                        required
+                                        type="number"
+                                        error={!!validationErrors.founded}
+                                        helperText={validationErrors.founded || "Use negative numbers for BC (e.g., -753 for 753 BC)"}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <CalendarTodayIcon sx={{ color: COLORS.primary }} />
+                                                </InputAdornment>
+                                            )
+                                        }}
+                                    />
+                                </Box>
 
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Latitude"
-                                    value={formData.latitude}
-                                    onChange={(e) => handleInputChange('latitude', e.target.value)}
-                                    fullWidth
-                                    required
-                                    type="number"
-                                    inputProps={{ step: "any" }}
-                                    error={!!validationErrors.latitude}
-                                    helperText={validationErrors.latitude || "Range: -90 to 90"}
-                                />
-                            </Grid>
+                                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
+                                    <TextField
+                                        label="End Year (Optional)"
+                                        value={formData.end_date}
+                                        onChange={(e) => handleInputChange('end_date', e.target.value)}
+                                        fullWidth
+                                        type="number"
+                                        error={!!validationErrors.end_date}
+                                        helperText={validationErrors.end_date || "Leave empty if city still exists"}
+                                    />
+                                </Box>
+                            </Box>
 
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Longitude"
-                                    value={formData.longitude}
-                                    onChange={(e) => handleInputChange('longitude', e.target.value)}
-                                    fullWidth
-                                    required
-                                    type="number"
-                                    inputProps={{ step: "any" }}
-                                    error={!!validationErrors.longitude}
-                                    helperText={validationErrors.longitude || "Range: -180 to 180"}
-                                />
-                            </Grid>
+                            {/* Row 4: Latitude - Longitude */}
+                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
+                                    <TextField
+                                        label="Latitude"
+                                        value={formData.latitude}
+                                        onChange={(e) => handleInputChange('latitude', e.target.value)}
+                                        fullWidth
+                                        required
+                                        type="number"
+                                        inputProps={{ step: "any" }}
+                                        error={!!validationErrors.latitude}
+                                        helperText={validationErrors.latitude || "Range: -90 to 90"}
+                                    />
+                                </Box>
 
-                            <Grid item xs={12} sx={{ width: '100%', maxWidth: '100%' }}>
+                                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
+                                    <TextField
+                                        label="Longitude"
+                                        value={formData.longitude}
+                                        onChange={(e) => handleInputChange('longitude', e.target.value)}
+                                        fullWidth
+                                        required
+                                        type="number"
+                                        inputProps={{ step: "any" }}
+                                        error={!!validationErrors.longitude}
+                                        helperText={validationErrors.longitude || "Range: -180 to 180"}
+                                    />
+                                </Box>
+                            </Box>
+
+                            {/* Row 5: Description */}
+                            <Box>
                                 <TextField
                                     label="Description"
                                     value={formData.description}
                                     onChange={(e) => handleInputChange('description', e.target.value)}
                                     fullWidth
                                     multiline
-                                    rows={6}
+                                    minRows={2}
+                                    maxRows={20}
                                     placeholder="Enter a brief description of the city..."
                                     helperText="Optional field for additional city information"
-                                    sx={{
-                                        width: '100%',
-                                        '& .MuiInputBase-root': {
-                                            width: '100%'
-                                        }
-                                    }}
                                 />
-                            </Grid>
-                        </Grid>
+                            </Box>
+                        </Box>
 
                         {/* Historical Data Editor */}
                         {completeCityData && (
@@ -918,28 +935,24 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 </Paper>
 
                                 {/* Image Credit Fields */}
-                                <Grid container spacing={{ xs: 1.5, md: 2 }}>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Image Credit (Photographer Name)"
-                                            value={imageCredit}
-                                            onChange={(e) => setImageCredit(e.target.value)}
-                                            fullWidth
-                                            placeholder="e.g., John Doe"
-                                            helperText="Optional: Credit the photographer"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField
-                                            label="Credit Link (URL)"
-                                            value={imageCreditLink}
-                                            onChange={(e) => setImageCreditLink(e.target.value)}
-                                            fullWidth
-                                            placeholder="e.g., https://unsplash.com/@johndoe"
-                                            helperText="Optional: Link to photographer's profile"
-                                        />
-                                    </Grid>
-                                </Grid>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 2 } }}>
+                                    <TextField
+                                        label="Image Credit (Photographer Name)"
+                                        value={imageCredit}
+                                        onChange={(e) => setImageCredit(e.target.value)}
+                                        fullWidth
+                                        placeholder="e.g., John Doe"
+                                        helperText="Optional: Credit the photographer"
+                                    />
+                                    <TextField
+                                        label="Credit Link (URL)"
+                                        value={imageCreditLink}
+                                        onChange={(e) => setImageCreditLink(e.target.value)}
+                                        fullWidth
+                                        placeholder="e.g., https://unsplash.com/@johndoe"
+                                        helperText="Optional: Link to photographer's profile"
+                                    />
+                                </Box>
                             </Box>
                         )}
                         </Box>
