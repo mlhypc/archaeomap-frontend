@@ -65,12 +65,14 @@ function CityAddCollectionButton({ cityId }) {
       ]);
 
       if (collectionsResult.success) {
-        const userCollections = collectionsResult.data.collections.map(collection => ({
-          id: collection.id,
-          name: collection.name,
-          description: collection.description,
-          citiesCount: collection.city_count
-        }));
+        const userCollections = (collectionsResult.data.collections || [])
+          .filter(collection => collection && collection.id)
+          .map(collection => ({
+            id: collection.id,
+            name: collection.name || 'Unnamed Collection',
+            description: collection.description || '',
+            citiesCount: collection.city_count || 0
+          }));
         setCollections(userCollections);
       } else {
         if (collectionsResult.needsAuth) {
@@ -82,7 +84,9 @@ function CityAddCollectionButton({ cityId }) {
       }
 
       if (cityCollectionsResult.success) {
-        const cityCollectionIds = cityCollectionsResult.data.collections.map(c => c.id);
+        const cityCollectionIds = (cityCollectionsResult.data.collections || [])
+          .filter(c => c && c.id)
+          .map(c => c.id);
         setCityCollections(cityCollectionIds);
       } else {
         // If we can't get city collections, assume empty (not critical error)
@@ -114,6 +118,14 @@ function CityAddCollectionButton({ cityId }) {
       setActionLoading(true);
       setError('');
 
+      // Validate collection ID
+      if (!collectionId) {
+        console.error('Invalid collectionId:', collectionId);
+        setError('Invalid collection');
+        setActionLoading(false);
+        return;
+      }
+
       const result = await collectionsApi.toggleCityInCollection(collectionId, cityId);
       
       if (result.success) {
@@ -130,7 +142,7 @@ function CityAddCollectionButton({ cityId }) {
           if (collection.id === collectionId) {
             return {
               ...collection,
-              citiesCount: result.data.likesCount
+              citiesCount: result.data.likesCount || collection.citiesCount || 0
             };
           }
           return collection;
@@ -180,6 +192,13 @@ function CityAddCollectionButton({ cityId }) {
         description: createResult.data.collection.description,
         citiesCount: 0
       };
+
+      // Validate collection ID
+      if (!newCollection.id) {
+        console.error('Invalid collection response:', createResult.data);
+        setError('Failed to create collection - invalid response');
+        return;
+      }
 
       // Then add the city to the new collection
       const addResult = await collectionsApi.addCityToCollection(newCollection.id, cityId);
@@ -334,11 +353,11 @@ function CityAddCollectionButton({ cityId }) {
           </Box>
         ) : (
           <List sx={{ p: 0 }}>
-            {collections.map((collection) => {
+            {collections.filter(c => c.id).map((collection, index) => {
               const isInCollection = cityCollections.includes(collection.id);
-              
+
               return (
-                <ListItem key={collection.id} disablePadding>
+                <ListItem key={collection.id || `collection-${index}`} disablePadding>
                   <ListItemButton
                     onClick={() => handleToggleCollection(collection.id, isInCollection)}
                     disabled={actionLoading}
@@ -358,7 +377,7 @@ function CityAddCollectionButton({ cityId }) {
                     </ListItemIcon>
                     <ListItemText
                       primary={collection.name}
-                      secondary={`${collection.citiesCount} cities`}
+                      secondary={`${collection.citiesCount || 0} cities`}
                       primaryTypographyProps={{
                         sx: {
                           fontSize: '0.9rem',

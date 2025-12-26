@@ -345,7 +345,7 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                 generic_city_name: formData.generic_city_name.trim(),
                 country: formData.country.trim(),
                 founded: parseInt(formData.founded),
-                endDate: formData.endDate ? parseInt(formData.endDate) : new Date().getFullYear(),
+                end_date: formData.endDate ? parseInt(formData.endDate) : null,
                 coordinates: [parseFloat(formData.coordinates[0]), parseFloat(formData.coordinates[1])],
                 description: formData.description.trim() || null,
                 city_tier: parseInt(formData.city_tier),
