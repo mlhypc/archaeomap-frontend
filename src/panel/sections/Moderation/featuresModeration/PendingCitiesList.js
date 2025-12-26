@@ -229,7 +229,11 @@ function PendingCitiesList({ onCityReview, onDataUpdate }) {
             }
             return acc;
         }, []);
-        return unique.sort((a, b) => a.username.localeCompare(b.username));
+        return unique.sort((a, b) => {
+            const usernameA = a?.username || '';
+            const usernameB = b?.username || '';
+            return usernameA.localeCompare(usernameB);
+        });
     }, [cities]);
 
     return (
@@ -303,11 +307,20 @@ function PendingCitiesList({ onCityReview, onDataUpdate }) {
                             label="Filter by Submitter"
                         >
                             <MenuItem value="">All Submitters</MenuItem>
-                            {uniqueSubmitters.map((submitter, index) => (
-                                <MenuItem key={submitter.id || `submitter-${index}`} value={submitter.id}>
-                                    {submitter.name || submitter.username}
-                                </MenuItem>
-                            ))}
+                            {uniqueSubmitters.map((submitter, index) => {
+                                const firstName = submitter?.id?.firstName;
+                                const lastName = submitter?.id?.lastName;
+                                const username = submitter?.username;
+                                const displayName = firstName && lastName
+                                    ? `${firstName} ${lastName}`
+                                    : firstName || username || 'Unknown';
+
+                                return (
+                                    <MenuItem key={submitter.id || `submitter-${index}`} value={submitter.id}>
+                                        {displayName}
+                                    </MenuItem>
+                                );
+                            })}
                         </Select>
                     </FormControl>
                 </Stack>
@@ -391,7 +404,14 @@ function PendingCitiesList({ onCityReview, onDataUpdate }) {
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         <PersonIcon sx={{ fontSize: 16, color: COLORS.texts.muted }} />
                                                         <Typography variant="body2" sx={{ color: COLORS.texts.secondary }}>
-                                                            {city.submitter.name}
+                                                            {(() => {
+                                                                const firstName = city.submitter?.id?.firstName;
+                                                                const lastName = city.submitter?.id?.lastName;
+                                                                const username = city.submitter?.username;
+                                                                if (firstName && lastName) return `${firstName} ${lastName}`;
+                                                                if (firstName) return firstName;
+                                                                return username || 'Unknown';
+                                                            })()}
                                                         </Typography>
                                                     </Box>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
