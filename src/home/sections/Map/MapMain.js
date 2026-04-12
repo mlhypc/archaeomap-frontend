@@ -21,7 +21,7 @@ import {
 
 import { ControlPanel, AuthenticationPanel } from './features/mapControls';
 import { getCurrentCityName } from '../../../shared/config/generalUtils';
-import CesiumGlobe from './features/CesiumGlobe';
+const CesiumGlobe = React.lazy(() => import('./features/CesiumGlobe'));
 
 // MAP LAYERS - moved outside component to prevent re-creation
 const MAP_LAYERS = {
@@ -598,17 +598,19 @@ function MapComponent(props) {
             zIndex: uiState.enable3D ? 1 : 0
           }}
         >
-          {/* 3D GLOBE VIEW */}
-          <CesiumGlobe
-            cities={[...dataState.currentDisplayData.active, ...dataState.currentDisplayData.ended]}
-            selectedCity={uiState.selectedCity}
-            onCityClick={handleSelectCity}
-            onCameraChange={handleCameraChange}
-            currentYear={uiState.currentYear}
-            showLabels={uiState.showLabels}
-            labelFilter={uiState.labelFilter}
-            cameraPosition={mapState.cameraPosition}
-          />
+          {/* 3D GLOBE VIEW - lazy loaded only when 3D mode is enabled */}
+          <React.Suspense fallback={<CircularProgress sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />}>
+            <CesiumGlobe
+              cities={[...dataState.currentDisplayData.active, ...dataState.currentDisplayData.ended]}
+              selectedCity={uiState.selectedCity}
+              onCityClick={handleSelectCity}
+              onCameraChange={handleCameraChange}
+              currentYear={uiState.currentYear}
+              showLabels={uiState.showLabels}
+              labelFilter={uiState.labelFilter}
+              cameraPosition={mapState.cameraPosition}
+            />
+          </React.Suspense>
         </Box>
       )}
 

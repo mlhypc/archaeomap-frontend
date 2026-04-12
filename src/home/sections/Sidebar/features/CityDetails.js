@@ -182,7 +182,7 @@ function CityDetails({ cityDetails, currentYear }) {
               Historical Control
             </Typography>
 
-            <IconButton size="small" sx={{ color: COLORS.texts.secondary }}>
+            <IconButton size="small" aria-label={controlHistoryOpen ? "Collapse historical control" : "Expand historical control"} sx={{ color: COLORS.texts.secondary }}>
               {controlHistoryOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </IconButton>
           </Box>
@@ -315,7 +315,7 @@ function CityDetails({ cityDetails, currentYear }) {
               Historical Landmarks
             </Typography>
 
-            <IconButton size="small" sx={{ color: COLORS.texts.secondary }}>
+            <IconButton size="small" aria-label={landmarksOpen ? "Collapse historical landmarks" : "Expand historical landmarks"} sx={{ color: COLORS.texts.secondary }}>
               {landmarksOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </IconButton>
           </Box>

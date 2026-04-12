@@ -180,6 +180,7 @@ function HomePage() {
 
           <IconButton
             onClick={closeLeftDrawer}
+            aria-label="Close panel"
             sx={{
               color: COLORS.primary,
               '&:hover': {

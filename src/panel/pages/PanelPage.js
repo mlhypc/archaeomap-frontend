@@ -309,9 +309,10 @@ function PanelPage() {
             </Typography>
           </Box>
 
-          <IconButton 
+          <IconButton
             onClick={() => navigate('/')}
             color="inherit"
+            aria-label="Back to map"
           >
             <ArrowBackIcon />
           </IconButton>
@@ -337,9 +338,10 @@ function PanelPage() {
             </Typography>
           </Box>
           
-          <IconButton 
+          <IconButton
             onClick={() => setMobileMenuOpen(false)}
             size="small"
+            aria-label="Close menu"
           >
             <CloseIcon />
           </IconButton>
@@ -377,6 +379,7 @@ function PanelPage() {
               <IconButton
                 onClick={handleLogout}
                 color="error"
+                aria-label="Logout"
               >
                 <LogoutIcon />
               </IconButton>
@@ -392,8 +395,9 @@ function PanelPage() {
       {/* Desktop Header */}
       <Box sx={panelStyles.desktopHeader}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton 
+          <IconButton
             onClick={() => navigate('/')}
+            aria-label="Back to map"
             sx={panelComponents.backButton}
           >
             <ArrowBackIcon />

@@ -184,7 +184,7 @@ function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
 
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Chip label={formatYear(year)} size="small" color="secondary" sx={{ mr: 1, backgroundColor: currentPeriod.color, minWidth: '48px', color: '#fff', fontFamily: 'Georgia, serif', fontSize: '0.7rem' }} />
-            <IconButton size="small" onClick={toggleExpanded} sx={{ color: theme.palette.primary.main, p: 0.5 }}>
+            <IconButton size="small" onClick={toggleExpanded} aria-label={expanded ? "Collapse timeline" : "Expand timeline"} sx={{ color: theme.palette.primary.main, p: 0.5 }}>
               {expanded ? <ExpandMoreIcon /> : <ExpandLessIcon />}
             </IconButton>
           </Box>
