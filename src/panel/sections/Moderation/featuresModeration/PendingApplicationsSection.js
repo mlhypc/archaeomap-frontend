@@ -220,6 +220,7 @@ function PendingApplicationsSection() {
       setApplications([]);
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token]);
 
   if (loading && applications.length === 0) {

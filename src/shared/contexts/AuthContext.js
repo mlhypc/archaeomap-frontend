@@ -327,6 +327,7 @@ export const AuthProvider = ({ children }) => {
     return () => {
       mounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Sadece mount'ta çalışır, dependency yok
 
   const login = useCallback(async (identifier, password) => {
