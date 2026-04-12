@@ -1,6 +1,6 @@
 // archaeomap-frontend\src\components\panel\DataManagement\CityEditModal.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -33,6 +33,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import InfoIcon from '@mui/icons-material/Info';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
@@ -54,6 +55,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
 
     // Tab state
     const [activeTab, setActiveTab] = useState(0);
+    const jsonInputRef = useRef(null);
 
     // Image state
     const [imageFile, setImageFile] = useState(null);
@@ -236,6 +238,82 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         if (success) {
             setSuccess(null);
         }
+    };
+
+    // Load city data from a JSON file into the form
+    const handleJsonImport = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.name.endsWith('.json')) {
+            setError('Please select a .json file');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+
+                // Validate required fields
+                const problems = [];
+                if (!json.generic_city_name || typeof json.generic_city_name !== 'string')
+                    problems.push('generic_city_name missing or not a string');
+                if (!json.country || typeof json.country !== 'string')
+                    problems.push('country missing or not a string');
+                if (json.founded === undefined || typeof json.founded !== 'number')
+                    problems.push('founded missing or not a number');
+                if (!Array.isArray(json.coordinates) || json.coordinates.length < 2)
+                    problems.push('coordinates must be an array [lat, lon]');
+                else {
+                    const [lat, lon] = json.coordinates;
+                    if (typeof lat !== 'number' || lat < -90 || lat > 90)
+                        problems.push('coordinates[0] (latitude) must be a number between -90 and 90');
+                    if (typeof lon !== 'number' || lon < -180 || lon > 180)
+                        problems.push('coordinates[1] (longitude) must be a number between -180 and 180');
+                }
+                if (json.end_date !== undefined && json.end_date !== null && typeof json.end_date !== 'number')
+                    problems.push('end_date must be a number or null');
+                if (json.city_tier !== undefined && (typeof json.city_tier !== 'number' || json.city_tier < 1 || json.city_tier > 10))
+                    problems.push('city_tier must be a number between 1 and 10');
+                if (json.controlHistory !== undefined && !Array.isArray(json.controlHistory))
+                    problems.push('controlHistory must be an array');
+                if (json.populationHistory !== undefined && !Array.isArray(json.populationHistory))
+                    problems.push('populationHistory must be an array');
+                if (json.landmarksHistory !== undefined && !Array.isArray(json.landmarksHistory))
+                    problems.push('landmarksHistory must be an array');
+
+                if (problems.length > 0) {
+                    setError(`JSON validation failed:\n• ${problems.join('\n• ')}`);
+                    return;
+                }
+
+                setFormData(prev => ({
+                    ...prev,
+                    generic_city_name: json.generic_city_name,
+                    country: json.country,
+                    founded: json.founded.toString(),
+                    end_date: json.end_date != null ? json.end_date.toString() : '',
+                    latitude: json.coordinates[0].toString(),
+                    longitude: json.coordinates[1].toString(),
+                    description: json.description || prev.description,
+                    city_tier: json.city_tier ?? prev.city_tier
+                }));
+
+                if (Array.isArray(json.controlHistory)) setControlHistory(json.controlHistory);
+                if (Array.isArray(json.populationHistory)) setPopulationHistory(json.populationHistory);
+                if (Array.isArray(json.landmarksHistory)) setLandmarksHistory(json.landmarksHistory);
+
+                setSuccess(`JSON loaded: "${json.generic_city_name}" — review changes and click Save`);
+                setError(null);
+            } catch {
+                setError('Invalid JSON file — could not parse');
+            }
+        };
+        reader.readAsText(file);
+
+        // Reset input so same file can be re-selected
+        event.target.value = '';
     };
 
     // Handle image file selection
@@ -969,8 +1047,32 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     gap: 1
                 }}
             >
-                {/* Left side - Delete button (Imperator only) */}
-                <Box>
+                {/* Hidden JSON file input */}
+                <input
+                    ref={jsonInputRef}
+                    type="file"
+                    accept=".json"
+                    style={{ display: 'none' }}
+                    onChange={handleJsonImport}
+                />
+
+                {/* Left side - Delete + Import JSON buttons */}
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    {activeTab === 0 && !loading && (
+                        <Button
+                            onClick={() => jsonInputRef.current?.click()}
+                            disabled={saving || deleting}
+                            variant="outlined"
+                            startIcon={<UploadFileIcon />}
+                            sx={{
+                                borderColor: COLORS.secondary,
+                                color: COLORS.secondary,
+                                '&:hover': { backgroundColor: `${COLORS.secondary}10` }
+                            }}
+                        >
+                            Load JSON
+                        </Button>
+                    )}
                     {isAdmin && !loading && (
                         <Button
                             onClick={handleDelete}
@@ -994,7 +1096,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                             {deleting ? 'Deleting...' : 'Delete City'}
                         </Button>
                     )}
-                </Box>
+                </Box> {/* end left side box */}
 
                 {/* Right side - Cancel and Save buttons (tab-specific) */}
                 <Box sx={{ display: 'flex', gap: 1 }}>

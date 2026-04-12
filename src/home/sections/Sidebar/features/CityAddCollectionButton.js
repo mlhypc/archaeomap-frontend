@@ -66,9 +66,9 @@ function CityAddCollectionButton({ cityId }) {
 
       if (collectionsResult.success) {
         const userCollections = (collectionsResult.data.collections || [])
-          .filter(collection => collection && collection.id)
+          .filter(collection => collection && (collection.id || collection._id))
           .map(collection => ({
-            id: collection.id,
+            id: collection.id || collection._id?.toString(),
             name: collection.name || 'Unnamed Collection',
             description: collection.description || '',
             citiesCount: collection.city_count || 0
@@ -187,7 +187,7 @@ function CityAddCollectionButton({ cityId }) {
       }
 
       const newCollection = {
-        id: createResult.data.collection.id,
+        id: createResult.data.collection.id || createResult.data.collection._id?.toString(),
         name: createResult.data.collection.name,
         description: createResult.data.collection.description,
         citiesCount: 0

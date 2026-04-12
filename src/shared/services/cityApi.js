@@ -364,6 +364,45 @@ const citiesApi = {
     return citiesApi.createCity(cityData);
   },
 
+  // Export city as downloadable JSON file
+  exportCity: async (cityId, cityName) => {
+    try {
+      const token = localStorage.getItem('archaeomap_token');
+      const response = await fetch(`${API_BASE_URL}/cityData/${cityId}/export`, {
+        headers: { ...(token && { Authorization: `Bearer ${token}` }) }
+      });
+
+      if (!response.ok) return { success: false, error: 'Export failed' };
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(cityName || cityId).replace(/[^a-zA-Z0-9]/g, '_')}_data.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Failed to export city data' };
+    }
+  },
+
+  // Import/update city from JSON data (moderator+)
+  importCity: async (cityId, jsonData) => {
+    try {
+      const response = await makeRequest(`/cityData/${cityId}/import`, {
+        method: 'PUT',
+        body: JSON.stringify(jsonData)
+      });
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to import city data' };
+    }
+  },
+
   // Delete city (Admin only)
   deleteCity: async (cityId) => {
     try {
@@ -746,6 +785,15 @@ class CachedCitiesApi {
     this.clearAllCaches();
     return await citiesApi.deleteCity(cityId);
   }
+
+  async importCity(cityId, jsonData) {
+    this.cityDetailsCache.delete(`city_${cityId}`);
+    this.clearCitiesCaches();
+    this.timelineCache.clear();
+    return await citiesApi.importCity(cityId, jsonData);
+  }
+
+  exportCity = citiesApi.exportCity;
 
   // ========================================================================
   // CACHE MANAGEMENT METHODS

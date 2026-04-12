@@ -13,13 +13,30 @@ import {
   CustomDataSource,
   LabelStyle,
   VerticalOrigin,
-  HorizontalOrigin
+  HorizontalOrigin,
+  UrlTemplateImageryProvider,
+  ImageryLayer,
+  EllipsoidTerrainProvider,
+  Credit
 } from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import './cesium-custom.css';
 import { getCurrentCityName } from '../../../../shared/config/generalUtils';
 
 // CESIUM_BASE_URL is defined in craco.config.js
+
+// Use OpenStreetMap imagery to avoid Cesium Ion authentication
+const OSM_LAYER = new ImageryLayer(
+  new UrlTemplateImageryProvider({
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: ['a', 'b', 'c'],
+    maximumLevel: 19,
+    credit: new Credit('© OpenStreetMap contributors')
+  })
+);
+
+// Flat ellipsoid terrain - no Ion asset required
+const ELLIPSOID_TERRAIN = new EllipsoidTerrainProvider();
 
 const CesiumGlobe = ({
   cities = [],
@@ -328,6 +345,8 @@ const CesiumGlobe = ({
         navigationHelpButton={false}
         navigationInstructionsInitiallyVisible={false}
         scene3DOnly={true}
+        baseLayer={OSM_LAYER}
+        terrainProvider={ELLIPSOID_TERRAIN}
         style={{
           width: '100%',
           height: '100%',

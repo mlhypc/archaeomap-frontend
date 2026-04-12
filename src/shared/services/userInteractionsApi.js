@@ -468,7 +468,9 @@ export const collectionsApi = {
       }
 
       const collection = collectionResult.data.collection;
-      const cityInCollection = collection.cities?.some(city => city.id === cityId) || false;
+      const cityInCollection = collection.cities?.some(
+        city => (city.id || city._id?.toString()) === cityId.toString()
+      ) || false;
 
       if (cityInCollection) {
         // Remove city from collection
@@ -522,14 +524,14 @@ export const collectionsApi = {
         return collectionsResult;
       }
 
-      const cityCollections = collectionsResult.data.collections.filter(collection =>
-        collection.cities?.some(city => city.id === cityId)
-      ).map(collection => ({
-        id: collection.id,
-        name: collection.name,
-        description: collection.description,
-        citiesCount: collection.city_count
-      }));
+      const cityCollections = collectionsResult.data.collections
+        .filter(collection => collection.cityIds?.includes(cityId.toString()))
+        .map(collection => ({
+          id: collection.id || collection._id?.toString(),
+          name: collection.name,
+          description: collection.description,
+          citiesCount: collection.city_count
+        }));
 
       return {
         success: true,
