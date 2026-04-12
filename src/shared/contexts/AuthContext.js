@@ -329,10 +329,10 @@ export const AuthProvider = ({ children }) => {
     };
   }, []); // Sadece mount'ta çalışır, dependency yok
 
-  const login = async (identifier, password) => {
+  const login = useCallback(async (identifier, password) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING });
-      
+
       const result = await authService.login(identifier, password);
 
       if (result.success) {
@@ -360,17 +360,15 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: errorMessage };
     }
-  };
+  }, [dispatch]);
 
-  const loginWithToken = async (accessToken, refreshToken) => {
+  const loginWithToken = useCallback(async (accessToken, refreshToken) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING });
 
-      // Store tokens immediately
       localStorage.setItem('archaeomap_token', accessToken);
       localStorage.setItem('archaeomap_refresh_token', refreshToken);
 
-      // Get user info using the OAuth token
       const result = await authService.getOAuthUserInfo(accessToken);
 
       if (result.success) {
@@ -384,10 +382,9 @@ export const AuthProvider = ({ children }) => {
         });
         return true;
       } else {
-        // Clear tokens if user info fetch fails
         localStorage.removeItem('archaeomap_token');
         localStorage.removeItem('archaeomap_refresh_token');
-        
+
         dispatch({
           type: AUTH_ACTIONS.SET_ERROR,
           payload: result.error || 'Failed to authenticate with OAuth token'
@@ -396,23 +393,22 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('OAuth token login error:', error);
-      
-      // Clear tokens on error
+
       localStorage.removeItem('archaeomap_token');
       localStorage.removeItem('archaeomap_refresh_token');
-      
+
       dispatch({
         type: AUTH_ACTIONS.SET_ERROR,
         payload: 'OAuth authentication failed'
       });
       return false;
     }
-  };
+  }, [dispatch]);
 
-  const register = async (userData) => {
+  const register = useCallback(async (userData) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING });
-      
+
       const result = await authService.register(userData);
 
       if (result.success) {
@@ -440,12 +436,12 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: errorMessage };
     }
-  };
+  }, [dispatch]);
 
-  const updateProfile = async (profileData) => {
+  const updateProfile = useCallback(async (profileData) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING });
-      
+
       const result = await authService.updateProfile(profileData);
 
       if (result.success) {
@@ -469,14 +465,14 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: errorMessage };
     }
-  };
+  }, [dispatch]);
 
   // PREFERENCES FUNCTIONS
 
-  const updateUserPreferences = async (preferences) => {
+  const updateUserPreferences = useCallback(async (preferences) => {
     try {
       dispatch({ type: AUTH_ACTIONS.PREFERENCES_REQUEST });
-      
+
       const result = await authService.updatePreferences(preferences);
 
       if (result.success) {
@@ -484,12 +480,11 @@ export const AuthProvider = ({ children }) => {
           type: AUTH_ACTIONS.PREFERENCES_SUCCESS,
           payload: { user: result.user }
         });
-        
-        // Auto-clear success status after 3 seconds
+
         setTimeout(() => {
           dispatch({ type: AUTH_ACTIONS.CLEAR_PREFERENCES_STATUS });
         }, 3000);
-        
+
         return { success: true, user: result.user, preferences: result.preferences };
       } else {
         dispatch({
@@ -506,16 +501,16 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: errorMessage };
     }
-  };
+  }, [dispatch]);
 
-  const updateSinglePreference = async (key, value) => {
+  const updateSinglePreference = useCallback(async (key, value) => {
     return await updateUserPreferences({ [key]: value });
-  };
+  }, [updateUserPreferences]);
 
-  const updatePrivacySettings = async (privacySettings) => {
+  const updatePrivacySettings = useCallback(async (privacySettings) => {
     try {
       dispatch({ type: AUTH_ACTIONS.PREFERENCES_REQUEST });
-      
+
       const result = await authService.updatePrivacySettings(privacySettings);
 
       if (result.success) {
@@ -523,12 +518,11 @@ export const AuthProvider = ({ children }) => {
           type: AUTH_ACTIONS.PREFERENCES_SUCCESS,
           payload: { user: result.user }
         });
-        
-        // Auto-clear success status after 3 seconds
+
         setTimeout(() => {
           dispatch({ type: AUTH_ACTIONS.CLEAR_PREFERENCES_STATUS });
         }, 3000);
-        
+
         return { success: true, user: result.user };
       } else {
         dispatch({
@@ -545,14 +539,14 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: errorMessage };
     }
-  };
+  }, [dispatch]);
 
   // FORGOT PASSWORD FUNCTIONS
 
-  const requestPasswordReset = async (email) => {
+  const requestPasswordReset = useCallback(async (email) => {
     try {
       dispatch({ type: AUTH_ACTIONS.FORGOT_PASSWORD_REQUEST });
-      
+
       const result = await authService.requestPasswordReset(email);
 
       if (result.success) {
@@ -573,12 +567,12 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: errorMessage };
     }
-  };
+  }, [dispatch]);
 
-  const resetPassword = async (token, newPassword) => {
+  const resetPassword = useCallback(async (token, newPassword) => {
     try {
       dispatch({ type: AUTH_ACTIONS.RESET_PASSWORD_REQUEST });
-      
+
       const result = await authService.resetPassword(token, newPassword);
 
       if (result.success) {
@@ -599,9 +593,9 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: errorMessage };
     }
-  };
+  }, [dispatch]);
 
-  const verifyResetToken = async (token) => {
+  const verifyResetToken = useCallback(async (token) => {
     try {
       const result = await authService.verifyResetToken(token);
       return result;
@@ -609,14 +603,14 @@ export const AuthProvider = ({ children }) => {
       console.error('Verify reset token error:', error);
       return { success: false, valid: false, error: 'Invalid or expired token' };
     }
-  };
+  }, []);
 
   // CHANGE PASSWORD FUNCTIONS
 
-  const changePassword = async (currentPassword, newPassword) => {
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
     try {
       dispatch({ type: AUTH_ACTIONS.CHANGE_PASSWORD_REQUEST });
-      
+
       const result = await authService.changePassword(currentPassword, newPassword);
 
       if (result.success) {
@@ -637,33 +631,28 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: errorMessage };
     }
-  };
+  }, [dispatch]);
 
-  // Simple clearError function
-  const clearError = () => {
+  const clearError = useCallback(() => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
-  };
+  }, [dispatch]);
 
-  // Clear forgot password state
-  const clearForgotPassword = () => {
+  const clearForgotPassword = useCallback(() => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_FORGOT_PASSWORD });
-  };
+  }, [dispatch]);
 
-  // Clear change password state
-  const clearChangePassword = () => {
+  const clearChangePassword = useCallback(() => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_CHANGE_PASSWORD });
-  };
+  }, [dispatch]);
 
-  // Clear preferences status
-  const clearPreferencesStatus = () => {
+  const clearPreferencesStatus = useCallback(() => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_PREFERENCES_STATUS });
-  };
+  }, [dispatch]);
 
-  // Unlink Google account
-  const unlinkGoogleAccount = async () => {
+  const unlinkGoogleAccount = useCallback(async () => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING });
-      
+
       const result = await authService.unlinkGoogleAccount();
 
       if (result.success) {
@@ -687,7 +676,7 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: false, error: errorMessage };
     }
-  };
+  }, [dispatch]);
 
   // DÜZELTME: Context value'yu React.useMemo ile optimize ediyoruz
   const contextValue = React.useMemo(() => ({
@@ -742,7 +731,6 @@ export const AuthProvider = ({ children }) => {
 
     // OAuth functions
     unlinkGoogleAccount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [state, login, loginWithToken, register, logout, updateProfile, clearError, updateUserPreferences, updateSinglePreference, updatePrivacySettings, clearPreferencesStatus, requestPasswordReset, resetPassword, verifyResetToken, clearForgotPassword, changePassword, clearChangePassword, unlinkGoogleAccount]);
 
   return (

@@ -34,6 +34,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import InfoIcon from '@mui/icons-material/Info';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
+import DownloadIcon from '@mui/icons-material/Download';
 
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
@@ -1056,22 +1057,37 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     onChange={handleJsonImport}
                 />
 
-                {/* Left side - Delete + Import JSON buttons */}
+                {/* Left side - Delete + Import/Export JSON buttons */}
                 <Box sx={{ display: 'flex', gap: 1 }}>
                     {activeTab === 0 && !loading && (
-                        <Button
-                            onClick={() => jsonInputRef.current?.click()}
-                            disabled={saving || deleting}
-                            variant="outlined"
-                            startIcon={<UploadFileIcon />}
-                            sx={{
-                                borderColor: COLORS.secondary,
-                                color: COLORS.secondary,
-                                '&:hover': { backgroundColor: `${COLORS.secondary}10` }
-                            }}
-                        >
-                            Load JSON
-                        </Button>
+                        <>
+                            <Button
+                                onClick={() => citiesApi.exportCity(cityId, formData.generic_city_name)}
+                                disabled={saving || deleting}
+                                variant="outlined"
+                                startIcon={<DownloadIcon />}
+                                sx={{
+                                    borderColor: COLORS.primary,
+                                    color: COLORS.primary,
+                                    '&:hover': { backgroundColor: `${COLORS.primary}10` }
+                                }}
+                            >
+                                JSON
+                            </Button>
+                            <Button
+                                onClick={() => jsonInputRef.current?.click()}
+                                disabled={saving || deleting}
+                                variant="outlined"
+                                startIcon={<UploadFileIcon />}
+                                sx={{
+                                    borderColor: COLORS.secondary,
+                                    color: COLORS.secondary,
+                                    '&:hover': { backgroundColor: `${COLORS.secondary}10` }
+                                }}
+                            >
+                                Load JSON
+                            </Button>
+                        </>
                     )}
                     {isAdmin && !loading && (
                         <Button

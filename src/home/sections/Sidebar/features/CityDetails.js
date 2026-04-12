@@ -13,10 +13,8 @@ import { useTheme } from '@mui/material/styles';
 import { COLORS, formatYear, truncateText, getCurrentCityName, hexToRgb } from '../../../../shared/config/generalUtils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import DownloadIcon from '@mui/icons-material/Download';
 import CityLikeButton from './CityLikeButton';
 import CityAddCollectionButton from './CityAddCollectionButton';
-import { citiesApi } from '../../../../shared/services/cityApi';
 
 function CityDetails({ cityDetails, currentYear }) {
   const theme = useTheme();
@@ -74,30 +72,6 @@ function CityDetails({ cityDetails, currentYear }) {
       }}>
         <CityLikeButton cityId={cityDetails.id} />
         <CityAddCollectionButton cityId={cityDetails.id} />
-        <Box
-          onClick={() => citiesApi.exportCity(cityDetails.id, cityDetails.name)}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            cursor: 'pointer',
-            padding: '4px 8px',
-            borderRadius: '16px',
-            border: `1px solid ${COLORS.border}`,
-            transition: 'all 0.2s ease',
-            width: 'fit-content',
-            '&:hover': {
-              backgroundColor: `${COLORS.primary}10`,
-              borderColor: COLORS.primary,
-              transform: 'scale(1.02)'
-            }
-          }}
-        >
-          <DownloadIcon sx={{ fontSize: '1rem', color: COLORS.texts.secondary }} />
-          <Typography sx={{ fontSize: '0.8rem', fontWeight: 500, color: COLORS.texts.secondary }}>
-            JSON
-          </Typography>
-        </Box>
       </Box>
 
       {/* City Image */}
