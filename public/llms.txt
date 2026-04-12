@@ -1,0 +1,69 @@
+# ArchaeoMap
+
+> ArchaeoMap is a free, interactive web application that visualizes the historical evolution of human settlements and ancient cities across time — from prehistoric origins to modern metropolises.
+
+## What is ArchaeoMap?
+
+ArchaeoMap lets users explore how cities around the world were founded, grew, changed rulers, built landmarks, and sometimes disappeared — all through an interactive map and timeline slider. It is designed for history enthusiasts, students, researchers, and anyone curious about the ancient world.
+
+The application is accessible at https://archaeomap.com and is completely free to use.
+
+## Core Features
+
+- **Interactive Timeline**: A draggable slider that spans thousands of years. The map updates in real time to show which cities existed during the selected period.
+- **City Markers**: Color-coded dots on a world map. Active cities appear in brown, ended cities in dark red, and the selected city is highlighted in gold.
+- **City Details Sidebar**: Clicking a city opens a detailed panel showing:
+  - Founding date and end date (if applicable)
+  - Description of the city's history
+  - Historical Control timeline (rulers, empires, dynasties that governed the city)
+  - Landmarks history (notable monuments and their construction dates)
+  - Population history
+- **3D Globe View**: A 3D Cesium-powered globe mode for an immersive perspective.
+- **Search and Filter**: Find cities by name or filter by time period.
+- **Collections**: Registered users can save cities into personal collections.
+- **JSON Export**: Any city's data can be downloaded as a structured JSON file.
+- **Responsive Design**: Fully functional on mobile and desktop.
+
+## Data Model
+
+Each city in ArchaeoMap contains:
+- `name`: The modern or most recognized name
+- `country`: Modern country it belongs to
+- `founded`: Year of founding (negative numbers = BCE)
+- `endDate`: Year the city ceased to exist (if applicable)
+- `coordinates`: Latitude and longitude
+- `description`: Historical summary
+- `controlHistory`: Array of ruling powers with start/end years and descriptions
+- `landmarksHistory`: Array of notable structures with construction dates and purposes
+- `populationHistory`: Population estimates over time
+
+## Who Should Use ArchaeoMap?
+
+- History students and teachers looking for visual teaching tools
+- Researchers studying urban history, archaeology, or historical geography
+- Travelers interested in the ancient origins of cities they visit
+- Game developers or writers seeking historical city data
+- Anyone curious about how the world looked in 300 BCE, 1000 CE, or any other period
+
+## Frequently Asked Questions
+
+**What time periods does ArchaeoMap cover?**
+ArchaeoMap covers cities from prehistoric settlements (thousands of years BCE) through to modern times. The timeline slider allows navigation across this full range.
+
+**Is ArchaeoMap free?**
+Yes. ArchaeoMap is completely free to use with no subscription required. An optional account allows saving personal city collections.
+
+**How accurate is the data?**
+Data is curated from historical records, archaeological findings, and open-source research. The team continuously improves accuracy. Users and contributors can suggest corrections.
+
+**Can I contribute data?**
+Yes. Registered contributors can submit new cities for review. Moderators verify submissions before they appear on the public map.
+
+**Is there an API?**
+City data can be exported individually as JSON from the city detail panel. A public API is planned for future development.
+
+## Contact
+
+Email: melih@archaeomap.com
+Website: https://archaeomap.com
+About page: https://archaeomap.com/about.html

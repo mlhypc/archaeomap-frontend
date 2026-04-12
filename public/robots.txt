@@ -24,5 +24,6 @@ Allow: /
 User-agent: cohere-ai
 Allow: /
 
-# Point to sitemap for better indexing
+# Point to sitemap and LLM context file
 Sitemap: https://archaeomap.com/sitemap.xml
+LLMs: https://archaeomap.com/llms.txt
