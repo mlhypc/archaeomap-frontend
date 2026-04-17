@@ -71,7 +71,7 @@ function PendingApplicationsSection() {
         return;
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/role-applications/pending`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/role-applications/pending`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -102,7 +102,7 @@ function PendingApplicationsSection() {
 
     try {
       setSubmittingVote(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/role-applications/${selectedApplication.id}/vote`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/role-applications/${selectedApplication.id}/vote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ function PendingApplicationsSection() {
 
     try {
       setClosingVoting(application.id);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/role-applications/${application.id}/close`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/role-applications/${application.id}/close`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

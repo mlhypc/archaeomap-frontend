@@ -53,7 +53,7 @@ function ApplyForContributorSection() {
         return;
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/role-applications/my-applications`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/role-applications/my-applications`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -103,7 +103,7 @@ function CityLists() {
                 return;
             }
             
-            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/user-interactions/collections`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/user-interactions/collections`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
@@ -150,8 +150,8 @@ function CityLists() {
             setError(null);
 
             const url = editingCollection
-                ? `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${editingCollection.id}`
-                : `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/user-interactions/collections`;
+                ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${editingCollection.id}`
+                : `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/user-interactions/collections`;
             
             const method = editingCollection ? 'PUT' : 'POST';
 
@@ -194,7 +194,7 @@ function CityLists() {
         }
 
         try {
-            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${collection.id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${collection.id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -233,7 +233,7 @@ function CityLists() {
             
             // Use Promise.allSettled for better error handling and performance
             const addPromises = selectedCities.map(city => 
-                fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${selectedCollection.id}/cities`, {
+                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${selectedCollection.id}/cities`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -275,7 +275,7 @@ function CityLists() {
         }
 
         try {
-            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${collection.id}/cities/${city.id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${collection.id}/cities/${city.id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -304,7 +304,7 @@ function CityLists() {
 
     const handleViewCollection = async (collection) => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${collection.id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/user-interactions/collections/${collection.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             

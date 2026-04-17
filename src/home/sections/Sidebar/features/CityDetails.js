@@ -87,7 +87,7 @@ function CityDetails({ cityDetails, currentYear }) {
             display: imageLoaded ? 'block' : 'none'
           }}>
             <img
-              src={`${(process.env.REACT_APP_API_URL || 'http://localhost:5000').replace('/api', '')}${cityDetails.image_url}`}
+              src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${cityDetails.image_url}`}
               alt={`${cityDetails.name}`}
               onError={handleImageError}
               onLoad={handleImageLoad}

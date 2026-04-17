@@ -117,7 +117,7 @@ function ApplyForContributor({ open, onClose, onSuccess }) {
         throw new Error('No authentication token found. Please log in again.');
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/role-applications/contributor`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/role-applications/contributor`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

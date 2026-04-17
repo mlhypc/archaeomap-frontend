@@ -32,7 +32,7 @@ export const useCitySearch = () => {
         debounceRef.current = setTimeout(async () => {
             try {
                 const response = await fetch(
-                    `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/cityData/search?q=${encodeURIComponent(query)}`, 
+                    `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/cityData/search?q=${encodeURIComponent(query)}`, 
                     {
                         headers: { 'Authorization': `Bearer ${token}` }
                     }

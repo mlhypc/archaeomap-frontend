@@ -173,7 +173,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         setImagePreview(result.data.image_url);
                     } else {
                         // Local path - prepend base URL
-                        const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace('/api', '');
+                        const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '');
                         setImagePreview(`${baseUrl}${result.data.image_url}`);
                     }
                 }

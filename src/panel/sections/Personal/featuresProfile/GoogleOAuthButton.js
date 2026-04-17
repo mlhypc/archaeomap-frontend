@@ -28,7 +28,7 @@ const GoogleIcon = () => (
 
 function GoogleOAuthButton({ type = 'login' }) {
   const handleGoogleAuth = () => {
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     
     // Redirect to backend Google OAuth endpoint
     window.location.href = `${apiUrl}/auth/google`;

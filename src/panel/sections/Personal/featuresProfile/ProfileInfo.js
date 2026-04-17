@@ -44,9 +44,10 @@ function ProfileInfo() {
       {/* Main Profile Header */}
       <Stack direction="row" spacing={3} alignItems="center">
         <Avatar
-          sx={{ 
-            width: 80, 
-            height: 80, 
+          src={user?.profileImageUrl || undefined}
+          sx={{
+            width: 80,
+            height: 80,
             bgcolor: COLORS.primary,
             fontSize: '2rem',
             fontFamily: 'Georgia, serif',

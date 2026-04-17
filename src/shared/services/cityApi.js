@@ -2,7 +2,7 @@
 
 import { authService } from './authApi';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ========================================================================
 // HELPER FUNCTIONS
@@ -378,7 +378,7 @@ const citiesApi = {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${(cityName || cityId).replace(/[^a-zA-Z0-9]/g, '_')}_data.json`;
+      a.download = `${cityId}_${(cityName || '').replace(/[^a-zA-Z0-9]/g, '_')}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
