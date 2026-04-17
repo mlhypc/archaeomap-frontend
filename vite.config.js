@@ -11,6 +11,7 @@ export default defineConfig({
         if (!id.match(/src\/.*\.js$/)) return null;
         return transformWithEsbuild(code, id.replace(/\.js$/, '.jsx'), {
           loader: 'jsx',
+          jsx: 'automatic',
         });
       },
     },
