@@ -1062,7 +1062,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                     {activeTab === 0 && !loading && (
                         <>
                             <Button
-                                onClick={() => citiesApi.exportCity(cityId, formData.generic_city_name)}
+                                onClick={() => citiesApi.exportCity(cityId, formData.generic_city_name, formData.country)}
                                 disabled={saving || deleting}
                                 variant="outlined"
                                 startIcon={<DownloadIcon />}

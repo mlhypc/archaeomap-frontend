@@ -365,7 +365,7 @@ const citiesApi = {
   },
 
   // Export city as downloadable JSON file
-  exportCity: async (cityId, cityName) => {
+  exportCity: async (cityId, cityName, country) => {
     try {
       const token = localStorage.getItem('archaeomap_token');
       const response = await fetch(`${API_BASE_URL}/cityData/${cityId}/export`, {
@@ -378,7 +378,8 @@ const citiesApi = {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${cityId}_${(cityName || '').replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+      const safeName = (s) => (s || '').replace(/[^a-zA-Z0-9]/g, '_');
+      a.download = `${safeName(country)}_${safeName(cityName)}_${cityId}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
