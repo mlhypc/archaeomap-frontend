@@ -1,16 +1,22 @@
-import { defineConfig } from 'vite';
+import { defineConfig, transformWithEsbuild } from 'vite';
 import react from '@vitejs/plugin-react';
 import cesium from 'vite-plugin-cesium';
 
 export default defineConfig({
   plugins: [
-    react({ include: /\.(jsx|js|tsx|ts)$/ }),
+    {
+      name: 'treat-js-files-as-jsx',
+      enforce: 'pre',
+      async transform(code, id) {
+        if (!id.match(/src\/.*\.js$/)) return null;
+        return transformWithEsbuild(code, id.replace(/\.js$/, '.jsx'), {
+          loader: 'jsx',
+        });
+      },
+    },
+    react(),
     cesium(),
   ],
-  esbuild: {
-    loader: 'jsx',
-    include: /src\/.*\.js$/,
-  },
   server: {
     port: 3000,
   },
