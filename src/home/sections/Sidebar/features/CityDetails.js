@@ -25,6 +25,7 @@ function CityDetails({ cityDetails, currentYear }) {
   // Local state for collapsible sections
   const [controlHistoryOpen, setControlHistoryOpen] = useState(false);
   const [landmarksOpen, setLandmarksOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageCredit, setImageCredit] = useState(null);
 
@@ -87,7 +88,9 @@ function CityDetails({ cityDetails, currentYear }) {
             display: imageLoaded ? 'block' : 'none'
           }}>
             <img
-              src={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${cityDetails.image_url}`}
+              src={cityDetails.image_url.startsWith('http')
+                ? cityDetails.image_url
+                : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${cityDetails.image_url}`}
               alt={`${cityDetails.name}`}
               onError={handleImageError}
               onLoad={handleImageLoad}
@@ -417,6 +420,94 @@ function CityDetails({ cityDetails, currentYear }) {
                     </Box>
                   ))}
               </Box>
+            </Box>
+          </Collapse>
+        </Box>
+      )}
+
+      {/* Sources */}
+      {cityDetails.sources && cityDetails.sources.length > 0 && (
+        <Box sx={{ mt: { xs: 1.5, md: 2 } }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            p: 1.5,
+            backgroundColor: sourcesOpen
+              ? `rgba(${hexToRgb(COLORS.primary)}, 0.12)`
+              : `rgba(${hexToRgb(COLORS.primary)}, 0.08)`,
+            borderRadius: '6px',
+            mb: 2,
+            border: `1px solid ${COLORS.border}`,
+            '&:hover': {
+              backgroundColor: `rgba(${hexToRgb(COLORS.primary)}, 0.14)`
+            }
+          }} onClick={() => setSourcesOpen(!sourcesOpen)}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" sx={{
+                fontSize: { xs: isSmallMobile ? '0.95rem' : '1.05rem' },
+                color: COLORS.texts.primary,
+                fontWeight: 600
+              }}>
+                Sources
+              </Typography>
+              <Typography variant="caption" sx={{
+                fontSize: '0.7rem',
+                color: COLORS.texts.muted,
+                backgroundColor: `${COLORS.primary}20`,
+                px: 0.8,
+                py: 0.2,
+                borderRadius: '10px'
+              }}>
+                {cityDetails.sources.length}
+              </Typography>
+            </Box>
+
+            <IconButton size="small" aria-label={sourcesOpen ? "Collapse sources" : "Expand sources"} sx={{ color: COLORS.texts.secondary }}>
+              {sourcesOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </IconButton>
+          </Box>
+
+          <Collapse in={sourcesOpen} timeout="auto" unmountOnExit>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {cityDetails.sources.map((source, index) => (
+                <Box key={index} sx={{
+                  backgroundColor: `${COLORS.background}cc`,
+                  border: `1px solid ${COLORS.border}`,
+                  borderRadius: '4px',
+                  p: 1.25
+                }}>
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: COLORS.primary,
+                      textDecoration: 'none',
+                      fontSize: isSmallMobile ? '0.8rem' : '0.85rem',
+                      fontWeight: 500,
+                      lineHeight: 1.4,
+                      display: 'block',
+                      wordBreak: 'break-word'
+                    }}
+                  >
+                    {source.title}
+                  </a>
+                  {(source.author || source.year) && (
+                    <Typography sx={{
+                      fontSize: '0.7rem',
+                      color: COLORS.texts.muted,
+                      mt: 0.3,
+                      fontStyle: 'italic'
+                    }}>
+                      {source.author && source.year
+                        ? `${source.author}, ${source.year}`
+                        : (source.author || source.year)}
+                    </Typography>
+                  )}
+                </Box>
+              ))}
             </Box>
           </Collapse>
         </Box>

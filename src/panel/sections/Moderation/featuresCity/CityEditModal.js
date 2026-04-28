@@ -35,6 +35,9 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import InfoIcon from '@mui/icons-material/Info';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import AddIcon from '@mui/icons-material/Add';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
@@ -86,6 +89,9 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const [controlHistory, setControlHistory] = useState([]);
     const [populationHistory, setPopulationHistory] = useState([]);
     const [landmarksHistory, setLandmarksHistory] = useState([]);
+
+    // Sources state
+    const [sources, setSources] = useState([]);
 
     // Load city data when modal opens
     useEffect(() => {
@@ -165,6 +171,9 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 setPopulationHistory(completeData.population_history_json || []);
                 setLandmarksHistory(completeData.landmarks_history_json || []);
 
+                // Set sources from backend
+                setSources(Array.isArray(result.data.sources) ? result.data.sources : []);
+
                 // Set image data
                 if (result.data.image_url) {
                     // Check if it's a full URL (B2) or relative path (local)
@@ -212,6 +221,9 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
         setControlHistory([]);
         setPopulationHistory([]);
         setLandmarksHistory([]);
+
+        // Reset sources
+        setSources([]);
 
         // Reset image states
         setImageFile(null);
@@ -442,7 +454,14 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 // Send sanitized historical data
                 controlHistory: sanitizedControlHistory,
                 populationHistory: sanitizedPopulationHistory,
-                landmarksHistory: sanitizedLandmarksHistory
+                landmarksHistory: sanitizedLandmarksHistory,
+                // Preserve sources (edited on a separate tab but sent on every save so backend keeps them)
+                sources: sources.map(s => ({
+                    title: (s.title || '').trim(),
+                    url: (s.url || '').trim(),
+                    author: s.author ? s.author.trim() : null,
+                    year: s.year !== '' && s.year !== null && s.year !== undefined ? parseInt(s.year) : null
+                })).filter(s => s.title && s.url)
             };
 
             console.log('🔍 Frontend sending updateData:', updateData);
@@ -546,6 +565,86 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
     const hasUnsavedChanges = () => {
         if (!originalData) return false;
         return JSON.stringify(formData) !== JSON.stringify(originalData);
+    };
+
+    // Save handler for Sources tab - sends only sources + minimum city fields
+    const handleSaveSources = async () => {
+        if (!cityId || !completeCityData) {
+            setError('City data not loaded');
+            return;
+        }
+
+        // Validate sources
+        for (let i = 0; i < sources.length; i++) {
+            const s = sources[i];
+            if (!s.title?.trim() || !s.url?.trim()) {
+                setError(`Source #${i + 1}: title and URL are required`);
+                return;
+            }
+            try {
+                new URL(s.url);
+            } catch {
+                setError(`Source #${i + 1}: invalid URL`);
+                return;
+            }
+        }
+
+        setSaving(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const sanitizedSources = sources.map(s => ({
+                title: s.title.trim(),
+                url: s.url.trim(),
+                author: s.author ? s.author.trim() : null,
+                year: s.year !== '' && s.year !== null && s.year !== undefined ? parseInt(s.year) : null
+            }));
+
+            // Backend PUT /:id requires full city data when not image-only,
+            // so we send everything along with sources
+            const updateData = {
+                generic_city_name: formData.generic_city_name.trim(),
+                country: formData.country.trim(),
+                founded: parseInt(formData.founded),
+                end_date: formData.end_date ? parseInt(formData.end_date) : new Date().getFullYear(),
+                description: formData.description.trim() || null,
+                city_tier: parseInt(formData.city_tier),
+                data_status: formData.data_status,
+                coordinates: [parseFloat(formData.latitude), parseFloat(formData.longitude)],
+                controlHistory: controlHistory,
+                populationHistory: populationHistory,
+                landmarksHistory: landmarksHistory,
+                sources: sanitizedSources
+            };
+
+            const result = await citiesApi.updateCity(cityId, updateData);
+
+            if (result.success) {
+                setSuccess('Sources updated successfully!');
+                if (onCityUpdated) onCityUpdated(result.data.city);
+            } else {
+                setError(result.error || 'Failed to update sources');
+            }
+        } catch (err) {
+            setError('Network error occurred');
+            console.error('Sources update error:', err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Sources editor helpers
+    const handleAddSource = () => {
+        setSources(prev => [...prev, { title: '', url: '', author: '', year: '' }]);
+    };
+
+    const handleRemoveSource = (index) => {
+        setSources(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSourceChange = (index, field, value) => {
+        setSources(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
     };
 
     const handleDelete = async () => {
@@ -705,6 +804,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                             >
                                 <Tab icon={<InfoIcon />} label="Historical Info" iconPosition="start" />
                                 <Tab icon={<PhotoCameraIcon />} label="Photos" iconPosition="start" />
+                                <Tab icon={<MenuBookIcon />} label="Sources" iconPosition="start" />
                             </Tabs>
                         </Box>
 
@@ -1034,6 +1134,132 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 </Box>
                             </Box>
                         )}
+
+                        {/* Tab 2: Sources */}
+                        {activeTab === 2 && (
+                            <Box sx={{ pt: 2 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                                    <Typography variant="h6" sx={{ color: COLORS.texts.primary }}>
+                                        Sources & References
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<AddIcon />}
+                                        onClick={handleAddSource}
+                                        sx={{
+                                            borderColor: COLORS.primary,
+                                            color: COLORS.primary,
+                                            '&:hover': { backgroundColor: `${COLORS.primary}10` }
+                                        }}
+                                    >
+                                        Add Source
+                                    </Button>
+                                </Box>
+
+                                <Alert severity="info" sx={{ mb: 3 }}>
+                                    Add external references for this city — DOI links, Wikipedia, JSTOR, archive.org, etc.
+                                    Do not host PDFs directly; link to the original source.
+                                </Alert>
+
+                                {sources.length === 0 ? (
+                                    <Paper
+                                        elevation={0}
+                                        sx={{
+                                            p: 4,
+                                            textAlign: 'center',
+                                            border: `2px dashed ${COLORS.border}`,
+                                            borderRadius: '8px',
+                                            backgroundColor: COLORS.background
+                                        }}
+                                    >
+                                        <MenuBookIcon sx={{ fontSize: 40, color: COLORS.texts.muted, mb: 1 }} />
+                                        <Typography variant="body2" sx={{ color: COLORS.texts.muted }}>
+                                            No sources yet. Click "Add Source" to add one.
+                                        </Typography>
+                                    </Paper>
+                                ) : (
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                        {sources.map((source, index) => (
+                                            <Paper
+                                                key={index}
+                                                elevation={1}
+                                                sx={{ p: 2, borderRadius: '8px', position: 'relative' }}
+                                            >
+                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                                                    <Typography variant="subtitle2" sx={{ color: COLORS.texts.secondary }}>
+                                                        Source #{index + 1}
+                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                        {source.url && (
+                                                            <Button
+                                                                size="small"
+                                                                href={source.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                startIcon={<OpenInNewIcon fontSize="small" />}
+                                                                sx={{ color: COLORS.primary, minWidth: 'auto' }}
+                                                            >
+                                                                Open
+                                                            </Button>
+                                                        )}
+                                                        <Button
+                                                            size="small"
+                                                            color="error"
+                                                            onClick={() => handleRemoveSource(index)}
+                                                            startIcon={<DeleteIcon fontSize="small" />}
+                                                            sx={{ minWidth: 'auto' }}
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </Box>
+                                                </Box>
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                                    <TextField
+                                                        label="Title"
+                                                        value={source.title || ''}
+                                                        onChange={(e) => handleSourceChange(index, 'title', e.target.value)}
+                                                        fullWidth
+                                                        required
+                                                        size="small"
+                                                        placeholder="e.g., The Histories, Book I"
+                                                    />
+                                                    <TextField
+                                                        label="URL"
+                                                        value={source.url || ''}
+                                                        onChange={(e) => handleSourceChange(index, 'url', e.target.value)}
+                                                        fullWidth
+                                                        required
+                                                        size="small"
+                                                        placeholder="https://doi.org/... or https://archive.org/..."
+                                                        type="url"
+                                                    />
+                                                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5 }}>
+                                                        <TextField
+                                                            label="Author"
+                                                            value={source.author || ''}
+                                                            onChange={(e) => handleSourceChange(index, 'author', e.target.value)}
+                                                            size="small"
+                                                            sx={{ flex: 2 }}
+                                                            placeholder="e.g., Herodotus"
+                                                        />
+                                                        <TextField
+                                                            label="Year"
+                                                            value={source.year ?? ''}
+                                                            onChange={(e) => handleSourceChange(index, 'year', e.target.value)}
+                                                            size="small"
+                                                            type="number"
+                                                            sx={{ flex: 1 }}
+                                                            placeholder="e.g., 1923"
+                                                        />
+                                                    </Box>
+                                                </Box>
+                                            </Paper>
+                                        ))}
+                                    </Box>
+                                )}
+                            </Box>
+                        )}
                         </Box>
                     </>
                 )}
@@ -1164,6 +1390,26 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                             }}
                         >
                             {saving ? 'Uploading...' : 'Save Photo'}
+                        </Button>
+                    )}
+
+                    {/* Sources Tab - Save Button */}
+                    {activeTab === 2 && (
+                        <Button
+                            onClick={handleSaveSources}
+                            disabled={loading || saving || deleting || !completeCityData}
+                            variant="contained"
+                            startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
+                            sx={{
+                                backgroundColor: COLORS.primary,
+                                '&:hover': { backgroundColor: '#5d3a2a' },
+                                '&:disabled': {
+                                    backgroundColor: COLORS.texts.muted,
+                                    color: 'white'
+                                }
+                            }}
+                        >
+                            {saving ? 'Saving...' : 'Save Sources'}
                         </Button>
                     )}
                 </Box>
