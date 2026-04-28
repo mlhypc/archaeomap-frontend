@@ -403,6 +403,30 @@ export const authService = {
     }
   },
 
+  // Upload profile picture
+  async uploadProfilePicture(file) {
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const response = await authApi.post('/auth/profile/picture', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return { success: true, user: response.data.user };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || 'Upload failed' };
+    }
+  },
+
+  // Delete profile picture
+  async deleteProfilePicture() {
+    try {
+      const response = await authApi.delete('/auth/profile/picture');
+      return { success: true, user: response.data.user };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.error || 'Delete failed' };
+    }
+  },
+
   // Unlink Google account
   async unlinkGoogleAccount() {
     try {

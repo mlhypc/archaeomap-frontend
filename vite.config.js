@@ -18,6 +18,11 @@ export default defineConfig({
     react(),
     cesium(),
   ],
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: { '.js': 'jsx' },
+    },
+  },
   server: {
     port: 3000,
   },

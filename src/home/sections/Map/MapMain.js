@@ -29,7 +29,7 @@ const MAP_LAYERS = {
     name: 'Ancient World Map',
     url: 'https://cawm.lib.uiowa.edu/tiles/{z}/{x}/{y}.png',
     attribution: '&copy; Consortium of Ancient World Mappers (CAWM)',
-    maxZoom: 13  // Override default
+    maxZoom: 11
   },
   arcgis: {
     name: 'ArcGIS',
@@ -50,8 +50,8 @@ const MAP_LAYERS = {
 };
 
 // Global zoom settings
-const MAP_MIN_ZOOM = 1;
-const MAP_MAX_ZOOM = 17;
+const MAP_MIN_ZOOM = 3;
+const MAP_MAX_ZOOM = 18;
 
 // TIMELINE YEARS - moved outside to prevent re-generation
 const generateTimelineYears = () => {
@@ -103,6 +103,18 @@ function BoundsTracker({ onBoundsChange, onCameraChange }) {
       map.off('zoomend', updateBounds);
     };
   }, [map, onBoundsChange, onCameraChange]);
+  return null;
+}
+
+function MaxZoomController({ maxZoom }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+    map.setMaxZoom(maxZoom);
+    if (map.getZoom() > maxZoom) {
+      map.setZoom(maxZoom);
+    }
+  }, [map, maxZoom]);
   return null;
 }
 
@@ -225,10 +237,11 @@ function useMapState() {
 
 // MAIN COMPONENT - optimized
 function MapComponent(props) {
-  const { 
-    onSelectCity = () => {}, 
-    onYearChange = () => {}, 
-    onAuthClick = () => {} 
+  const {
+    onSelectCity = () => {},
+    onYearChange = () => {},
+    onAuthClick = () => {},
+    sidebarCollapsed = false
   } = props || {};
 
   // CUSTOM HOOK USAGE
@@ -315,8 +328,8 @@ function MapComponent(props) {
 
     if (uiState.selectedCity?.id === city.id) return;
 
-    // Background detail fetching
-    if (!cityDetailsCache.current.has(city.id)) {
+    // Skip background fetch when sidebar is collapsed — Sidebar will fetch on expand
+    if (!sidebarCollapsed && !cityDetailsCache.current.has(city.id)) {
       try {
         const result = await cachedCitiesApi.getCityDetails(city.id);
         if (result.success) {
@@ -652,6 +665,7 @@ function MapComponent(props) {
             attribution={MAP_LAYERS[uiState.mapLayerKey].attribution}
           />
 
+          <MaxZoomController maxZoom={MAP_LAYERS[uiState.mapLayerKey].maxZoom || MAP_MAX_ZOOM} />
           <BoundsTracker
             onBoundsChange={handleBoundsChange}
             onCameraChange={handleCameraChange}

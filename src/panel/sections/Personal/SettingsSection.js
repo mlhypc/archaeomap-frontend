@@ -15,6 +15,7 @@ import { useAuth } from '../../../shared/contexts/AuthContext';
 import { COLORS } from '../../../shared/config/generalUtils';
 
 // Import modular components
+import ProfilePictureSettings from './featuresSettings/ProfilePictureSettings';
 import PrivacySettings from './featuresSettings/PrivacySettings';
 import PasswordSettings from './featuresSettings/PasswordSettings';
 import AppearanceSettings from './featuresSettings/AppearanceSettings';
@@ -253,6 +254,9 @@ function SettingsSection() {
             Manage your account preferences and security settings
           </Typography>
         </Box>
+
+        {/* Profile Picture */}
+        <ProfilePictureSettings />
 
         {/* Privacy Settings */}
         <PrivacySettings

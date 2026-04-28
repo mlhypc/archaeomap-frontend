@@ -13,6 +13,7 @@ import {
   ListItemText,
   Box,
   Typography,
+  Avatar,
   useMediaQuery
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -197,50 +198,55 @@ export const AuthenticationPanel = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
-  // Hide on mobile to prevent duplication with FAB controls
+
   if (isMobile) return null;
+
+  const tooltip = isAuthenticated ? (
+    <Box>
+      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{user?.username}</Typography>
+      <Typography variant="caption" sx={{ opacity: 0.8 }}>Click to manage account</Typography>
+    </Box>
+  ) : 'Login / Register';
 
   return (
     <ControlContainer position="topLeft">
-      <ControlButton
-        icon={AccountCircleIcon}
-        tooltip={
-          isAuthenticated ? (
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                {user?.username}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                Click to manage account
-              </Typography>
-            </Box>
+      <MuiTooltip title={tooltip} arrow placement="bottom" TransitionComponent={Fade} TransitionProps={{ timeout: 600 }}>
+        <IconButton
+          onClick={onAuthClick}
+          size="medium"
+          aria-label={isAuthenticated ? "Account settings" : "Login or register"}
+          sx={{
+            position: 'relative',
+            transition: 'all 0.2s ease',
+            '&:hover': { backgroundColor: 'rgba(255,255,255,0.3)', transform: 'scale(1.05)' },
+            ...(isAuthenticated && {
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: 2,
+                right: 2,
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: '#4caf50',
+                border: '1.5px solid white',
+                boxShadow: '0 0 0 1px rgba(76, 175, 80, 0.3)'
+              }
+            })
+          }}
+        >
+          {isAuthenticated ? (
+            <Avatar
+              src={user?.profileImageUrl || undefined}
+              sx={{ width: 28, height: 28, fontSize: '0.85rem', bgcolor: COLORS.primary }}
+            >
+              {!user?.profileImageUrl && (user?.username?.[0]?.toUpperCase() || '?')}
+            </Avatar>
           ) : (
-            'Login / Register'
-          )
-        }
-        onClick={onAuthClick}
-        color={isAuthenticated ? '#2e7d32' : COLORS.primary}
-        isActive={isAuthenticated}
-        sx={{
-          position: 'relative',
-          ...(isAuthenticated && {
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 2,
-              right: 2,
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: '#4caf50',
-              border: '1.5px solid white',
-              boxShadow: '0 0 0 1px rgba(76, 175, 80, 0.3)'
-            }
-          })
-        }}
-        aria-label={isAuthenticated ? "Account settings" : "Login or register"}
-      />
+            <AccountCircleIcon sx={{ color: COLORS.primary }} />
+          )}
+        </IconButton>
+      </MuiTooltip>
     </ControlContainer>
   );
 };

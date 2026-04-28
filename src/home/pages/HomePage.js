@@ -1,6 +1,6 @@
 // src/pages/HomePage.js - UNIFIED DRAWER VERSION
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -16,6 +16,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import InfoIcon from '@mui/icons-material/Info';
 import ExploreIcon from '@mui/icons-material/Explore';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Map from '../sections/Map/MapMain';
 import Sidebar from '../sections/Sidebar/Sidebar';
 import { useAuth } from '../../shared/contexts/AuthContext';
@@ -35,13 +36,12 @@ const MapContainer = styled(Box)({
 
 // Desktop Sidebar Container
 const DesktopSidebarContainer = styled(Box)(({ theme }) => ({
-  width: 360,
   flexShrink: 0,
   overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
   backgroundColor: COLORS.background,
-  borderRight: `1px solid ${COLORS.border}`,
+  transition: 'width 0.3s ease',
   [theme.breakpoints.down('md')]: {
     display: 'none'
   }
@@ -51,6 +51,11 @@ function HomePage() {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState(null);
   const [currentYear, setCurrentYear] = useState(2000);
+  const [sidebarWidth, setSidebarWidth] = useState(360);
+  const [isDraggingState, setIsDraggingState] = useState(false);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartWidth = useRef(0);
 
   // Unified drawer states - 2 state birleşti
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
@@ -85,6 +90,39 @@ function HomePage() {
     setLeftDrawerOpen(false);
   }, []);
 
+  const handleDragStart = useCallback((e) => {
+    e.preventDefault();
+    isDragging.current = true;
+    dragStartX.current = e.clientX;
+    dragStartWidth.current = sidebarWidth;
+    setIsDraggingState(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [sidebarWidth]);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging.current) return;
+      const delta = e.clientX - dragStartX.current;
+      const newWidth = Math.max(0, Math.min(600, dragStartWidth.current + delta));
+      setSidebarWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      setIsDraggingState(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      setSidebarWidth(prev => (prev < 300 ? 0 : prev));
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
   // Navigation
   const navigateToPanel = useCallback(() => {
     navigate('/panel');
@@ -93,7 +131,7 @@ function HomePage() {
   return (
     <AppContainer>
       {/* ===== DESKTOP SIDEBAR ===== */}
-      <DesktopSidebarContainer>
+      <DesktopSidebarContainer sx={{ width: sidebarWidth, transition: isDraggingState ? 'none' : 'width 0.3s ease' }}>
         {/* Desktop Header - Sadece Logo + Title */}
         <Box sx={{
           display: 'flex',
@@ -126,13 +164,63 @@ function HomePage() {
         {/* Desktop Sidebar Content */}
         <Box sx={{ flex: 1, overflow: 'hidden' }}>
           <Sidebar
-            selectedCity={selectedCity}
+            selectedCity={sidebarWidth === 0 ? null : selectedCity}
             currentYear={currentYear}
-            hideTitle={true} // Header'da zaten var
-            mode="city" // Desktop always city mode
+            hideTitle={true}
+            mode="city"
           />
         </Box>
       </DesktopSidebarContainer>
+
+      {/* ===== DESKTOP DRAG HANDLE ===== */}
+      {!isMobile && sidebarWidth > 0 && (
+        <Box
+          onMouseDown={handleDragStart}
+          sx={{
+            width: 6,
+            flexShrink: 0,
+            cursor: 'col-resize',
+            zIndex: 10,
+            backgroundColor: 'transparent',
+            borderRight: `1px solid ${COLORS.border}`,
+            transition: 'background-color 0.15s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            '&:hover': {
+              backgroundColor: 'rgba(119,73,54,0.10)',
+            },
+            '&:hover .drag-dots': {
+              opacity: 1,
+            },
+          }}
+        >
+          <Box
+            className="drag-dots"
+            sx={{
+              opacity: 0,
+              transition: 'opacity 0.15s',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '3px',
+              pointerEvents: 'none',
+            }}
+          >
+            {[0, 1, 2].map(i => (
+              <Box
+                key={i}
+                sx={{
+                  width: 3,
+                  height: 3,
+                  borderRadius: '50%',
+                  backgroundColor: COLORS.primary,
+                  opacity: 0.5,
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
 
       {/* ===== UNIFIED LEFT DRAWER ===== */}
       <Drawer
@@ -205,10 +293,45 @@ function HomePage() {
 
       {/* ===== MAP CONTAINER ===== */}
       <MapContainer>
+        {/* Re-expand tab — only when sidebar is fully collapsed */}
+        {!isMobile && sidebarWidth === 0 && (
+          <Box
+            onClick={() => setSidebarWidth(360)}
+            sx={{
+              position: 'absolute',
+              left: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 1000,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 20,
+              height: 48,
+              backgroundColor: 'rgba(255,255,255,0.55)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              border: `1px solid rgba(255,255,255,0.5)`,
+              borderLeft: 'none',
+              borderRadius: '0 8px 8px 0',
+              boxShadow: '2px 0 8px rgba(119,73,54,0.12)',
+              color: COLORS.primary,
+              transition: 'background-color 0.2s ease',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.85)',
+              }
+            }}
+          >
+            <ChevronRightIcon sx={{ fontSize: 16 }} />
+          </Box>
+        )}
+
         <Map
           onSelectCity={handleSelectCity}
           onYearChange={handleYearChange}
           onAuthClick={navigateToPanel}
+          sidebarCollapsed={sidebarWidth === 0}
         />
 
         {/* ===== MOBILE HEADER & CONTROL PANEL ===== */}

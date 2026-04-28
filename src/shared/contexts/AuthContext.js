@@ -650,6 +650,18 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_PREFERENCES_STATUS });
   }, [dispatch]);
 
+  const uploadProfilePicture = useCallback(async (file) => {
+    const result = await authService.uploadProfilePicture(file);
+    if (result.success) dispatch({ type: AUTH_ACTIONS.UPDATE_USER, payload: result.user });
+    return result;
+  }, []);
+
+  const deleteProfilePicture = useCallback(async () => {
+    const result = await authService.deleteProfilePicture();
+    if (result.success) dispatch({ type: AUTH_ACTIONS.UPDATE_USER, payload: result.user });
+    return result;
+  }, []);
+
   const unlinkGoogleAccount = useCallback(async () => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING });
@@ -730,9 +742,13 @@ export const AuthProvider = ({ children }) => {
     changePassword,
     clearChangePassword,
 
+    // Profile picture
+    uploadProfilePicture,
+    deleteProfilePicture,
+
     // OAuth functions
     unlinkGoogleAccount
-  }), [state, login, loginWithToken, register, logout, updateProfile, clearError, updateUserPreferences, updateSinglePreference, updatePrivacySettings, clearPreferencesStatus, requestPasswordReset, resetPassword, verifyResetToken, clearForgotPassword, changePassword, clearChangePassword, unlinkGoogleAccount]);
+  }), [state, login, loginWithToken, register, logout, updateProfile, clearError, updateUserPreferences, updateSinglePreference, updatePrivacySettings, clearPreferencesStatus, requestPasswordReset, resetPassword, verifyResetToken, clearForgotPassword, changePassword, clearChangePassword, uploadProfilePicture, deleteProfilePicture, unlinkGoogleAccount]);
 
   return (
     <AuthContext.Provider value={contextValue}>

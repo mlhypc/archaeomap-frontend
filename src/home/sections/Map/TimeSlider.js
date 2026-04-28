@@ -1,6 +1,6 @@
 // frontend\src\components\map\TimeSlider.js
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Box,
   Slider,
@@ -75,9 +75,11 @@ function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
 
   const [year, setYear] = useState(currentYear || minYear);
   const [expanded, setExpanded] = useState(!isMobile);
+  const throttleRef = useRef(null);
+  const isDraggingRef = useRef(false);
 
   useEffect(() => {
-    if (currentYear !== undefined) setYear(currentYear);
+    if (currentYear !== undefined && !isDraggingRef.current) setYear(currentYear);
   }, [currentYear]);
 
   const marks = useMemo(() => {
@@ -96,6 +98,7 @@ function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
   }, [year, availableYears]);
 
   const handleSliderChange = useCallback((event, newValue) => {
+    isDraggingRef.current = true;
     let targetYear = newValue;
     if (!availableYears.includes(targetYear)) {
       targetYear = availableYears.reduce((prev, curr) =>
@@ -103,7 +106,12 @@ function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
       );
     }
     setYear(targetYear);
-    if (onYearChange) onYearChange(targetYear);
+    if (!onYearChange) return;
+    if (throttleRef.current) return;
+    throttleRef.current = setTimeout(() => {
+      throttleRef.current = null;
+      onYearChange(targetYear);
+    }, 50);
   }, [availableYears, onYearChange]);
 
   const handleForward = () => {
@@ -203,6 +211,14 @@ function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
                 max={maxYear}
                 step={null}
                 onChange={handleSliderChange}
+                onChangeCommitted={(_, val) => {
+                  isDraggingRef.current = false;
+                  if (throttleRef.current) {
+                    clearTimeout(throttleRef.current);
+                    throttleRef.current = null;
+                  }
+                  if (onYearChange) onYearChange(val);
+                }}
                 valueLabelDisplay="off"
                 marks={marks}
                 components={{ ValueLabel: ValueLabelComponent }}

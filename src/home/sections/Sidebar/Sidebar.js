@@ -14,6 +14,110 @@ import { COLORS } from '../../../shared/config/generalUtils';
 import { cachedCitiesApi } from '../../../shared/services/cityApi';
 import CityDetails from './features/CityDetails';
 
+const tips = [
+  {
+    icon: 'fa-solid fa-location-dot',
+    title: 'Select a city',
+    text: 'Click any marker to open its full history — rulers, population, and landmarks across time.'
+  },
+  {
+    icon: 'fa-solid fa-clock-rotate-left',
+    title: 'Travel through time',
+    text: 'Drag the timeline to move between eras. Cities appear and disappear as they rise and fall.'
+  },
+  {
+    icon: 'fa-solid fa-circle-half-stroke',
+    title: 'Red markers',
+    text: 'Dark red dots are cities that existed but had already fallen by the year you are viewing.'
+  },
+  {
+    icon: 'fa-solid fa-sliders',
+    title: 'Map controls',
+    text: 'Use the top-right buttons to filter cities by historical age, toggle city labels, switch map layers, or enable the 3D globe view.'
+  }
+];
+
+function EmptyState({ isSmallMobile }) {
+  return (
+    <Box sx={{ px: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+      {/* Hero icon */}
+      <Box sx={{
+        width: 48,
+        height: 48,
+        borderRadius: '50%',
+        backgroundColor: `${COLORS.primary}12`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mb: 1.5
+      }}>
+        <i className="fa-solid fa-earth-europe" style={{ fontSize: '1.3rem', color: COLORS.primary }} />
+      </Box>
+
+      {/* Heading */}
+      <Typography sx={{
+        fontFamily: 'Georgia, serif',
+        fontSize: isSmallMobile ? '1rem' : '1.1rem',
+        color: COLORS.primary,
+        fontWeight: 'normal',
+        textAlign: 'center',
+        mb: 0.75
+      }}>
+        Explore the Ancient World
+      </Typography>
+
+      {/* Subtext */}
+      <Typography sx={{
+        fontSize: '0.75rem',
+        color: COLORS.texts.muted,
+        textAlign: 'center',
+        lineHeight: 1.6,
+        mb: 2,
+        maxWidth: 260
+      }}>
+        7,000 years of urban history — from the earliest settlements to the fall of empires.
+      </Typography>
+
+      {/* Tips */}
+      <Box sx={{ width: '100%', borderTop: `1px solid ${COLORS.border}` }}>
+        {tips.map((tip, i) => (
+          <Box key={i} sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 1.5,
+            py: 1.25,
+            borderBottom: `1px solid ${COLORS.border}`
+          }}>
+            <Box sx={{ width: 18, mt: '2px', textAlign: 'center', flexShrink: 0 }}>
+              <i className={tip.icon} style={{ fontSize: '0.75rem', color: COLORS.secondary }} />
+            </Box>
+            <Box>
+              <Typography sx={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: COLORS.texts.primary,
+                fontFamily: 'Georgia, serif',
+                mb: 0.2
+              }}>
+                {tip.title}
+              </Typography>
+              <Typography sx={{
+                fontSize: '0.7rem',
+                color: COLORS.texts.muted,
+                lineHeight: 1.5
+              }}>
+                {tip.text}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+    </Box>
+  );
+}
+
 function Sidebar({
   selectedCity,
   currentYear,
@@ -152,18 +256,8 @@ function Sidebar({
     return (
       <Box sx={containerSx}>
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Box variant="emptyState">
-            <Typography variant="muted" sx={{ fontSize: { xs: isSmallMobile ? '0.8rem' : undefined } }}>
-              Select a city on the map to view details
-            </Typography>
-            <Paper variant="infoBox" sx={{ mt: { xs: 1.5, md: 2 } }}>
-              <Typography variant="body2" sx={{ color: COLORS.secondary, fontSize: { xs: isSmallMobile ? '0.75rem' : undefined } }}>
-                Explore historic cities from around the world. Discover their stories and cultural heritage.
-              </Typography>
-            </Paper>
-          </Box>
+          <EmptyState isSmallMobile={isSmallMobile} />
         </Box>
-
         <Box sx={footerSx}>
           © {new Date().getFullYear()} ArchaeoMap –{' '}
           <a href="/about.html" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.primary, textDecoration: 'underline', marginLeft: '4px' }}>
@@ -213,16 +307,7 @@ function Sidebar({
         <CityDetails cityDetails={cityDetails} currentYear={currentYear} />
       ) : !loading && (
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Box variant="emptyState">
-            <Typography variant="muted" sx={{ fontSize: { xs: isSmallMobile ? '0.8rem' : undefined } }}>
-              Select a city on the map to view details
-            </Typography>
-            <Paper variant="infoBox" sx={{ mt: { xs: 1.5, md: 2 } }}>
-              <Typography variant="body2" sx={{ color: COLORS.secondary, fontSize: { xs: isSmallMobile ? '0.75rem' : undefined } }}>
-                Explore historic cities from around the world. Discover their stories and cultural heritage.
-              </Typography>
-            </Paper>
-          </Box>
+          <EmptyState isSmallMobile={isSmallMobile} />
         </Box>
       )}
 
