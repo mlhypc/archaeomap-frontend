@@ -64,12 +64,51 @@ export const COLORS = {
   export const getCurrentCityName = (city, currentYear) => {
     // Eğer PeriodCityName verisi yoksa varsayılan adı döndür
     if (!city.PeriodCityName?.length) return city.name;
-    
+
     // Mevcut yıla uygun period'u bul
-    const period = city.PeriodCityName.find(p => 
+    const period = city.PeriodCityName.find(p =>
       currentYear >= p.start && currentYear <= p.end
     );
-    
+
     // Period bulunursa o dönemdeki adı, bulunamazsa varsayılan adı döndür
     return period ? period.CityName : city.name;
+  };
+
+  // URL slug helpers — used to build shareable city URLs like /cities/turkiye/cadir-hoyuk
+  // Handles Turkish-specific characters that NFD/diacritic stripping misses (ı, ğ, ş, etc.)
+  const SLUG_CHAR_MAP = {
+    ç: 'c', Ç: 'c',
+    ğ: 'g', Ğ: 'g',
+    ı: 'i', İ: 'i',
+    ş: 's', Ş: 's',
+    ö: 'o', Ö: 'o',
+    ü: 'u', Ü: 'u'
+  };
+
+  export const slugify = (s) =>
+    (s || '')
+      .toString()
+      .replace(/[çÇğĞıİşŞöÖüÜ]/g, ch => SLUG_CHAR_MAP[ch] || ch)
+      .normalize('NFD')                 // split remaining accents (Latin diacritics)
+      .replace(/\p{M}/gu, '')           // strip combining marks
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')     // drop non-alphanumeric (keeps spaces/hyphens)
+      .trim()
+      .replace(/\s+/g, '-')             // spaces to hyphens
+      .replace(/-+/g, '-');             // collapse repeats
+
+  export const cityUrl = (city) => {
+    const country = slugify(city.country);
+    const name = slugify(city.name || city.generic_city_name);
+    if (!country || !name) return '/';
+    return `/cities/${country}/${name}`;
+  };
+
+  // Find a city in a list by URL slug params (case-insensitive, accent-insensitive)
+  export const findCityBySlug = (cities, countrySlug, citySlug) => {
+    if (!Array.isArray(cities)) return null;
+    return cities.find(c =>
+      slugify(c.country) === countrySlug &&
+      slugify(c.name || c.generic_city_name) === citySlug
+    ) || null;
   };

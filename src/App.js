@@ -17,6 +17,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/cities/:countrySlug/:citySlug" element={<HomePage />} />
             <Route path="/panel" element={<PanelPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />

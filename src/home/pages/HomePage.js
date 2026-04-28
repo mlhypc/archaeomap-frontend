@@ -1,7 +1,9 @@
 // src/pages/HomePage.js - UNIFIED DRAWER VERSION
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { cachedCitiesApi } from '../../shared/services/cityApi';
+import { cityUrl, findCityBySlug } from '../../shared/config/generalUtils';
 import {
   Box,
   Drawer,
@@ -49,6 +51,7 @@ const DesktopSidebarContainer = styled(Box)(({ theme }) => ({
 
 function HomePage() {
   const navigate = useNavigate();
+  const { countrySlug, citySlug } = useParams();
   const [selectedCity, setSelectedCity] = useState(null);
   const [currentYear, setCurrentYear] = useState(2000);
   const [sidebarWidth, setSidebarWidth] = useState(360);
@@ -65,10 +68,40 @@ function HomePage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Handle city selection
+  // Resolve URL slug -> selectedCity (one-way: URL drives state when slug changes)
+  // Avoids re-resolving when user clicks a city (since that path also updates the URL).
+  useEffect(() => {
+    if (!countrySlug || !citySlug) {
+      // No slug in URL — clear selection only if we're at "/"
+      return;
+    }
+    // If we already have the right city selected, skip
+    if (selectedCity && selectedCity.country && selectedCity.name) {
+      const currentUrl = cityUrl(selectedCity);
+      if (currentUrl === `/cities/${countrySlug}/${citySlug}`) return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const result = await cachedCitiesApi.getBulkTimelineData();
+      if (cancelled || !result.success) return;
+      const match = findCityBySlug(result.data.cities, countrySlug, citySlug);
+      if (match) setSelectedCity(match);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countrySlug, citySlug]);
+
+  // Handle city selection — also pushes a canonical URL so it's shareable
   const handleSelectCity = useCallback((city) => {
     setSelectedCity(city);
-  }, []);
+    if (city) {
+      const url = cityUrl(city);
+      if (url && url !== '/') navigate(url);
+    } else {
+      navigate('/');
+    }
+  }, [navigate]);
 
   // Handle year change
   const handleYearChange = useCallback((year) => {
