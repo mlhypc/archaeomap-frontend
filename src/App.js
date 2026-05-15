@@ -9,6 +9,7 @@ import HomePage from './home/pages/HomePage';
 import PanelPage from './panel/pages/PanelPage';
 import ResetPasswordPage from './panel/pages/ResetPasswordPage';
 import OAuthCallback from './panel/sections/Personal/featuresProfile/OAuthCallback';
+import NotFoundPage from './shared/components/NotFoundPage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/panel" element={<PanelPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Router>
       </AuthProvider>

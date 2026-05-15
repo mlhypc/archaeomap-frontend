@@ -23,11 +23,26 @@ import { ControlPanel, AuthenticationPanel } from './features/mapControls';
 import { getCurrentCityName } from '../../../shared/config/generalUtils';
 const CesiumGlobe = React.lazy(() => import('./features/CesiumGlobe'));
 
-// MAP LAYERS - moved outside component to prevent re-creation
+// MAP LAYERS - moved outside component to prevent re-creation.
+//
+// CAWM is proxied through our own backend (see archaeomap-backend's
+// tileProxy.js) so Cloudflare's edge caches each tile for 30 days
+// instead of every browser conditionally re-fetching from Iowa.
+// In dev we point straight at the local backend; in prod the URL
+// goes through Cloudflare Pages' _redirects rule.
+//
+// CartoDB Positron replaces the raw tile.openstreetmap.org endpoint,
+// which forbids unidentified browser-default User-Agents in its tile
+// usage policy. Carto's CDN serves the same OSM data with proper
+// caching and no policy violation for moderate traffic.
+const CAWM_TILE_ORIGIN = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
+  : 'https://archaeomap.com';
+
 const MAP_LAYERS = {
   cawm: {
     name: 'Ancient World Map',
-    url: 'https://cawm.lib.uiowa.edu/tiles/{z}/{x}/{y}.png',
+    url: `${CAWM_TILE_ORIGIN}/cawm-tiles/{z}/{x}/{y}.png`,
     attribution: '&copy; Consortium of Ancient World Mappers (CAWM)',
     maxZoom: 11
   },
@@ -42,10 +57,12 @@ const MAP_LAYERS = {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
   },
-  osm: {
+  carto: {
     name: 'OpenStreetMap',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; OpenStreetMap contributors'
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
   }
 };
 
@@ -118,16 +135,19 @@ function MaxZoomController({ maxZoom }) {
   return null;
 }
 
-// OPTIMIZED CITY MARKER COMPONENT - Memoized for performance
-const OptimizedCityMarker = React.memo(({ 
-  city, 
-  iconFn, 
-  isSelected, 
-  onSelect, 
+// OPTIMIZED CITY MARKER COMPONENT - Memoized for performance.
+// Intentionally does NOT accept `currentYear` — labelText is already
+// derived from the current year by the caller, so threading the year
+// through here would defeat React.memo (every slider tick would
+// invalidate the memo even when labelText is unchanged).
+const OptimizedCityMarker = React.memo(({
+  city,
+  iconFn,
+  isSelected,
+  onSelect,
   showLabel,
   labelText,
-  status,
-  currentYear
+  status
 }) => {
   // Memoize icon creation to prevent unnecessary recreations
   const icon = useMemo(() => iconFn(city, isSelected), [city, iconFn, isSelected]);
@@ -185,7 +205,6 @@ const renderCityMarkers = (
         showLabel={showLabel}
         labelText={labelText}
         status={status}
-        currentYear={currentYear}
       />
     );
   });
@@ -241,7 +260,8 @@ function MapComponent(props) {
     onSelectCity = () => {},
     onYearChange = () => {},
     onAuthClick = () => {},
-    sidebarCollapsed = false
+    sidebarCollapsed = false,
+    focusCity = null
   } = props || {};
 
   // CUSTOM HOOK USAGE
@@ -253,6 +273,11 @@ function MapComponent(props) {
   } = useMapState();
 
   const cityDetailsCache = useRef(new Map());
+  // Keep enhanced city objects (city + computed iconSize) reference-
+  // stable across renders so that React.memo on OptimizedCityMarker
+  // can actually short-circuit. Without this, every slider tick spreads
+  // a new object per city — making the memo a no-op.
+  const enhancedCityCacheRef = useRef(new Map());
   const cameraPositionRef = useRef(mapState.cameraPosition); // Ref for camera position (no re-render)
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -355,18 +380,31 @@ function MapComponent(props) {
 
   const visibleCities = useMemo(() => {
     if (!padBounds) return { active: [], ended: [] };
-    
-    // More efficient filtering function
+
+    const cache = enhancedCityCacheRef.current;
+
+    // Filter to in-bounds cities and attach iconSize. Reuses the
+    // previous enhanced object whenever both the source city and the
+    // resolved iconSize are unchanged, so OptimizedCityMarker's memo
+    // sees a stable `city` prop across slider ticks that don't actually
+    // shift this city's size bucket.
     const filterAndEnhance = (cities) => {
       const result = [];
       for (let i = 0; i < cities.length; i++) {
         const city = cities[i];
         if (city.coordinates && padBounds.contains(L.latLng(city.coordinates))) {
-          // Cache icon size calculation for better performance
-          const iconSize = city.PeriodIconSize?.find(p => 
+          const iconSize = city.PeriodIconSize?.find(p =>
             uiState.currentYear >= p.start && uiState.currentYear <= p.end
           )?.iconSize || 5;
-          result.push({ ...city, iconSize });
+
+          const cached = cache.get(city.id);
+          if (cached && cached.source === city && cached.enhanced.iconSize === iconSize) {
+            result.push(cached.enhanced);
+          } else {
+            const enhanced = { ...city, iconSize };
+            cache.set(city.id, { source: city, enhanced });
+            result.push(enhanced);
+          }
         }
       }
       return result;
@@ -400,6 +438,42 @@ function MapComponent(props) {
     onYearChange(year);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onYearChange]);
+
+  // External focus (URL-driven): pan to city + select + jump slider to founded year.
+  // Zoom is intentionally preserved.
+  useEffect(() => {
+    if (!focusCity || !Array.isArray(focusCity.coordinates)) return;
+    const [lat, lng] = focusCity.coordinates;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+    setMapState(prev => ({
+      ...prev,
+      cameraPosition: {
+        ...prev.cameraPosition,
+        lat,
+        lng
+      }
+    }));
+
+    // Slider only accepts values that exist in TIMELINE_YEARS marks.
+    // Snap founded to the nearest available year.
+    let targetYear = focusCity.founded;
+    if (typeof targetYear === 'number' && TIMELINE_YEARS.length) {
+      targetYear = TIMELINE_YEARS.reduce((closest, y) =>
+        Math.abs(y - focusCity.founded) < Math.abs(closest - focusCity.founded) ? y : closest
+      );
+    }
+
+    setUiState(prev => ({
+      ...prev,
+      selectedCity: focusCity,
+      currentYear: typeof targetYear === 'number' ? targetYear : prev.currentYear
+    }));
+    if (typeof targetYear === 'number') {
+      onYearChange(targetYear);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusCity?._focusedAt]);
 
   const handleBoundsChange = useCallback((bounds) => {
     setMapState(prev => ({ ...prev, mapBounds: bounds }));
@@ -622,6 +696,7 @@ function MapComponent(props) {
               showLabels={uiState.showLabels}
               labelFilter={uiState.labelFilter}
               cameraPosition={mapState.cameraPosition}
+              mapLayerKey={uiState.mapLayerKey}
             />
           </React.Suspense>
         </Box>
@@ -663,6 +738,9 @@ function MapComponent(props) {
             key={uiState.mapLayerKey}
             url={MAP_LAYERS[uiState.mapLayerKey].url}
             attribution={MAP_LAYERS[uiState.mapLayerKey].attribution}
+            {...(MAP_LAYERS[uiState.mapLayerKey].subdomains
+              ? { subdomains: MAP_LAYERS[uiState.mapLayerKey].subdomains }
+              : {})}
           />
 
           <MaxZoomController maxZoom={MAP_LAYERS[uiState.mapLayerKey].maxZoom || MAP_MAX_ZOOM} />

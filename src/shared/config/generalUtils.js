@@ -75,20 +75,43 @@ export const COLORS = {
   };
 
   // URL slug helpers — used to build shareable city URLs like /cities/turkiye/cadir-hoyuk
-  // Handles Turkish-specific characters that NFD/diacritic stripping misses (ı, ğ, ş, etc.)
+  //
+  // This map covers characters that NFD diacritic stripping cannot decompose.
+  // NFD handles most Latin accents on its own (é, ñ, ć, š, etc.); the entries
+  // here are the famously non-decomposable letters that would otherwise be
+  // dropped by the `[^a-z0-9\s-]` filter and break the slug entirely.
+  //
+  // Must stay in sync with archaeomap-backend/infrastructure/utils.js#slugify.
   const SLUG_CHAR_MAP = {
+    // Turkish
     ç: 'c', Ç: 'c',
     ğ: 'g', Ğ: 'g',
     ı: 'i', İ: 'i',
     ş: 's', Ş: 's',
     ö: 'o', Ö: 'o',
-    ü: 'u', Ü: 'u'
+    ü: 'u', Ü: 'u',
+    // German
+    ß: 'ss',
+    // Polish
+    ł: 'l', Ł: 'l',
+    // Icelandic / Old English
+    þ: 'th', Þ: 'th',
+    ð: 'd', Ð: 'd',
+    // Scandinavian
+    ø: 'o', Ø: 'o',
+    æ: 'ae', Æ: 'ae',
+    // Romanian (comma-below variants — explicit fallback)
+    ș: 's', Ș: 's',
+    ț: 't', Ț: 't'
   };
+
+  // Match keys built from the map so we never silently drift apart.
+  const SLUG_CHAR_REGEX = new RegExp(`[${Object.keys(SLUG_CHAR_MAP).join('')}]`, 'g');
 
   export const slugify = (s) =>
     (s || '')
       .toString()
-      .replace(/[çÇğĞıİşŞöÖüÜ]/g, ch => SLUG_CHAR_MAP[ch] || ch)
+      .replace(SLUG_CHAR_REGEX, ch => SLUG_CHAR_MAP[ch] || ch)
       .normalize('NFD')                 // split remaining accents (Latin diacritics)
       .replace(/\p{M}/gu, '')           // strip combining marks
       .toLowerCase()
@@ -102,13 +125,4 @@ export const COLORS = {
     const name = slugify(city.name || city.generic_city_name);
     if (!country || !name) return '/';
     return `/cities/${country}/${name}`;
-  };
-
-  // Find a city in a list by URL slug params (case-insensitive, accent-insensitive)
-  export const findCityBySlug = (cities, countrySlug, citySlug) => {
-    if (!Array.isArray(cities)) return null;
-    return cities.find(c =>
-      slugify(c.country) === countrySlug &&
-      slugify(c.name || c.generic_city_name) === citySlug
-    ) || null;
   };

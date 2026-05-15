@@ -1,7 +1,7 @@
 // frontend/src/home/sections/Map/features/CesiumGlobe.js
 // 3D Globe implementation using Cesium
 
-import React, { useCallback, useRef, useEffect, useState } from 'react';
+import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import { Viewer } from 'resium';
 import {
   Cartesian2,
@@ -23,20 +23,51 @@ import 'cesium/Build/Cesium/Widgets/widgets.css';
 import './cesium-custom.css';
 import { getCurrentCityName } from '../../../../shared/config/generalUtils';
 
-// CESIUM_BASE_URL is defined in craco.config.js
-
-// Use OpenStreetMap imagery to avoid Cesium Ion authentication
-const OSM_LAYER = new ImageryLayer(
-  new UrlTemplateImageryProvider({
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    subdomains: ['a', 'b', 'c'],
-    maximumLevel: 19,
-    credit: new Credit('© OpenStreetMap contributors')
-  })
-);
-
-// Flat ellipsoid terrain - no Ion asset required
+// Flat ellipsoid terrain - no Ion asset required.
 const ELLIPSOID_TERRAIN = new EllipsoidTerrainProvider();
+
+// CAWM tile origin — must mirror the same env-aware logic used by the
+// 2D map in MapMain.js so dev hits the local backend proxy and prod
+// hits the Cloudflare-proxied URL on archaeomap.com.
+const CAWM_TILE_ORIGIN = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')
+  : 'https://archaeomap.com';
+
+// Layer factory keyed by the same identifiers used in MapMain's
+// MAP_LAYERS, so the 2D and 3D layer pickers stay in sync. Each call
+// returns a fresh ImageryLayer instance because Cesium re-parents
+// providers when swapping layers at runtime — sharing a single
+// instance across swaps trips Cesium's "already attached" guard.
+const createImageryLayer = (key) => {
+  switch (key) {
+    case 'cawm':
+      return new ImageryLayer(new UrlTemplateImageryProvider({
+        url: `${CAWM_TILE_ORIGIN}/cawm-tiles/{z}/{x}/{y}.png`,
+        maximumLevel: 11,
+        credit: new Credit('© Consortium of Ancient World Mappers (CAWM)')
+      }));
+    case 'arcgis':
+      return new ImageryLayer(new UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
+        maximumLevel: 13,
+        credit: new Credit('Tiles © Esri — US National Park Service')
+      }));
+    case 'nasa':
+      return new ImageryLayer(new UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        maximumLevel: 18,
+        credit: new Credit('Tiles © Esri — Earthstar Geographics, USDA, USGS')
+      }));
+    case 'carto':
+    default:
+      return new ImageryLayer(new UrlTemplateImageryProvider({
+        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        subdomains: ['a', 'b', 'c', 'd'],
+        maximumLevel: 19,
+        credit: new Credit('© OpenStreetMap contributors © CARTO')
+      }));
+  }
+};
 
 const CesiumGlobe = ({
   cities = [],
@@ -46,7 +77,8 @@ const CesiumGlobe = ({
   currentYear,
   showLabels = true,
   labelFilter = 'show_active_only',
-  cameraPosition = { lat: 36, lng: 31, zoom: 6 }
+  cameraPosition = { lat: 36, lng: 31, zoom: 6 },
+  mapLayerKey = 'carto'
 }) => {
   const viewerRef = useRef(null);
   const cityEntityMapRef = useRef(new Map()); // Track city ID -> City data mapping
@@ -54,6 +86,27 @@ const CesiumGlobe = ({
   const handlerRef = useRef(null); // Store event handler
   const [viewerReady, setViewerReady] = useState(false); // Track viewer ready state
   const isInitialMount = useRef(true); // Track first camera position set
+
+  // baseLayer is consumed once at viewer mount. Subsequent swaps go
+  // through the imageryLayers effect below so we don't remount Cesium.
+  const initialMapLayerKeyRef = useRef(mapLayerKey);
+  const initialBaseLayer = useMemo(
+    () => createImageryLayer(initialMapLayerKeyRef.current),
+    []
+  );
+
+  // Swap imagery when the layer key changes after mount. Cesium owns
+  // the layer collection so the React-side memo above is only used at
+  // mount; runtime swaps remove the old layer and add a fresh one.
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || !viewerReady) return;
+    if (mapLayerKey === initialMapLayerKeyRef.current) return;
+
+    viewer.imageryLayers.removeAll();
+    viewer.imageryLayers.add(createImageryLayer(mapLayerKey));
+    initialMapLayerKeyRef.current = mapLayerKey;
+  }, [mapLayerKey, viewerReady]);
 
   // Callback when Viewer is loaded and ready
   const handleViewerReady = useCallback((viewer) => {
@@ -345,7 +398,7 @@ const CesiumGlobe = ({
         navigationHelpButton={false}
         navigationInstructionsInitiallyVisible={false}
         scene3DOnly={true}
-        baseLayer={OSM_LAYER}
+        baseLayer={initialBaseLayer}
         terrainProvider={ELLIPSOID_TERRAIN}
         style={{
           width: '100%',

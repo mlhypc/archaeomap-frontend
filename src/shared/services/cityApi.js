@@ -143,7 +143,6 @@ class EnhancedDataCache {
 // Create specialized cache instances
 const timelineCache = new EnhancedDataCache(50, 600000); // 10 minutes for timeline data
 const cityDetailsCache = new EnhancedDataCache(200, 1800000); // 30 minutes for city details
-const metadataCache = new EnhancedDataCache(1, 3600000); // 1 hour for metadata
 const generalCache = new EnhancedDataCache(100, 300000); // 5 minutes for general data
 
 // ========================================================================
@@ -197,26 +196,6 @@ const citiesApi = {
       return await parseResponse(response);
     } catch (error) {
       return { success: false, error: 'Failed to fetch bulk timeline data' };
-    }
-  },
-
-  // Get system metadata
-  getMetadata: async () => {
-    try {
-      const response = await makeRequest('/cityData/metadata');
-      return await parseResponse(response);
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch system metadata' };
-    }
-  },
-
-  // Get timeline range
-  getTimelineRange: async () => {
-    try {
-      const response = await makeRequest('/cityData/timeline/range');
-      return await parseResponse(response);
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch timeline range' };
     }
   },
 
@@ -279,6 +258,19 @@ const citiesApi = {
       return await parseResponse(response);
     } catch (error) {
       return { success: false, error: 'Failed to fetch city details' };
+    }
+  },
+
+  // Resolve a /cities/:country/:city deep link without downloading the full
+  // bulk timeline payload. Returns the same shape as getCityDetails.
+  getCityBySlug: async (countrySlug, citySlug) => {
+    try {
+      const response = await makeRequest(
+        `/cityData/by-slug/${encodeURIComponent(countrySlug)}/${encodeURIComponent(citySlug)}`
+      );
+      return await parseResponse(response);
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch city by slug' };
     }
   },
 
@@ -632,7 +624,6 @@ class CachedCitiesApi {
   constructor() {
     this.timelineCache = timelineCache;
     this.cityDetailsCache = cityDetailsCache;
-    this.metadataCache = metadataCache;
     this.generalCache = generalCache;
   }
 
@@ -685,15 +676,6 @@ class CachedCitiesApi {
     );
   }
 
-  async getTimelineRange() {
-    const cacheKey = 'timeline_range';
-    return await this.getCachedResult(
-      this.metadataCache,
-      cacheKey,
-      () => citiesApi.getTimelineRange()
-    );
-  }
-
   // ========================================================================
   // CITY DATA METHODS WITH CACHING
   // ========================================================================
@@ -716,12 +698,12 @@ class CachedCitiesApi {
     );
   }
 
-  async getMetadata() {
-    const cacheKey = 'metadata';
+  async getCityBySlug(countrySlug, citySlug) {
+    const cacheKey = `city_slug_${countrySlug}_${citySlug}`;
     return await this.getCachedResult(
-      this.metadataCache,
+      this.cityDetailsCache,
       cacheKey,
-      () => citiesApi.getMetadata()
+      () => citiesApi.getCityBySlug(countrySlug, citySlug)
     );
   }
 
@@ -808,7 +790,6 @@ class CachedCitiesApi {
   clearAllCaches() {
     this.timelineCache.clear();
     this.cityDetailsCache.clear();
-    this.metadataCache.clear();
     this.generalCache.clear();
   }
 
@@ -844,8 +825,6 @@ class CachedCitiesApi {
   getTimelineDirect = citiesApi.getTimeline;
   getBulkTimelineDataDirect = citiesApi.getBulkTimelineData;
   getCitiesForTimePeriodDirect = citiesApi.getCitiesForTimePeriod;
-  getTimelineRangeDirect = citiesApi.getTimelineRange;
-  getMetadataDirect = citiesApi.getMetadata;
 }
 
 // ========================================================================
@@ -856,7 +835,7 @@ class CachedCitiesApi {
 const cachedCitiesApi = new CachedCitiesApi();
 
 // Export cache instances for external access if needed
-export { timelineCache, cityDetailsCache, metadataCache, generalCache };
+export { timelineCache, cityDetailsCache, generalCache };
 
 // Main exports
 export { citiesApi, cachedCitiesApi };

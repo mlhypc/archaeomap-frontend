@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { cachedCitiesApi } from '../../shared/services/cityApi';
-import { cityUrl, findCityBySlug } from '../../shared/config/generalUtils';
+import { cityUrl } from '../../shared/config/generalUtils';
 import {
   Box,
   Drawer,
@@ -23,6 +23,8 @@ import Map from '../sections/Map/MapMain';
 import Sidebar from '../sections/Sidebar/Sidebar';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { COLORS } from '../../shared/config/generalUtils';
+import CitySeoTags from '../../shared/components/seo/CitySeoTags';
+import NotFoundPage from '../../shared/components/NotFoundPage';
 
 const AppContainer = styled(Box)({
   display: 'flex',
@@ -52,7 +54,10 @@ const DesktopSidebarContainer = styled(Box)(({ theme }) => ({
 function HomePage() {
   const navigate = useNavigate();
   const { countrySlug, citySlug } = useParams();
+
   const [selectedCity, setSelectedCity] = useState(null);
+  const [focusCity, setFocusCity] = useState(null);
+  const [cityNotFound, setCityNotFound] = useState(false);
   const [currentYear, setCurrentYear] = useState(2000);
   const [sidebarWidth, setSidebarWidth] = useState(360);
   const [isDraggingState, setIsDraggingState] = useState(false);
@@ -68,38 +73,55 @@ function HomePage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Resolve URL slug -> selectedCity (one-way: URL drives state when slug changes)
+  // Resolve URL slug -> selectedCity (one-way: URL drives state when slug changes).
   // Avoids re-resolving when user clicks a city (since that path also updates the URL).
+  // Hits /cityData/by-slug so we only fetch ONE city instead of the whole bulk timeline,
+  // and the response already includes description/controlHistory/etc. — so the Sidebar
+  // skips its own second fetch.
   useEffect(() => {
     if (!countrySlug || !citySlug) {
-      // No slug in URL — clear selection only if we're at "/"
+      setCityNotFound(false);
       return;
     }
+
     // If we already have the right city selected, skip
     if (selectedCity && selectedCity.country && selectedCity.name) {
       const currentUrl = cityUrl(selectedCity);
-      if (currentUrl === `/cities/${countrySlug}/${citySlug}`) return;
+      if (currentUrl === `/cities/${countrySlug}/${citySlug}`) {
+        setCityNotFound(false);
+        return;
+      }
     }
 
     let cancelled = false;
     (async () => {
-      const result = await cachedCitiesApi.getBulkTimelineData();
-      if (cancelled || !result.success) return;
-      const match = findCityBySlug(result.data.cities, countrySlug, citySlug);
-      if (match) setSelectedCity(match);
+      const result = await cachedCitiesApi.getCityBySlug(countrySlug, citySlug);
+      if (cancelled) return;
+      if (!result.success) {
+        // Treat any unsuccessful resolve as a missing city. The backend
+        // returns 404 for unknown slugs; network errors are also surfaced
+        // here so we render the 404 page rather than a silently blank UI.
+        setCityNotFound(true);
+        setSelectedCity(null);
+        return;
+      }
+      setCityNotFound(false);
+      setSelectedCity(result.data);
+      // Send a fresh focus signal to Map (timestamp ensures effect re-fires per URL change)
+      setFocusCity({ ...result.data, _focusedAt: Date.now() });
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countrySlug, citySlug]);
 
-  // Handle city selection — also pushes a canonical URL so it's shareable
+  // Handle city selection — pushes a canonical URL when a city is picked.
+  // Null/deselect intentionally does NOT navigate, because Map fires onSelectCity(null)
+  // on initial mount and would otherwise redirect us off the /cities/... URL.
   const handleSelectCity = useCallback((city) => {
     setSelectedCity(city);
     if (city) {
       const url = cityUrl(city);
       if (url && url !== '/') navigate(url);
-    } else {
-      navigate('/');
     }
   }, [navigate]);
 
@@ -161,8 +183,13 @@ function HomePage() {
     navigate('/panel');
   }, [navigate]);
 
+  if (cityNotFound) {
+    return <NotFoundPage />;
+  }
+
   return (
     <AppContainer>
+      <CitySeoTags city={selectedCity} />
       {/* ===== DESKTOP SIDEBAR ===== */}
       <DesktopSidebarContainer sx={{ width: sidebarWidth, transition: isDraggingState ? 'none' : 'width 0.3s ease' }}>
         {/* Desktop Header - Sadece Logo + Title */}
@@ -365,6 +392,7 @@ function HomePage() {
           onYearChange={handleYearChange}
           onAuthClick={navigateToPanel}
           sidebarCollapsed={sidebarWidth === 0}
+          focusCity={focusCity}
         />
 
         {/* ===== MOBILE HEADER & CONTROL PANEL ===== */}

@@ -263,6 +263,10 @@ function Sidebar({
           <a href="/about.html" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.primary, textDecoration: 'underline', marginLeft: '4px' }}>
             About
           </a>
+          {' · '}
+          <a href="/cities-index.html" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.primary, textDecoration: 'underline' }}>
+            All cities
+          </a>
         </Box>
       </Box>
     );
