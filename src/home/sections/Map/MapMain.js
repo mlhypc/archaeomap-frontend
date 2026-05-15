@@ -48,7 +48,7 @@ const MAP_LAYERS = {
     // further (up to 14) by reusing the maxNativeZoom tiles upscaled —
     // user sees low-res but navigation continues to street-level zooms.
     maxZoom: 14,
-    maxNativeZoom: 11
+    maxNativeZoom: 10
   },
   arcgis: {
     name: 'ArcGIS',
