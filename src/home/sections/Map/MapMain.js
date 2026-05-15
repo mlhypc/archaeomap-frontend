@@ -44,7 +44,7 @@ const MAP_LAYERS = {
     name: 'Ancient World Map',
     url: `${CAWM_TILE_ORIGIN}/cawm-tiles/{z}/{x}/{y}.png`,
     attribution: '&copy; Consortium of Ancient World Mappers (CAWM)',
-    maxZoom: 11
+    maxZoom: 10
   },
   arcgis: {
     name: 'ArcGIS',
