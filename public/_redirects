@@ -1,16 +1,12 @@
 # Cloudflare Pages routing rules.
 #
-# Proxy /sitemap.xml to the backend so the dynamic, DB-driven sitemap
-# is served on the canonical archaeomap.com origin. Status 200 means
-# the response is streamed transparently (not a 30x redirect).
+# Cross-origin 200 proxy is NOT supported by _redirects on Cloudflare
+# Pages — only same-origin proxy works here. The backend-bound paths
+# (/sitemap.xml, /llms-full.txt, /cities-index.html, /cawm-tiles/*)
+# are handled by Pages Functions in the functions/ directory instead.
 #
-# Replace the backend host below with the production Railway URL.
-/sitemap.xml         https://archaeomap-backend-production.up.railway.app/sitemap.xml         200
-/llms-full.txt       https://archaeomap-backend-production.up.railway.app/llms-full.txt       200
-/cities-index.html   https://archaeomap-backend-production.up.railway.app/cities-index.html   200
-/cawm-tiles/*        https://archaeomap-backend-production.up.railway.app/cawm-tiles/:splat   200
-
-# SPA fallback — every other unknown path serves the React app's
-# index.html so client-side routing (/cities/:country/:city, /panel,
-# /reset-password, /auth/callback) works on hard refresh.
+# This file only contains the SPA fallback: any unknown path serves
+# the React app's index.html so client-side routing
+# (/cities/:country/:city, /panel, /reset-password, /auth/callback)
+# works on hard refresh. Functions take precedence over this rule.
 /*  /index.html  200
