@@ -44,7 +44,11 @@ const MAP_LAYERS = {
     name: 'Ancient World Map',
     url: `${CAWM_TILE_ORIGIN}/cawm-tiles/{z}/{x}/{y}.png`,
     attribution: '&copy; Consortium of Ancient World Mappers (CAWM)',
-    maxZoom: 10
+    // CAWM upstream serves tiles up to ~zoom 10. Allow Leaflet to zoom
+    // further (up to 14) by reusing the maxNativeZoom tiles upscaled —
+    // user sees low-res but navigation continues to street-level zooms.
+    maxZoom: 14,
+    maxNativeZoom: 11
   },
   arcgis: {
     name: 'ArcGIS',
@@ -740,6 +744,9 @@ function MapComponent(props) {
             attribution={MAP_LAYERS[uiState.mapLayerKey].attribution}
             {...(MAP_LAYERS[uiState.mapLayerKey].subdomains
               ? { subdomains: MAP_LAYERS[uiState.mapLayerKey].subdomains }
+              : {})}
+            {...(MAP_LAYERS[uiState.mapLayerKey].maxNativeZoom !== undefined
+              ? { maxNativeZoom: MAP_LAYERS[uiState.mapLayerKey].maxNativeZoom }
               : {})}
           />
 
