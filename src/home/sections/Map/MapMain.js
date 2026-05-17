@@ -74,6 +74,32 @@ const MAP_LAYERS = {
 const MAP_MIN_ZOOM = 3;
 const MAP_MAX_ZOOM = 18;
 
+// Persisted view state — keeps camera, base layer, and current year across
+// F5 reloads via localStorage. Schema-versioned so future field additions
+// don't crash on stale stored blobs (parse returns null → defaults kick in).
+const VIEW_STORAGE_KEY = 'archaeomap.mapView';
+const VIEW_STORAGE_VERSION = 1;
+
+const loadPersistedView = () => {
+  try {
+    const raw = localStorage.getItem(VIEW_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed.version !== VIEW_STORAGE_VERSION) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const savePersistedView = (view) => {
+  try {
+    localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify({ version: VIEW_STORAGE_VERSION, ...view }));
+  } catch {
+    // localStorage may be unavailable (privacy mode, quota); fail silently
+  }
+};
+
 // TIMELINE YEARS - moved outside to prevent re-generation
 const generateTimelineYears = () => {
   const timePeriods = [];
@@ -216,6 +242,11 @@ const renderCityMarkers = (
 
 // CUSTOM HOOK - extracted map state logic
 function useMapState() {
+  // Persisted view (camera + layer + year) loaded once at hook init.
+  // Reads localStorage synchronously so the first render uses the
+  // restored values rather than mounting at defaults and snapping.
+  const persisted = loadPersistedView();
+
   // CONSOLIDATED STATE - reduced from 15+ useState to 3 compound states
   const [dataState, setDataState] = useState({
     allCities: [],
@@ -227,10 +258,10 @@ function useMapState() {
 
   const [uiState, setUiState] = useState({
     selectedCity: null,
-    currentYear: -5000,
+    currentYear: persisted?.currentYear ?? -5000,
     ageFilter: HISTORICAL_AGES.ALL_AGES,
     labelFilter: LABEL_VISIBILITY.SHOW_ACTIVE_ONLY.key,
-    mapLayerKey: 'cawm',
+    mapLayerKey: persisted?.mapLayerKey && MAP_LAYERS[persisted.mapLayerKey] ? persisted.mapLayerKey : 'cawm',
     showLabels: true,
     enable3D: false, // Toggle for 3D mode
     pitch: 0, // 0-60 degrees
@@ -247,7 +278,9 @@ function useMapState() {
   const [mapState, setMapState] = useState({
     map: null,
     mapBounds: null,
-    cameraPosition: { lat: 36, lng: 31, zoom: 6 } // Store camera position
+    cameraPosition: persisted?.cameraPosition && typeof persisted.cameraPosition.lat === 'number'
+      ? persisted.cameraPosition
+      : { lat: 36, lng: 31, zoom: 6 } // Store camera position
   });
 
   return {
@@ -488,10 +521,29 @@ function MapComponent(props) {
     // Update ref immediately (no re-render)
     cameraPositionRef.current = camera;
 
+    // Persist on every moveend/zoomend. localStorage write is sync but
+    // cheap (~µs); moveend fires once per drag/zoom, not per frame.
+    savePersistedView({
+      cameraPosition: camera,
+      mapLayerKey: uiState.mapLayerKey,
+      currentYear: uiState.currentYear
+    });
+
     // Only update state when switching modes (will be handled by toggle3D)
     // This prevents constant re-renders during pan/zoom
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [uiState.mapLayerKey, uiState.currentYear]);
+
+  // Persist layer + year changes (camera handled inside handleCameraChange).
+  // Reads camera from the ref so a layer/year change immediately after a pan
+  // doesn't clobber the just-panned camera with a stale state value.
+  useEffect(() => {
+    savePersistedView({
+      cameraPosition: cameraPositionRef.current,
+      mapLayerKey: uiState.mapLayerKey,
+      currentYear: uiState.currentYear
+    });
+  }, [uiState.mapLayerKey, uiState.currentYear]);
 
   const handleMapReady = useCallback((map) => {
     setMapState(prev => ({ ...prev, map }));
