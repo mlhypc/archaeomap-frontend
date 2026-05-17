@@ -66,15 +66,41 @@ const parseResponse = async (response) => {
 // ---- Public surface ----
 
 export const rulerService = {
-  // List with optional search/pagination
-  async list({ search, limit, offset } = {}) {
+  // List with optional search/pagination/status filter
+  async list({ search, limit, offset, status } = {}) {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (limit !== undefined) params.set('limit', String(limit));
     if (offset !== undefined) params.set('offset', String(offset));
+    if (status) params.set('status', status);
     const qs = params.toString();
     const res = await makeRequest(`/rulerData${qs ? `?${qs}` : ''}`);
     return parseResponse(res);
+  },
+
+  // Client-side JSON export: serialize a ruler object and download as file.
+  exportRuler(ruler) {
+    const payload = {
+      generic_name: ruler.generic_name,
+      slug: ruler.slug,
+      aliases: ruler.aliases || [],
+      color: ruler.color || null,
+      start_year: ruler.start_year ?? null,
+      end_year: ruler.end_year ?? null,
+      description: ruler.description || null,
+      data_status: ruler.data_status || 'active'
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safe = (s) => (s || '').replace(/[^a-zA-Z0-9]/g, '_');
+    a.download = `ruler_${safe(ruler.slug || ruler.generic_name)}_${ruler.id || ''}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return { success: true };
   },
 
   // Single by Mongo _id

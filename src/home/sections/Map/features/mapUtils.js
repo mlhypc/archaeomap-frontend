@@ -95,18 +95,24 @@ export const LABEL_VISIBILITY_LOOKUP = Object.values(LABEL_VISIBILITY).reduce((a
 }, {});
 
 // === City Marker Icons ===
-export const getCityIcon = (city, isSelected = false) => {
+// rulerColor (optional) replaces the default brown fill ONLY when the
+// city is active and unselected. Selected always wins (gold). Ended
+// cities are drawn from the static `endedCityIcon` singleton below and
+// are unaffected by ruler color.
+export const getCityIcon = (city, isSelected = false, rulerColor = null) => {
   const size = city.iconSize || 5;
-  const color = isSelected ? '#daa520' : COLORS.primary;
+  const color = isSelected
+    ? '#daa520'
+    : (rulerColor || COLORS.primary);
 
   return L.divIcon({
     className: 'custom-div-icon',
     html: `<div style="
-      background-color: ${color}; 
-      width: ${size}px; 
-      height: ${size}px; 
-      border-radius: 50%; 
-      border: 1px solid rgba(255,255,255,0.5); 
+      background-color: ${color};
+      width: ${size}px;
+      height: ${size}px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.5);
       box-shadow: 0 0 0 1px white;
     "></div>`,
     iconSize: [size, size],
@@ -122,11 +128,17 @@ export const endedCityIcon = L.divIcon({
 });
 
 // === City Label Icons ===
-export const createCityLabel = (cityName, isSelected = false, status = 'active') => {
-  const className = `city-label${isSelected ? ' selected' : ''}${status === 'ended' ? ' ended' : ''}`;
+// The text is wrapped in a `<span class="city-label-text">` so the
+// OptimizedCityMarker effect can crossfade old → new text spans on
+// change (old one becomes .outgoing, new one mounts at opacity 0 → 1).
+// labelColor (optional) becomes the --ruler-color CSS var, paining a
+// colored ring around the pill without touching text / background.
+export const createCityLabel = (cityName, isSelected = false, status = 'active', labelColor = null) => {
+  const className = `city-label${isSelected ? ' selected' : ''}${status === 'ended' ? ' ended' : ''}${labelColor ? ' has-ruler' : ''}`;
+  const styleAttr = labelColor ? ` style="--ruler-color:${labelColor}"` : '';
   return L.divIcon({
     className: 'leaflet-label-wrapper',
-    html: `<div class="${className}">${cityName}</div>`,
+    html: `<div class="${className}"${styleAttr}><span class="city-label-text">${cityName}</span></div>`,
     iconSize: undefined,
     iconAnchor: [0, 0]
   });

@@ -74,6 +74,17 @@ export const COLORS = {
     return period ? period.CityName : city.name;
   };
 
+  // Get current ruler color for a city's label highlight. Returns the
+  // color string when a PeriodRuler entry covers the year, else null
+  // (caller treats null as "no highlight, use default chrome").
+  export const getCurrentRulerColor = (city, currentYear) => {
+    if (!city.PeriodRuler?.length) return null;
+    const period = city.PeriodRuler.find(p =>
+      currentYear >= p.start && currentYear <= p.end
+    );
+    return period?.color || null;
+  };
+
   // URL slug helpers — used to build shareable city URLs like /cities/turkiye/cadir-hoyuk
   //
   // This map covers characters that NFD diacritic stripping cannot decompose.

@@ -194,25 +194,35 @@ function CityDetails({ cityDetails, currentYear }) {
 
           <Collapse in={controlHistoryOpen} timeout="auto" unmountOnExit>
             <Box sx={{ pl: 0 }}>
-              <Box sx={{
-                position: 'relative',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  left: '12px',
-                  top: '0',
-                  bottom: '0',
-                  width: '2px',
-                  backgroundColor: COLORS.timeline.line,
-                  borderRadius: '1px'
-                }
-              }}>
-                {cityDetails.controlHistory.map((control, index) => (
+              <Box sx={{ position: 'relative' }}>
+                {cityDetails.controlHistory.map((control, index) => {
+                  const dotColor = control.ruler_color || COLORS.timeline.dotPrimary;
+                  const lineColor = control.ruler_color || COLORS.timeline.line;
+                  const isLast = index === cityDetails.controlHistory.length - 1;
+                  return (
                   <Box key={index} sx={{
                     position: 'relative',
                     mb: 2.5,
                     pl: 3
                   }}>
+                    {/* Line segment from below this dot down to the next dot.
+                        Colored by this period's ruler so each segment reads
+                        as "this stretch belongs to this ruler". Omitted on
+                        the last entry. mb:2.5 = 20px gap; the next dot starts
+                        6px below the next entry's top, so -26px lands the
+                        segment exactly at the next dot's top edge. */}
+                    {!isLast && (
+                      <Box sx={{
+                        position: 'absolute',
+                        left: '11px',
+                        top: '22px',
+                        bottom: '-26px',
+                        width: '2px',
+                        backgroundColor: lineColor,
+                        borderRadius: '1px',
+                        zIndex: 0
+                      }} />
+                    )}
                     <Box sx={{
                       position: 'absolute',
                       left: '4px',
@@ -220,9 +230,10 @@ function CityDetails({ cityDetails, currentYear }) {
                       width: '16px',
                       height: '16px',
                       borderRadius: '50%',
-                      backgroundColor: COLORS.timeline.dotPrimary,
+                      backgroundColor: dotColor,
                       border: `2px solid ${COLORS.background}`,
-                      boxShadow: `0 0 0 2px ${COLORS.border}`
+                      boxShadow: `0 0 0 2px ${COLORS.border}`,
+                      zIndex: 1
                     }} />
 
                     <Box sx={{
@@ -286,7 +297,8 @@ function CityDetails({ cityDetails, currentYear }) {
                       )}
                     </Box>
                   </Box>
-                ))}
+                  );
+                })}
               </Box>
             </Box>
           </Collapse>

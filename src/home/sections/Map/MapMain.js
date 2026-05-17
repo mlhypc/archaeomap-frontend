@@ -20,7 +20,7 @@ import {
 } from './features/mapUtils';
 
 import { ControlPanel, AuthenticationPanel } from './features/mapControls';
-import { getCurrentCityName } from '../../../shared/config/generalUtils';
+import { getCurrentCityName, getCurrentRulerColor } from '../../../shared/config/generalUtils';
 const CesiumGlobe = React.lazy(() => import('./features/CesiumGlobe'));
 
 // MAP LAYERS - moved outside component to prevent re-creation.
@@ -177,15 +177,111 @@ const OptimizedCityMarker = React.memo(({
   onSelect,
   showLabel,
   labelText,
+  rulerColor,
   status
 }) => {
-  // Memoize icon creation to prevent unnecessary recreations
-  const icon = useMemo(() => iconFn(city, isSelected), [city, iconFn, isSelected]);
+  // Dot icon — kept memoized as before (dot recreate is cheap and we
+  // want active/selected swatches to fire instantly).
+  const icon = useMemo(
+    () => iconFn(city, isSelected, rulerColor),
+    [city, iconFn, isSelected, rulerColor]
+  );
 
-  // Memoize label icon creation
+  // Latest label values held in a ref so the icon useMemo (which only
+  // re-runs on showLabel toggle) can read fresh values on (re)mount
+  // while subsequent updates flow through the DOM-mutation effect below.
+  const latestLabelRef = useRef({ labelText, rulerColor, isSelected, status });
+  latestLabelRef.current = { labelText, rulerColor, isSelected, status };
+
+  // Label icon — created once when showLabel first becomes true (and on
+  // each subsequent toggle off→on). Keeping the L.divIcon stable means
+  // Leaflet does not call setIcon() per slider tick, so the inner DOM
+  // node persists and CSS `transition: width / box-shadow` can tween
+  // smoothly between values.
   const labelIcon = useMemo(() => {
-    return showLabel ? createCityLabel(labelText, isSelected, status) : null;
-  }, [showLabel, labelText, isSelected, status]);
+    if (!showLabel) return null;
+    const { labelText: t, rulerColor: c, isSelected: s, status: st } = latestLabelRef.current;
+    return createCityLabel(t, s, st, c);
+  }, [showLabel]);
+
+  // Ref to the label L.Marker; used to grab its DOM node for in-place
+  // mutation. The dot marker stays prop-driven.
+  const labelMarkerRef = useRef(null);
+  // Token gates stale transitionend handlers so a fast slider drag
+  // doesn't let an old cleanup wipe a newer transition.
+  const labelTokenRef = useRef(0);
+
+  useEffect(() => {
+    if (!showLabel) return;
+    const marker = labelMarkerRef.current;
+    if (!marker || typeof marker.getElement !== 'function') return;
+    const wrapper = marker.getElement();
+    if (!wrapper) return;
+    const el = wrapper.querySelector('.city-label');
+    if (!el) return;
+
+    // Color (CSS var) — `transition: box-shadow` tweens the colored
+    // outer ring automatically since the same DOM node persists.
+    if (rulerColor) el.style.setProperty('--ruler-color', rulerColor);
+    else el.style.removeProperty('--ruler-color');
+
+    // Selected / ended / has-ruler classes
+    el.classList.toggle('selected', isSelected);
+    el.classList.toggle('ended', status === 'ended');
+    el.classList.toggle('has-ruler', !!rulerColor);
+
+    // Text crossfade + width tween. Find the in-flow text span (the one
+    // without `.outgoing`); if its text differs, demote it to outgoing
+    // (absolute, fading out) and append a fresh incoming span.
+    const inFlow = Array.from(el.querySelectorAll('.city-label-text'))
+      .find(s => !s.classList.contains('outgoing'));
+    if (inFlow && inFlow.textContent !== labelText) {
+      const oldWidth = el.offsetWidth;
+
+      // Drop old span out of flow + start its fade
+      const outgoing = inFlow;
+      outgoing.classList.add('outgoing');
+      const cleanupOutgoing = (e) => {
+        if (e.propertyName !== 'opacity') return;
+        outgoing.removeEventListener('transitionend', cleanupOutgoing);
+        outgoing.remove();
+      };
+      outgoing.addEventListener('transitionend', cleanupOutgoing);
+      // Safety net in case transitionend never fires (browser bug, tab
+      // backgrounded, etc.) — remove after a slightly longer timeout.
+      setTimeout(() => { if (outgoing.isConnected) outgoing.remove(); }, 400);
+
+      // Append incoming span — starts at opacity 0, fade in next frame
+      const incoming = document.createElement('span');
+      incoming.className = 'city-label-text incoming';
+      incoming.textContent = labelText;
+      el.appendChild(incoming);
+
+      const newWidth = el.offsetWidth; // sync-layout with new content
+      // Width tween only when delta is perceivable. Sub-4px shifts
+      // are not visually meaningful but cost 2-3 forced layouts per
+      // marker — skip them and let the container snap to natural
+      // width. Crossfade (above) still runs regardless of delta.
+      if (Math.abs(newWidth - oldWidth) >= 4) {
+        const token = ++labelTokenRef.current;
+        el.style.width = `${oldWidth}px`;
+        void el.offsetWidth;
+        el.style.width = `${newWidth}px`;
+        const onEnd = (e) => {
+          if (e.propertyName !== 'width') return;
+          el.removeEventListener('transitionend', onEnd);
+          if (labelTokenRef.current !== token) return;
+          el.style.width = '';
+        };
+        el.addEventListener('transitionend', onEnd);
+      }
+
+      // Flip incoming to opacity 1 on next frame so the transition fires
+      requestAnimationFrame(() => {
+        incoming.classList.remove('incoming');
+      });
+    }
+  }, [showLabel, labelText, rulerColor, isSelected, status]);
 
   // Memoize click handler
   const handleClick = useCallback(() => onSelect(city), [city, onSelect]);
@@ -199,6 +295,7 @@ const OptimizedCityMarker = React.memo(({
       />
       {showLabel && labelIcon && (
         <Marker
+          ref={labelMarkerRef}
           position={city.coordinates}
           icon={labelIcon}
           eventHandlers={{ click: handleClick }}
@@ -224,6 +321,7 @@ const renderCityMarkers = (
     const isSelected = selectedCity?.id === city.id;
     const showLabel = showLabels && visibleKeys.includes(labelFilter);
     const labelText = getCurrentCityName(city, currentYear);
+    const rulerColor = getCurrentRulerColor(city, currentYear);
 
     return (
       <OptimizedCityMarker
@@ -234,6 +332,7 @@ const renderCityMarkers = (
         onSelect={handleSelectCity}
         showLabel={showLabel}
         labelText={labelText}
+        rulerColor={rulerColor}
         status={status}
       />
     );
@@ -849,7 +948,7 @@ const CityMarkers = React.memo(({
   }), []);
 
   // Memoized icon functions to prevent recreations
-  const activeCityIconFn = useCallback((city, isSelected) => getCityIcon(city, isSelected), []);
+  const activeCityIconFn = useCallback((city, isSelected, rulerColor) => getCityIcon(city, isSelected, rulerColor), []);
   const endedCityIconFn = useCallback(() => endedCityIcon, []);
 
   // Memoize active cities rendering

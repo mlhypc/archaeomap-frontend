@@ -788,9 +788,25 @@ const globalStyles = {
     boxShadow: 'none !important',
   },
   
-  '@keyframes archaeoLabelFadeIn': {
-    from: { opacity: 0, transform: 'translateX(-50%) translateY(2px)' },
-    to: { opacity: 1, transform: 'translateX(-50%) translateY(0)' }
+  '.city-label-text': {
+    display: 'inline-block',
+    transition: 'opacity 0.18s ease',
+    // When a newer span mounts on text change, the previous span becomes
+    // .outgoing — pulled out of layout flow (so the new span drives
+    // container width) and centered via translateX(-50%) so its natural
+    // width is preserved as the parent's width tweens around it.
+    '&.outgoing': {
+      position: 'absolute',
+      left: '50%',
+      top: '3px',
+      transform: 'translateX(-50%)',
+      opacity: 0,
+      pointerEvents: 'none',
+      whiteSpace: 'nowrap',
+    },
+    '&.incoming': {
+      opacity: 0,
+    }
   },
 
   '.city-label': {
@@ -808,9 +824,16 @@ const globalStyles = {
     padding: '3px 8px',
     pointerEvents: 'auto',
     cursor: 'pointer',
-    boxShadow: '0 0 1px rgba(0,0,0,0.2)',
-    transition: 'background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
-    animation: 'archaeoLabelFadeIn 0.25s ease',
+    // Subtle default shadow + (when --ruler-color is set) a colored
+    // outer ring. The fallback `transparent` keeps the ring invisible
+    // for uncolored periods so the legacy look is preserved.
+    boxShadow: '0 0 1px rgba(0,0,0,0.2), 0 0 0 1.5px var(--ruler-color, transparent)',
+    // OptimizedCityMarker keeps the label DOM node stable and mutates it
+    // in place, so these transitions fire naturally on ruler color /
+    // selection / status changes. `width` is included for the JS-driven
+    // explicit-pixel tween that animates label resize on text swap
+    // (e.g. "Constantinople" → "Istanbul").
+    transition: 'background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, width 0.2s ease',
 
     '&.selected': {
       backgroundColor: '#daa520',
