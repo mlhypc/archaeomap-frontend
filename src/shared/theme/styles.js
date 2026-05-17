@@ -788,6 +788,11 @@ const globalStyles = {
     boxShadow: 'none !important',
   },
   
+  '@keyframes archaeoLabelFadeIn': {
+    from: { opacity: 0, transform: 'translateX(-50%) translateY(2px)' },
+    to: { opacity: 1, transform: 'translateX(-50%) translateY(0)' }
+  },
+
   '.city-label': {
     position: 'absolute',
     top: '-30px',
@@ -804,7 +809,8 @@ const globalStyles = {
     pointerEvents: 'auto',
     cursor: 'pointer',
     boxShadow: '0 0 1px rgba(0,0,0,0.2)',
-    transition: 'all 0.2s ease',
+    transition: 'background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
+    animation: 'archaeoLabelFadeIn 0.25s ease',
 
     '&.selected': {
       backgroundColor: '#daa520',

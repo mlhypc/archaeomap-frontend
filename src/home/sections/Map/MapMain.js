@@ -181,7 +181,7 @@ const OptimizedCityMarker = React.memo(({
 }) => {
   // Memoize icon creation to prevent unnecessary recreations
   const icon = useMemo(() => iconFn(city, isSelected), [city, iconFn, isSelected]);
-  
+
   // Memoize label icon creation
   const labelIcon = useMemo(() => {
     return showLabel ? createCityLabel(labelText, isSelected, status) : null;
