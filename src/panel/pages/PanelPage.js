@@ -27,6 +27,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import ModerationIcon from '@mui/icons-material/Gavel';
 import PeopleIcon from '@mui/icons-material/People';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -38,6 +39,7 @@ import ProfileSection from '../sections/Personal/ProfileSection';
 import SettingsSection from '../sections/Personal/SettingsSection';
 import ApplyForContributorSection from '../sections/Personal/ApplyForContributorSection';
 import CityManage from '../sections/Moderation/CityManageSection';
+import RulerManageSection from '../sections/Moderation/RulerManageSection';
 import UserManagementSection from '../sections/Administration/UserManagementSection';
 import ModerationSection from '../sections/Moderation/ModerationSection';
 import PendingApplicationsSection from '../sections/Moderation/featuresModeration/PendingApplicationsSection';
@@ -57,6 +59,7 @@ const PANEL_SECTIONS = {
   CITIES: 'cities',
   MY_SUBMISSIONS: 'my-submissions',
   MODERATION: 'moderation',
+  RULERS: 'rulers',
   PENDING_APPLICATIONS: 'pending-applications',
   USER_MANAGEMENT: 'user-management',
   SYSTEM_SETTINGS: 'system-settings'
@@ -153,10 +156,16 @@ function PanelPage() {
           icon: HowToVoteIcon,
           category: 'Moderation'
         },
-        { 
-          id: PANEL_SECTIONS.CITIES, 
-          label: 'Cities', 
+        {
+          id: PANEL_SECTIONS.CITIES,
+          label: 'Cities',
           icon: LocationCityIcon,
+          category: 'Moderation'
+        },
+        {
+          id: PANEL_SECTIONS.RULERS,
+          label: 'Rulers',
+          icon: AccountBalanceIcon,
           category: 'Moderation'
         }
       );
@@ -199,6 +208,7 @@ function PanelPage() {
     [PANEL_SECTIONS.SETTINGS]: <SettingsSection />,
     [PANEL_SECTIONS.APPLY_CONTRIBUTOR]: <ApplyForContributorSection />,
     [PANEL_SECTIONS.CITIES]: <CityManage />,
+    [PANEL_SECTIONS.RULERS]: <RulerManageSection />,
     [PANEL_SECTIONS.MY_SUBMISSIONS]: <PlaceholderSection
       title="My Submissions"
       description="Track your data submissions and approval status"
