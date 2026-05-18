@@ -24,7 +24,9 @@ import {
     useMediaQuery,
     InputAdornment,
     IconButton,
-    Stack
+    Stack,
+    Switch,
+    FormControlLabel
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import SaveIcon from '@mui/icons-material/Save';
@@ -63,6 +65,7 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
         slug: '',
         aliases: [''],
         color: '',
+        color_override: false,
         start_year: '',
         end_year: '',
         description: '',
@@ -93,6 +96,7 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
                     slug: r.slug || '',
                     aliases: (r.aliases && r.aliases.length) ? r.aliases : [''],
                     color: r.color || '',
+                    color_override: r.color_override === true,
                     start_year: r.start_year ?? '',
                     end_year: r.end_year ?? '',
                     description: r.description || '',
@@ -185,6 +189,7 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
                     slug: json.slug || prev.slug,
                     aliases: Array.isArray(json.aliases) && json.aliases.length ? json.aliases : prev.aliases,
                     color: json.color !== undefined ? (json.color || '') : prev.color,
+                    color_override: json.color_override !== undefined ? (json.color_override === true) : prev.color_override,
                     start_year: json.start_year != null ? String(json.start_year) : prev.start_year,
                     end_year: json.end_year != null ? String(json.end_year) : prev.end_year,
                     description: json.description !== undefined ? (json.description || '') : prev.description,
@@ -242,6 +247,7 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
             slug: formData.slug.trim(),
             aliases: formData.aliases.map(a => a.trim()).filter(Boolean),
             color: formData.color.trim() || null,
+            color_override: formData.color_override === true,
             start_year: formData.start_year === '' ? null : Number(formData.start_year),
             end_year: formData.end_year === '' ? null : Number(formData.end_year),
             description: formData.description.trim() || null,
@@ -489,34 +495,52 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
                                 </Box>
                             </Box>
 
-                            {/* Row 3: Color */}
-                            <Box>
-                                <TextField
-                                    label="Color"
-                                    value={formData.color}
-                                    onChange={(e) => handleInputChange('color', e.target.value)}
-                                    fullWidth
-                                    placeholder="#b43232 or rgba(180,50,50,0.7)"
-                                    helperText="Hex or rgba for map label coloring"
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <PaletteIcon sx={{ color: COLORS.primary }} />
-                                            </InputAdornment>
-                                        ),
-                                        endAdornment: formData.color ? (
-                                            <InputAdornment position="end">
-                                                <Box sx={{
-                                                    width: 26,
-                                                    height: 26,
-                                                    borderRadius: '4px',
-                                                    backgroundColor: formData.color,
-                                                    border: '1px solid rgba(0,0,0,0.2)'
-                                                }} />
-                                            </InputAdornment>
-                                        ) : null
-                                    }}
-                                />
+                            {/* Row 3: Color + override toggle */}
+                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'flex-start' }}>
+                                <Box sx={{ flex: '1 1 auto', width: '100%' }}>
+                                    <TextField
+                                        label="Color"
+                                        value={formData.color}
+                                        onChange={(e) => handleInputChange('color', e.target.value)}
+                                        fullWidth
+                                        disabled={!formData.color_override}
+                                        placeholder="#b43232 or rgba(180,50,50,0.7)"
+                                        helperText={formData.color_override
+                                            ? 'Hex or rgba for map label coloring (locked: algorithm will not change)'
+                                            : 'Algorithm-managed — toggle Override to set manually'}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <PaletteIcon sx={{ color: COLORS.primary }} />
+                                                </InputAdornment>
+                                            ),
+                                            endAdornment: formData.color ? (
+                                                <InputAdornment position="end">
+                                                    <Box sx={{
+                                                        width: 26,
+                                                        height: 26,
+                                                        borderRadius: '4px',
+                                                        backgroundColor: formData.color,
+                                                        border: '1px solid rgba(0,0,0,0.2)'
+                                                    }} />
+                                                </InputAdornment>
+                                            ) : null
+                                        }}
+                                    />
+                                </Box>
+                                <Box sx={{ flex: '0 0 auto', pt: { sm: 0.5 } }}>
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={formData.color_override}
+                                                onChange={(e) => handleInputChange('color_override', e.target.checked)}
+                                                color="primary"
+                                            />
+                                        }
+                                        label="Override"
+                                        sx={{ m: 0, color: COLORS.texts.primary }}
+                                    />
+                                </Box>
                             </Box>
 
                             {/* Row 4: Aliases */}

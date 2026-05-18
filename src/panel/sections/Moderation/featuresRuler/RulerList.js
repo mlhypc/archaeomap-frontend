@@ -33,6 +33,8 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AddIcon from '@mui/icons-material/Add';
+import LockIcon from '@mui/icons-material/Lock';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useTheme } from '@mui/material/styles';
 
 import { COLORS, formatYear } from '../../../../shared/config/generalUtils';
@@ -375,20 +377,29 @@ function RulerList({ onCreateRuler, onEditRuler }) {
 
                                         {!isSmallMobile && (
                                             <TableCell>
-                                                {ruler.color ? (
-                                                    <Typography
-                                                        variant="caption"
-                                                        sx={{
-                                                            fontFamily: 'monospace',
-                                                            color: COLORS.texts.secondary,
-                                                            fontSize: '0.75rem'
-                                                        }}
-                                                    >
-                                                        {ruler.color}
-                                                    </Typography>
-                                                ) : (
-                                                    <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>—</Typography>
-                                                )}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                                    <Tooltip title={ruler.color_override ? 'Locked — manual override' : 'Algorithm-managed'} placement="top">
+                                                        {ruler.color_override ? (
+                                                            <LockIcon sx={{ fontSize: 14, color: '#c08a30' }} />
+                                                        ) : (
+                                                            <AutoAwesomeIcon sx={{ fontSize: 14, color: COLORS.texts.muted }} />
+                                                        )}
+                                                    </Tooltip>
+                                                    {ruler.color ? (
+                                                        <Typography
+                                                            variant="caption"
+                                                            sx={{
+                                                                fontFamily: 'monospace',
+                                                                color: COLORS.texts.secondary,
+                                                                fontSize: '0.75rem'
+                                                            }}
+                                                        >
+                                                            {ruler.color}
+                                                        </Typography>
+                                                    ) : (
+                                                        <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>—</Typography>
+                                                    )}
+                                                </Box>
                                             </TableCell>
                                         )}
 

@@ -26,7 +26,9 @@ import {
     Card,
     Chip,
     IconButton,
-    Stack
+    Stack,
+    Switch,
+    FormControlLabel
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
@@ -71,6 +73,7 @@ const EMPTY_FORM = {
     slug: '',
     aliases: [''],
     color: '',
+    color_override: false,
     start_year: '',
     end_year: '',
     description: '',
@@ -150,6 +153,7 @@ const RulerCreationModal = ({ open, onClose, onRulerCreated }) => {
                     slug: json.slug || (json.generic_name ? slugify(json.generic_name) : ''),
                     aliases: Array.isArray(json.aliases) && json.aliases.length ? json.aliases : [json.generic_name || ''],
                     color: json.color || '',
+                    color_override: json.color_override === true,
                     start_year: json.start_year ?? '',
                     end_year: json.end_year ?? '',
                     description: json.description || '',
@@ -219,6 +223,7 @@ const RulerCreationModal = ({ open, onClose, onRulerCreated }) => {
             slug: formData.slug.trim(),
             aliases: formData.aliases.map(a => a.trim()).filter(Boolean),
             color: formData.color.trim() || null,
+            color_override: formData.color_override === true,
             start_year: formData.start_year === '' ? null : Number(formData.start_year),
             end_year: formData.end_year === '' ? null : Number(formData.end_year),
             description: formData.description.trim() || null,
@@ -471,34 +476,52 @@ const RulerCreationModal = ({ open, onClose, onRulerCreated }) => {
                         </Box>
                     </Box>
 
-                    {/* Row 3: Color */}
-                    <Box>
-                        <TextField
-                            label="Color"
-                            value={formData.color}
-                            onChange={(e) => handleInputChange('color', e.target.value)}
-                            fullWidth
-                            placeholder="#b43232 or rgba(180,50,50,0.7)"
-                            helperText="Hex or rgba for map label coloring"
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <PaletteIcon sx={{ color: COLORS.primary }} />
-                                    </InputAdornment>
-                                ),
-                                endAdornment: formData.color ? (
-                                    <InputAdornment position="end">
-                                        <Box sx={{
-                                            width: 26,
-                                            height: 26,
-                                            borderRadius: '4px',
-                                            backgroundColor: formData.color,
-                                            border: '1px solid rgba(0,0,0,0.2)'
-                                        }} />
-                                    </InputAdornment>
-                                ) : null
-                            }}
-                        />
+                    {/* Row 3: Color + override toggle */}
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'flex-start' }}>
+                        <Box sx={{ flex: '1 1 auto', width: '100%' }}>
+                            <TextField
+                                label="Color"
+                                value={formData.color}
+                                onChange={(e) => handleInputChange('color', e.target.value)}
+                                fullWidth
+                                disabled={!formData.color_override}
+                                placeholder="#b43232 or rgba(180,50,50,0.7)"
+                                helperText={formData.color_override
+                                    ? 'Hex or rgba — locked, algorithm will not change it'
+                                    : 'Leave to algorithm — toggle Override to set manually'}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <PaletteIcon sx={{ color: COLORS.primary }} />
+                                        </InputAdornment>
+                                    ),
+                                    endAdornment: formData.color ? (
+                                        <InputAdornment position="end">
+                                            <Box sx={{
+                                                width: 26,
+                                                height: 26,
+                                                borderRadius: '4px',
+                                                backgroundColor: formData.color,
+                                                border: '1px solid rgba(0,0,0,0.2)'
+                                            }} />
+                                        </InputAdornment>
+                                    ) : null
+                                }}
+                            />
+                        </Box>
+                        <Box sx={{ flex: '0 0 auto', pt: { sm: 0.5 } }}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={formData.color_override}
+                                        onChange={(e) => handleInputChange('color_override', e.target.checked)}
+                                        color="primary"
+                                    />
+                                }
+                                label="Override"
+                                sx={{ m: 0, color: COLORS.texts.primary }}
+                            />
+                        </Box>
                     </Box>
 
                     {/* Row 4: Aliases */}

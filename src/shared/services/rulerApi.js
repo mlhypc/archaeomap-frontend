@@ -85,6 +85,7 @@ export const rulerService = {
       slug: ruler.slug,
       aliases: ruler.aliases || [],
       color: ruler.color || null,
+      color_override: ruler.color_override === true,
       start_year: ruler.start_year ?? null,
       end_year: ruler.end_year ?? null,
       description: ruler.description || null,
@@ -140,6 +141,14 @@ export const rulerService = {
 
   async remove(id) {
     const res = await makeRequest(`/rulerData/${id}`, { method: 'DELETE' });
+    return parseResponse(res);
+  },
+
+  // Admin: re-run the LAB color distribution algorithm. Updates the
+  // `color` of every override=false ruler in one shot. Synchronous —
+  // resolves once the algorithm has finished writing.
+  async recomputeColors() {
+    const res = await makeRequest('/rulerData/recompute-colors', { method: 'POST' });
     return parseResponse(res);
   }
 };
