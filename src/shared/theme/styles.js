@@ -827,7 +827,7 @@ const globalStyles = {
     // Subtle default shadow + (when --ruler-color is set) a colored
     // outer ring. The fallback `transparent` keeps the ring invisible
     // for uncolored periods so the legacy look is preserved.
-    boxShadow: '0 0 1px rgba(0,0,0,0.2), 0 0 0 1.5px var(--ruler-color, transparent)',
+    boxShadow: '0 0 1px rgba(0,0,0,0.2), 0 0 0 2px var(--ruler-color, transparent)',
     // OptimizedCityMarker keeps the label DOM node stable and mutates it
     // in place, so these transitions fire naturally on ruler color /
     // selection / status changes. `width` is included for the JS-driven
