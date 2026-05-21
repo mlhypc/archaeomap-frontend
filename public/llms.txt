@@ -2,9 +2,11 @@
 
 > ArchaeoMap is a free, interactive web application that visualizes the historical evolution of human settlements and ancient cities across time — from prehistoric origins to modern metropolises.
 
-For detailed per-city data (rulers, landmarks, populations, founding dates, descriptions), see [llms-full.txt](https://archaeomap.com/llms-full.txt) — a plain-text dump of every approved city, regenerated automatically from the live database.
+For detailed per-city data (rulers, landmarks, populations, founding dates, descriptions, historical alternate names), see [llms-full.txt](https://archaeomap.com/llms-full.txt) — a plain-text dump of every approved city, regenerated automatically from the live database.
 
-For a hyperlinked HTML directory of every city grouped by country, see [cities-index.html](https://archaeomap.com/cities-index.html).
+For a single city's data in plain text, fetch `https://archaeomap.com/cities/{country-slug}/{city-slug}.txt` (e.g. `/cities/turkiye/bodrum.txt`). The endpoint also accepts historical city-name slugs, so `/cities/turkiye/halicarnassus.txt` returns the same Bodrum entry.
+
+For a hyperlinked HTML directory of every city grouped by country, with each entry annotated by its historical alternate names, see [cities-index.html](https://archaeomap.com/cities-index.html).
 
 ## What is ArchaeoMap?
 

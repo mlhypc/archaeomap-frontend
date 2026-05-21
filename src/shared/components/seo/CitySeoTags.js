@@ -26,6 +26,28 @@ const formatYear = (year) => {
   return year < 0 ? `${Math.abs(year)} BC` : `${year} AD`;
 };
 
+// Collect distinct historical names from a city's controlHistory.
+// Skips the modern name itself and "*"-prefixed reconstructed names.
+// Used both for schema.org alternateName and for an "(ancient X)"
+// hint inserted into the page <title>, both of which strengthen
+// discoverability for searches on the historical form.
+const collectAlternateNames = (city) => {
+  const control = Array.isArray(city.controlHistory) ? city.controlHistory : [];
+  const modern = (city.name || '').trim();
+  const seen = new Set();
+  const out = [];
+  for (const c of control) {
+    const raw = (c.historical_city_name || '').trim();
+    if (!raw) continue;
+    if (raw.startsWith('*')) continue;
+    if (raw === modern) continue;
+    if (seen.has(raw)) continue;
+    seen.add(raw);
+    out.push(raw);
+  }
+  return out;
+};
+
 const buildCityDescription = (city) => {
   if (city.description) return truncate(city.description, 160);
   const founded = formatYear(city.founded);
@@ -62,7 +84,9 @@ function CitySeoTags({ city }) {
     );
   }
 
-  const title = `${city.name}, ${city.country} — ${SITE_NAME}`;
+  const alternateNames = collectAlternateNames(city);
+  const titleAlias = alternateNames.length ? ` (ancient ${alternateNames[0]})` : '';
+  const title = `${city.name}${titleAlias}, ${city.country} — ${SITE_NAME}`;
   const description = buildCityDescription(city);
   const canonical = `${SITE_ORIGIN}${cityUrl(city)}`;
   const image = city.image_url || DEFAULT_IMAGE;
@@ -77,6 +101,7 @@ function CitySeoTags({ city }) {
     '@type': 'Place',
     additionalType: 'https://schema.org/LandmarksOrHistoricalBuildings',
     name: city.name,
+    ...(alternateNames.length ? { alternateName: alternateNames } : {}),
     description,
     url: canonical,
     image,
@@ -103,6 +128,7 @@ function CitySeoTags({ city }) {
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonical} />
+      <link rel="alternate" type="text/plain" href={`${canonical}.txt`} title={`${city.name} — plain text`} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={canonical} />
