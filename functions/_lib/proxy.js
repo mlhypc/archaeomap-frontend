@@ -5,7 +5,7 @@
 // our cross-origin proxy targets (sitemap.xml, llms-full.txt,
 // cities-index.html, cawm-tiles) live as Functions instead.
 
-const BACKEND = 'https://archaeomap-backend-production.up.railway.app';
+const BACKEND = 'https://api.archaeomap.com';
 
 export async function proxyToBackend(request) {
   const url = new URL(request.url);
