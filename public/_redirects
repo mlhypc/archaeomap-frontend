@@ -5,12 +5,14 @@
 # (/sitemap.xml, /llms-full.txt, /cities-index.html, /cawm-tiles/*)
 # are handled by Pages Functions in the functions/ directory instead.
 #
-# /about has no React route (only the static /about.html landing
-# exists) — without this rule it fell through to the SPA fallback
-# below and rendered the noindex NotFoundPage, which Google had
-# started indexing anyway (25 impressions on a dead URL).
-/about  /about.html  301
-
+# Do NOT add a /about -> /about.html redirect here. Cloudflare Pages
+# already auto-redirects /about.html -> /about (308, built-in "pretty
+# URL" canonicalization for static .html files) and serves the file's
+# content at the extensionless path. An explicit reverse rule fights
+# that behavior and produces an infinite /about <-> /about.html loop
+# (ERR_TOO_MANY_REDIRECTS) — this was live in prod for a few minutes
+# on 2026-08-06, reverted here.
+#
 # This file only contains the SPA fallback: any unknown path serves
 # the React app's index.html so client-side routing
 # (/cities/:country/:city, /panel, /reset-password, /auth/callback)
