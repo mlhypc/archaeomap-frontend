@@ -7,6 +7,12 @@ versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 14.
 
 ## Unreleased
 
+## 1.1.2 - www redirect via Cloudflare rule (2026-10-14)
+
+### Removed
+- `functions/_middleware.js`: the www -> apex 301 is now a Cloudflare Redirect Rule on the zone, so no
+  request goes through a Pages Function any more.
+
 ## 1.1.1 - Restore www middleware (2026-10-14)
 
 ### Fixed

@@ -17,8 +17,8 @@
 # the React app's index.html so client-side routing
 # (/cities/:country/:city, /panel, /reset-password, /auth/callback)
 # works on hard refresh. Functions take precedence over this rule.
-# www -> apex lives in functions/_middleware.js. A host rule here
-# (`https://www.archaeomap.com/* https://archaeomap.com/:splat 301`) was tried on
-# 2026-10-14 (1.1.0) and Pages ignored it: www served 200. Do not retry without
-# testing with curl; a dashboard Redirect Rule would be the zero-cost alternative.
+# www -> apex is a Cloudflare dashboard Redirect Rule ("Redirect from WWW to root",
+# zone archaeomap.com, since 2026-10-14). Not in this repo: a host rule here was
+# ignored by Pages (1.1.0) and a root functions/_middleware.js ran on every asset
+# request (1.0.0-1.1.1). If www ever serves 200 again, check that rule first.
 /*  /index.html  200
