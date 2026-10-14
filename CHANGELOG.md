@@ -7,6 +7,12 @@ versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 14.
 
 ## Unreleased
 
+## 1.1.1 - Restore www middleware (2026-10-14)
+
+### Fixed
+- The `_redirects` host rule from 1.1.0 is ignored by Cloudflare Pages (www served 200 for ~10 minutes).
+  `functions/_middleware.js` is back; a dashboard Redirect Rule remains the way to drop the Function.
+
 ## 1.1.0 - Review fixes (2026-10-14)
 
 Two code reviews (home/map/SEO and panel/auth) cross-checked against the backend contracts. Backend
@@ -45,7 +51,7 @@ counterpart: archaeomap-backend 1.1.0.
 
 ### Changed
 - Cesium (5.7 MB) is loaded with `defer` instead of blocking first paint on every page.
-- www -> apex 301 moved from a root Pages Function (ran on every asset request) to a `_redirects` host rule.
+- www -> apex 301 moved to a `_redirects` host rule (reverted in 1.1.1: Pages ignored it).
 
 ### Known, not fixed
 - Every panel section is mounted for every visitor and hidden with CSS; hidden sections poll.
