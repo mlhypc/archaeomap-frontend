@@ -7,6 +7,13 @@ versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 14.
 
 ## Unreleased
 
+## 1.1.5 - Map resizes with the sidebar (2026-10-15)
+
+### Fixed
+- Collapsing or dragging the sidebar left the newly exposed map strip without tiles and markers: Leaflet
+  only re-measured on window resize. A ResizeObserver on the map container now calls `invalidateSize`
+  on every container size change.
+
 ## 1.1.4 - No em dashes (2026-10-15)
 
 ### Changed

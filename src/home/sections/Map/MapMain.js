@@ -554,16 +554,25 @@ function MapComponent(props) {
     };
   }, [dataState.currentDisplayData, padBounds, uiState.currentYear]);
 
-  // OPTIMIZED: Map resize handler
+  // Map resize handler. Leaflet only re-measures its container on window resize; when the sidebar
+  // collapses or is dragged, the container grows but the window does not, so the new strip stayed
+  // grey (no tiles) and markers there were culled by stale bounds. A ResizeObserver on the container
+  // catches every size change, including each frame of the 0.3 s width transition.
   useEffect(() => {
-    if (!mapState.map) return;
-    const resize = () => {
-      setTimeout(() => mapState.map.invalidateSize(), 100);
-    };
+    const map = mapState.map;
+    if (!map) return;
+    const resize = () => map.invalidateSize({ pan: false });
     resize();
+    const container = map.getContainer();
+    let observer = null;
+    if (typeof ResizeObserver !== 'undefined' && container) {
+      observer = new ResizeObserver(() => resize());
+      observer.observe(container);
+    }
     window.addEventListener('orientationchange', resize);
     window.addEventListener('resize', resize);
     return () => {
+      if (observer) observer.disconnect();
       window.removeEventListener('orientationchange', resize);
       window.removeEventListener('resize', resize);
     };
