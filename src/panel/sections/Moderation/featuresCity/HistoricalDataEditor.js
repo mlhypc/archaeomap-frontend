@@ -1,6 +1,7 @@
 // archaeomap-frontend/src/panel/sections/Moderation/featuresCity/HistoricalDataEditor.js
 // INTERACTIVE HISTORICAL DATA EDITOR WITH ACCORDION UI
 
+import { TEXT_LIMITS, cleanDashes, counterText } from '../../../../shared/config/textRules';
 import React, { useState } from 'react';
 import {
     Box,
@@ -186,14 +187,16 @@ const ControlHistorySection = React.memo(({ data, onChange }) => {
                                 {/* Description outside Grid for full width */}
                                 <Box sx={{ mt: 2 }}>
                                     <TextField
-                                        label="Description (Optional)"
+                                        label="Description"
                                         value={period.description || ''}
-                                        onChange={(e) => updatePeriod(index, 'description', e.target.value)}
+                                        onChange={(e) => updatePeriod(index, 'description', cleanDashes(e.target.value))}
                                         fullWidth
                                         multiline
                                         minRows={2}
                                         maxRows={20}
-                                        placeholder="Additional notes about this period..."
+                                        placeholder="Who held the city, how it began, how it ended (2-3 sentences)..."
+                                        inputProps={{ maxLength: TEXT_LIMITS.controlDescription }}
+                                        helperText={counterText(period.description, TEXT_LIMITS.controlDescription, '2-3 sentences, no em dashes')}
                                     />
                                 </Box>
                             </Paper>
@@ -535,12 +538,14 @@ const LandmarksSection = React.memo(({ data, onChange }) => {
                                     <TextField
                                         label="Description (Optional)"
                                         value={landmark.description || ''}
-                                        onChange={(e) => updateLandmark(index, 'description', e.target.value)}
+                                        onChange={(e) => updateLandmark(index, 'description', cleanDashes(e.target.value))}
                                         fullWidth
                                         multiline
                                         minRows={2}
                                         maxRows={20}
                                         placeholder="Additional details about the landmark..."
+                                        inputProps={{ maxLength: TEXT_LIMITS.landmarkDescription }}
+                                        helperText={counterText(landmark.description, TEXT_LIMITS.landmarkDescription, '2 sentences, no em dashes')}
                                     />
                                 </Box>
                             </Paper>

@@ -1,5 +1,6 @@
 // archaeomap-frontend\src\components\panel\DataManagement\CityEditModal.js
 
+import { TEXT_LIMITS, cleanDashes, counterText } from '../../../../shared/config/textRules';
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Dialog,
@@ -1003,13 +1004,14 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 <TextField
                                     label="Description"
                                     value={formData.description}
-                                    onChange={(e) => handleInputChange('description', e.target.value)}
+                                    onChange={(e) => handleInputChange('description', cleanDashes(e.target.value))}
                                     fullWidth
                                     multiline
                                     minRows={2}
                                     maxRows={20}
                                     placeholder="Enter a brief description of the city..."
-                                    helperText="Optional field for additional city information"
+                                    inputProps={{ maxLength: TEXT_LIMITS.cityDescription }}
+                                    helperText={counterText(formData.description, TEXT_LIMITS.cityDescription, '3-5 sentences, no em dashes')}
                                 />
                             </Box>
                         </Box>

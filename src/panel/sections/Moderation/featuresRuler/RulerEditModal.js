@@ -4,6 +4,7 @@
 // field, supports JSON export/import, and exposes a delete action for
 // admins. Single-tab (Edit) - rulers don't have photos / sources.
 
+import { TEXT_LIMITS, cleanDashes, counterText } from '../../../../shared/config/textRules';
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Dialog,
@@ -599,12 +600,14 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
                                 <TextField
                                     label="Description"
                                     value={formData.description}
-                                    onChange={(e) => handleInputChange('description', e.target.value)}
+                                    onChange={(e) => handleInputChange('description', cleanDashes(e.target.value))}
                                     fullWidth
                                     multiline
                                     minRows={4}
                                     maxRows={20}
                                     placeholder="Enter a brief description of this ruler / polity..."
+                                    inputProps={{ maxLength: TEXT_LIMITS.rulerDescription }}
+                                    helperText={counterText(formData.description, TEXT_LIMITS.rulerDescription, '3-5 sentences, no em dashes')}
                                 />
                             </Box>
                         </Box>

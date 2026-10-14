@@ -7,6 +7,13 @@ versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 14.
 
 ## Unreleased
 
+## 1.2.0 - Text rules in forms (2026-10-15)
+
+### Added
+- `shared/config/textRules.js` mirrors the backend limits: description fields in the city, ruler and
+  historical-data editors get a character counter and `maxLength`; typed or pasted em/en dashes become
+  hyphens; `cityApi` and `rulerApi` clean every string in a JSON request body before sending.
+
 ## 1.1.5 - Map resizes with the sidebar (2026-10-15)
 
 ### Fixed

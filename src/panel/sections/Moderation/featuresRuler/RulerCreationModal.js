@@ -5,6 +5,7 @@
 // is enough. JSON quick-fill is retained for parity (paste/upload a ruler
 // JSON file to populate the form).
 
+import { TEXT_LIMITS, cleanDashes, counterText } from '../../../../shared/config/textRules';
 import React, { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -580,12 +581,14 @@ const RulerCreationModal = ({ open, onClose, onRulerCreated }) => {
                         <TextField
                             label="Description (Optional)"
                             value={formData.description}
-                            onChange={(e) => handleInputChange('description', e.target.value)}
+                            onChange={(e) => handleInputChange('description', cleanDashes(e.target.value))}
                             fullWidth
                             multiline
                             minRows={5}
                             maxRows={20}
                             placeholder="Enter a brief description of this ruler / polity..."
+                            inputProps={{ maxLength: TEXT_LIMITS.rulerDescription }}
+                            helperText={counterText(formData.description, TEXT_LIMITS.rulerDescription, '3-5 sentences, no em dashes')}
                         />
                     </Box>
                 </Box>

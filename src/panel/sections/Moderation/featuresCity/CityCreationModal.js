@@ -1,5 +1,6 @@
 // src/panel/sections/DataManagement/CityCreationModal.js - UPDATED FOR APPROVAL WORKFLOW
 
+import { TEXT_LIMITS, cleanDashes, counterText } from '../../../../shared/config/textRules';
 import React, { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -830,12 +831,14 @@ const CityCreationModal = ({ open, onClose, onCityCreated }) => {
                                 <TextField
                                     label="Description (Optional)"
                                     value={formData.description}
-                                    onChange={(e) => handleInputChange('description', e.target.value)}
+                                    onChange={(e) => handleInputChange('description', cleanDashes(e.target.value))}
                                     fullWidth
                                     multiline
                                     minRows={5}
                                     maxRows={20}
                                     placeholder="Enter a brief description of the city..."
+                                    inputProps={{ maxLength: TEXT_LIMITS.cityDescription }}
+                                    helperText={counterText(formData.description, TEXT_LIMITS.cityDescription, '3-5 sentences, no em dashes')}
                                 />
                             </Box>
                         </Box>

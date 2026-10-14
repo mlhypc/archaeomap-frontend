@@ -1,5 +1,6 @@
 // archaeomap-frontend/src/shared/services/cityApi.js - COMPLETE CONSOLIDATED VERSION
 
+import { cleanDashesDeep } from '../config/textRules';
 import { authService } from './authApi';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -11,6 +12,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 // Helper function to make authenticated requests
 const makeRequest = async (url, options = {}) => {
   try {
+    // Metin kuralı: gövdedeki her string'de em/en dash düz tireye çevrilir (backend 400 döner)
+    if (typeof options.body === 'string' && (options.headers?.['Content-Type'] ?? 'application/json') === 'application/json') {
+      try { options = { ...options, body: JSON.stringify(cleanDashesDeep(JSON.parse(options.body))) }; } catch (_) { /* not JSON */ }
+    }
     const token = localStorage.getItem('archaeomap_token');
     
     const config = {
