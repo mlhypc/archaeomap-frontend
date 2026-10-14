@@ -7,6 +7,12 @@ versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 14.
 
 ## Unreleased
 
+## 1.1.3 - OpenStreetMap layer without CARTO (2026-10-14)
+
+### Fixed
+- The "OpenStreetMap" layer (2D and 3D) loaded CARTO basemap tiles; CARTO stopped serving them without an
+  API key on 2026-09-25 and returned an "API KEY REQUIRED" image. The layer now uses tile.openstreetmap.org.
+
 ## 1.1.2 - www redirect via Cloudflare rule (2026-10-14)
 
 ### Removed

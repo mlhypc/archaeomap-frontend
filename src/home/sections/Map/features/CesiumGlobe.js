@@ -61,10 +61,10 @@ const createImageryLayer = (key) => {
     case 'carto':
     default:
       return new ImageryLayer(new UrlTemplateImageryProvider({
-        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         subdomains: ['a', 'b', 'c', 'd'],
         maximumLevel: 19,
-        credit: new Credit('© OpenStreetMap contributors © CARTO')
+        credit: new Credit('© OpenStreetMap contributors')
       }));
   }
 };

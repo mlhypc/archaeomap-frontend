@@ -62,10 +62,12 @@ const MAP_LAYERS = {
     attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
   },
   carto: {
+    // Key 'carto' is persisted in localStorage (VIEW_STORAGE_VERSION), so it stays even though the
+    // tiles are no longer CARTO's: basemaps.cartocdn.com stopped serving raster tiles without an API
+    // key on 2026-09-25 (returned an "API KEY REQUIRED" PNG with HTTP 200). Plain OSM tiles instead.
     name: 'OpenStreetMap',
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: 'abcd',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19
   }
 };
