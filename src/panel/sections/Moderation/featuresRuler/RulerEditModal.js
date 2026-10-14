@@ -2,7 +2,7 @@
 //
 // Mirrors CityEditModal: loads ruler by id, lets a moderator edit every
 // field, supports JSON export/import, and exposes a delete action for
-// admins. Single-tab (Edit) — rulers don't have photos / sources.
+// admins. Single-tab (Edit) - rulers don't have photos / sources.
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -196,10 +196,10 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
                     data_status: json.data_status || prev.data_status
                 }));
 
-                setSuccess(`JSON loaded: "${json.generic_name}" — review changes and click Save`);
+                setSuccess(`JSON loaded: "${json.generic_name}" - review changes and click Save`);
                 setError(null);
             } catch {
-                setError('Invalid JSON file — could not parse');
+                setError('Invalid JSON file - could not parse');
             }
         };
         reader.readAsText(file);
@@ -279,7 +279,7 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
         const confirmed = window.confirm(
             `⚠️ WARNING: You are about to permanently delete "${formData.generic_name}".\n\n` +
             `Cities that reference this ruler via controlHistory.ruler strings will remain ` +
-            `unchanged (loose coupling — strings, not foreign keys).\n\n` +
+            `unchanged (loose coupling - strings, not foreign keys).\n\n` +
             `This action CANNOT be undone.\n\nAre you absolutely sure?`
         );
         if (!confirmed) return;
@@ -434,7 +434,7 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
                                         fullWidth
                                         required
                                         error={!!validationErrors.slug}
-                                        helperText={validationErrors.slug || 'URL key — lowercase, digits, hyphens'}
+                                        helperText={validationErrors.slug || 'URL key - lowercase, digits, hyphens'}
                                     />
                                 </Box>
                             </Box>
@@ -507,7 +507,7 @@ const RulerEditModal = ({ open, onClose, rulerId, onRulerUpdated }) => {
                                         placeholder="#b43232 or rgba(180,50,50,0.7)"
                                         helperText={formData.color_override
                                             ? 'Hex or rgba for map label coloring (locked: algorithm will not change)'
-                                            : 'Algorithm-managed — toggle Override to set manually'}
+                                            : 'Algorithm-managed - toggle Override to set manually'}
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">

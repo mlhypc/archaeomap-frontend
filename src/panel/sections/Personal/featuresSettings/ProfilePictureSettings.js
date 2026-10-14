@@ -97,7 +97,7 @@ function ProfilePictureSettings() {
             </Button>
           )}
           <Typography variant="caption" display="block" sx={{ color: COLORS.texts.muted }}>
-            JPEG, PNG or WebP — max 2MB
+            JPEG, PNG or WebP - max 2MB
           </Typography>
         </Box>
       </Box>

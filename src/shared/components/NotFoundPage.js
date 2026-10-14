@@ -12,7 +12,7 @@ import { COLORS } from '../config/generalUtils';
 
 const SITE_NAME = 'ArchaeoMap';
 
-export function SeoNoIndex({ title = `Page not found — ${SITE_NAME}` }) {
+export function SeoNoIndex({ title = `Page not found - ${SITE_NAME}` }) {
   return (
     <>
       <title>{title}</title>

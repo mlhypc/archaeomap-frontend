@@ -25,43 +25,43 @@ export const HISTORICAL_AGE_CONFIG = {
     range: () => true
   },
   [HISTORICAL_AGES.NEOLITHIC_AGE]: {
-    tooltip: "Neolithic Age cities (Old–3300 BCE)",
+    tooltip: "Neolithic Age cities (Old-3300 BCE)",
     color: "#8a8179",
     icon: <HistoryIcon />,
     range: (foundedYear) => foundedYear <= -3300
   },
   [HISTORICAL_AGES.BRONZE_AGE]: {
-    tooltip: "Bronze Age cities (3300–1200 BCE)",
+    tooltip: "Bronze Age cities (3300-1200 BCE)",
     color: "#cd7f32",
     icon: <HistoryIcon />,
     range: (foundedYear) => foundedYear >= -3300 && foundedYear <= -1200
   },
   [HISTORICAL_AGES.IRON_AGE]: {
-    tooltip: "Iron Age cities (1200–500 BCE)",
+    tooltip: "Iron Age cities (1200-500 BCE)",
     color: "#a19d94",
     icon: <HistoryIcon />,
     range: (foundedYear) => foundedYear > -1200 && foundedYear <= -500
   },
   [HISTORICAL_AGES.CLASSICAL]: {
-    tooltip: "Classical Antiquity cities (500 BCE–500 CE)",
+    tooltip: "Classical Antiquity cities (500 BCE-500 CE)",
     color: "#f5c542",
     icon: <HistoryIcon />,
     range: (foundedYear) => foundedYear > -500 && foundedYear <= 500
   },
   [HISTORICAL_AGES.MEDIEVAL]: {
-    tooltip: "Medieval cities (500–1500 CE)",
+    tooltip: "Medieval cities (500-1500 CE)",
     color: "#8b4513",
     icon: <HistoryIcon />,
     range: (foundedYear) => foundedYear > 500 && foundedYear <= 1500
   },
   [HISTORICAL_AGES.EARLY_MODERN]: {
-    tooltip: "Early Modern cities (1500–1800 CE)",
+    tooltip: "Early Modern cities (1500-1800 CE)",
     color: "#4b0082",
     icon: <HistoryIcon />,
     range: (foundedYear) => foundedYear > 1500 && foundedYear <= 1800
   },
   [HISTORICAL_AGES.MODERN]: {
-    tooltip: "Modern cities (1800 CE–present)",
+    tooltip: "Modern cities (1800 CE-present)",
     color: "#2e7d32",
     icon: <HistoryIcon />,
     range: (foundedYear) => foundedYear > 1800

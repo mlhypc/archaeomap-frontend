@@ -7,6 +7,12 @@ versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 14.
 
 ## Unreleased
 
+## 1.1.4 - No em dashes (2026-10-15)
+
+### Changed
+- Text rule: no em or en dashes in UI text, titles, meta tags, static pages or comments; plain hyphen
+  instead (`ArchaeoMap - Explore Ancient Cities Through Time`).
+
 ## 1.1.3 - OpenStreetMap layer without CARTO (2026-10-14)
 
 ### Fixed

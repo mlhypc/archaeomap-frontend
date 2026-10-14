@@ -18,7 +18,7 @@ const tips = [
   {
     icon: 'fa-solid fa-location-dot',
     title: 'Select a city',
-    text: 'Click any marker to open its full history — rulers, population, and landmarks across time.'
+    text: 'Click any marker to open its full history - rulers, population, and landmarks across time.'
   },
   {
     icon: 'fa-solid fa-clock-rotate-left',
@@ -76,7 +76,7 @@ function EmptyState({ isSmallMobile }) {
         mb: 2,
         maxWidth: 260
       }}>
-        7,000 years of urban history — from the earliest settlements to the fall of empires.
+        7,000 years of urban history - from the earliest settlements to the fall of empires.
       </Typography>
 
       {/* Tips */}
@@ -259,7 +259,7 @@ function Sidebar({
           <EmptyState isSmallMobile={isSmallMobile} />
         </Box>
         <Box sx={footerSx}>
-          © {new Date().getFullYear()} ArchaeoMap –{' '}
+          © {new Date().getFullYear()} ArchaeoMap -{' '}
           <a href="/about.html" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.primary, textDecoration: 'underline', marginLeft: '4px' }}>
             About
           </a>
@@ -317,7 +317,7 @@ function Sidebar({
 
       {/* Footer */}
       <Box sx={footerSx}>
-        © {new Date().getFullYear()} ArchaeoMap –{' '}
+        © {new Date().getFullYear()} ArchaeoMap -{' '}
         <a href="/about.html" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.primary, textDecoration: 'underline', marginLeft: '4px' }}>
           About
         </a>

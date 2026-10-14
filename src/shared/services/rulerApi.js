@@ -145,7 +145,7 @@ export const rulerService = {
   },
 
   // Admin: re-run the LAB color distribution algorithm. Updates the
-  // `color` of every override=false ruler in one shot. Synchronous —
+  // `color` of every override=false ruler in one shot. Synchronous -
   // resolves once the algorithm has finished writing.
   async recomputeColors() {
     const res = await makeRequest('/rulerData/recompute-colors', { method: 'POST' });

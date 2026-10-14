@@ -171,7 +171,7 @@ function PendingApplicationsSection() {
     }
   };
 
-  // Format time remaining — backend milisaniye (number) döner
+  // Format time remaining - backend milisaniye (number) döner
   const formatTimeRemaining = (timeRemaining) => {
     const ms = typeof timeRemaining === 'number' ? timeRemaining : 0;
     if (ms <= 0) {

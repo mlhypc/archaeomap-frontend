@@ -85,7 +85,7 @@ export const COLORS = {
     return period?.color || null;
   };
 
-  // URL slug helpers — used to build shareable city URLs like /cities/turkiye/cadir-hoyuk
+  // URL slug helpers - used to build shareable city URLs like /cities/turkiye/cadir-hoyuk
   //
   // This map covers characters that NFD diacritic stripping cannot decompose.
   // NFD handles most Latin accents on its own (é, ñ, ć, š, etc.); the entries
@@ -111,7 +111,7 @@ export const COLORS = {
     // Scandinavian
     ø: 'o', Ø: 'o',
     æ: 'ae', Æ: 'ae',
-    // Romanian (comma-below variants — explicit fallback)
+    // Romanian (comma-below variants - explicit fallback)
     ș: 's', Ș: 's',
     ț: 't', Ț: 't'
   };

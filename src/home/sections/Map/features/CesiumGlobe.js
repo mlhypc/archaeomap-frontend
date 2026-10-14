@@ -26,7 +26,7 @@ import { getCurrentCityName } from '../../../../shared/config/generalUtils';
 // Flat ellipsoid terrain - no Ion asset required.
 const ELLIPSOID_TERRAIN = new EllipsoidTerrainProvider();
 
-// CAWM tile origin — must mirror the same env-aware logic used by the
+// CAWM tile origin - must mirror the same env-aware logic used by the
 // 2D map in MapMain.js so dev hits the local backend proxy and prod
 // hits the Cloudflare-proxied URL on archaeomap.com.
 const CAWM_TILE_ORIGIN = import.meta.env.DEV
@@ -36,7 +36,7 @@ const CAWM_TILE_ORIGIN = import.meta.env.DEV
 // Layer factory keyed by the same identifiers used in MapMain's
 // MAP_LAYERS, so the 2D and 3D layer pickers stay in sync. Each call
 // returns a fresh ImageryLayer instance because Cesium re-parents
-// providers when swapping layers at runtime — sharing a single
+// providers when swapping layers at runtime - sharing a single
 // instance across swaps trips Cesium's "already attached" guard.
 const createImageryLayer = (key) => {
   switch (key) {
@@ -50,13 +50,13 @@ const createImageryLayer = (key) => {
       return new ImageryLayer(new UrlTemplateImageryProvider({
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
         maximumLevel: 13,
-        credit: new Credit('Tiles © Esri — US National Park Service')
+        credit: new Credit('Tiles © Esri - US National Park Service')
       }));
     case 'nasa':
       return new ImageryLayer(new UrlTemplateImageryProvider({
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         maximumLevel: 18,
-        credit: new Credit('Tiles © Esri — Earthstar Geographics, USDA, USGS')
+        credit: new Credit('Tiles © Esri - Earthstar Geographics, USDA, USGS')
       }));
     case 'carto':
     default:

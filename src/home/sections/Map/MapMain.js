@@ -45,7 +45,7 @@ const MAP_LAYERS = {
     url: `${CAWM_TILE_ORIGIN}/cawm-tiles/{z}/{x}/{y}.png`,
     attribution: '&copy; Consortium of Ancient World Mappers (CAWM)',
     // CAWM upstream serves tiles up to ~zoom 10. Allow Leaflet to zoom
-    // further (up to 14) by reusing the maxNativeZoom tiles upscaled —
+    // further (up to 14) by reusing the maxNativeZoom tiles upscaled -
     // user sees low-res but navigation continues to street-level zooms.
     maxZoom: 14,
     maxNativeZoom: 10
@@ -53,13 +53,13 @@ const MAP_LAYERS = {
   arcgis: {
     name: 'ArcGIS',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri — Source: US National Park Service',
+    attribution: 'Tiles &copy; Esri - Source: US National Park Service',
     maxZoom: 13  // Override default
   },
   nasa: {
     name: 'ESRI Satellite',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    attribution: 'Tiles © Esri - Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
   },
   carto: {
     // Key 'carto' is persisted in localStorage (VIEW_STORAGE_VERSION), so it stays even though the
@@ -76,7 +76,7 @@ const MAP_LAYERS = {
 const MAP_MIN_ZOOM = 3;
 const MAP_MAX_ZOOM = 18;
 
-// Persisted view state — keeps camera, base layer, and current year across
+// Persisted view state - keeps camera, base layer, and current year across
 // F5 reloads via localStorage. Schema-versioned so future field additions
 // don't crash on stale stored blobs (parse returns null → defaults kick in).
 const VIEW_STORAGE_KEY = 'archaeomap.mapView';
@@ -168,7 +168,7 @@ function MaxZoomController({ maxZoom }) {
 }
 
 // OPTIMIZED CITY MARKER COMPONENT - Memoized for performance.
-// Intentionally does NOT accept `currentYear` — labelText is already
+// Intentionally does NOT accept `currentYear` - labelText is already
 // derived from the current year by the caller, so threading the year
 // through here would defeat React.memo (every slider tick would
 // invalidate the memo even when labelText is unchanged).
@@ -182,7 +182,7 @@ const OptimizedCityMarker = React.memo(({
   rulerColor,
   status
 }) => {
-  // Dot icon — kept memoized as before (dot recreate is cheap and we
+  // Dot icon - kept memoized as before (dot recreate is cheap and we
   // want active/selected swatches to fire instantly).
   const icon = useMemo(
     () => iconFn(city, isSelected, rulerColor),
@@ -195,7 +195,7 @@ const OptimizedCityMarker = React.memo(({
   const latestLabelRef = useRef({ labelText, rulerColor, isSelected, status });
   latestLabelRef.current = { labelText, rulerColor, isSelected, status };
 
-  // Label icon — created once when showLabel first becomes true (and on
+  // Label icon - created once when showLabel first becomes true (and on
   // each subsequent toggle off→on). Keeping the L.divIcon stable means
   // Leaflet does not call setIcon() per slider tick, so the inner DOM
   // node persists and CSS `transition: width / box-shadow` can tween
@@ -222,7 +222,7 @@ const OptimizedCityMarker = React.memo(({
     const el = wrapper.querySelector('.city-label');
     if (!el) return;
 
-    // Color (CSS var) — `transition: box-shadow` tweens the colored
+    // Color (CSS var) - `transition: box-shadow` tweens the colored
     // outer ring automatically since the same DOM node persists.
     if (rulerColor) el.style.setProperty('--ruler-color', rulerColor);
     else el.style.removeProperty('--ruler-color');
@@ -250,10 +250,10 @@ const OptimizedCityMarker = React.memo(({
       };
       outgoing.addEventListener('transitionend', cleanupOutgoing);
       // Safety net in case transitionend never fires (browser bug, tab
-      // backgrounded, etc.) — remove after a slightly longer timeout.
+      // backgrounded, etc.) - remove after a slightly longer timeout.
       setTimeout(() => { if (outgoing.isConnected) outgoing.remove(); }, 400);
 
-      // Append incoming span — starts at opacity 0, fade in next frame
+      // Append incoming span - starts at opacity 0, fade in next frame
       const incoming = document.createElement('span');
       incoming.className = 'city-label-text incoming';
       incoming.textContent = labelText;
@@ -262,7 +262,7 @@ const OptimizedCityMarker = React.memo(({
       const newWidth = el.offsetWidth; // sync-layout with new content
       // Width tween only when delta is perceivable. Sub-4px shifts
       // are not visually meaningful but cost 2-3 forced layouts per
-      // marker — skip them and let the container snap to natural
+      // marker - skip them and let the container snap to natural
       // width. Crossfade (above) still runs regardless of delta.
       if (Math.abs(newWidth - oldWidth) >= 4) {
         const token = ++labelTokenRef.current;
@@ -414,7 +414,7 @@ function MapComponent(props) {
   // Keep enhanced city objects (city + computed iconSize) reference-
   // stable across renders so that React.memo on OptimizedCityMarker
   // can actually short-circuit. Without this, every slider tick spreads
-  // a new object per city — making the memo a no-op.
+  // a new object per city - making the memo a no-op.
   const enhancedCityCacheRef = useRef(new Map());
   const cameraPositionRef = useRef(mapState.cameraPosition); // Ref for camera position (no re-render)
   const theme = useTheme();
@@ -491,7 +491,7 @@ function MapComponent(props) {
 
     if (uiState.selectedCity?.id === city.id) return;
 
-    // Skip background fetch when sidebar is collapsed — Sidebar will fetch on expand
+    // Skip background fetch when sidebar is collapsed - Sidebar will fetch on expand
     if (!sidebarCollapsed && !cityDetailsCache.current.has(city.id)) {
       try {
         const result = await cachedCitiesApi.getCityDetails(city.id);

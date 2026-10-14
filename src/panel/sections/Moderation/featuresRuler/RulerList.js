@@ -63,9 +63,9 @@ function RulerList({ onCreateRuler, onEditRuler }) {
     });
 
     const formatPeriod = (start, end) => {
-        const s = start === null || start === undefined || start === '' ? '—' : formatYear(start);
+        const s = start === null || start === undefined || start === '' ? '-' : formatYear(start);
         const e = end === null || end === undefined || end === '' ? 'Present' : formatYear(end);
-        return `${s} – ${e}`;
+        return `${s} - ${e}`;
     };
 
     const getStatusChip = (ruler) => {
@@ -83,7 +83,7 @@ function RulerList({ onCreateRuler, onEditRuler }) {
 
     // Fetch from server with current filters. Server-side search + status,
     // but pagination is client-side because the API returns up to `limit`
-    // rows in one shot — same trade-off rulers tab makes elsewhere.
+    // rows in one shot - same trade-off rulers tab makes elsewhere.
     const fetchRulers = useCallback(async (page, currentFilters) => {
         setLoading(true);
         setError(null);
@@ -378,7 +378,7 @@ function RulerList({ onCreateRuler, onEditRuler }) {
                                         {!isSmallMobile && (
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                                                    <Tooltip title={ruler.color_override ? 'Locked — manual override' : 'Algorithm-managed'} placement="top">
+                                                    <Tooltip title={ruler.color_override ? 'Locked - manual override' : 'Algorithm-managed'} placement="top">
                                                         {ruler.color_override ? (
                                                             <LockIcon sx={{ fontSize: 14, color: '#c08a30' }} />
                                                         ) : (
@@ -397,7 +397,7 @@ function RulerList({ onCreateRuler, onEditRuler }) {
                                                             {ruler.color}
                                                         </Typography>
                                                     ) : (
-                                                        <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>—</Typography>
+                                                        <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>-</Typography>
                                                     )}
                                                 </Box>
                                             </TableCell>

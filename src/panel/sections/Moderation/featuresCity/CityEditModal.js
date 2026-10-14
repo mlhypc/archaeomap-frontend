@@ -317,10 +317,10 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 if (Array.isArray(json.populationHistory)) setPopulationHistory(json.populationHistory);
                 if (Array.isArray(json.landmarksHistory)) setLandmarksHistory(json.landmarksHistory);
 
-                setSuccess(`JSON loaded: "${json.generic_city_name}" — review changes and click Save`);
+                setSuccess(`JSON loaded: "${json.generic_city_name}" - review changes and click Save`);
                 setError(null);
             } catch {
-                setError('Invalid JSON file — could not parse');
+                setError('Invalid JSON file - could not parse');
             }
         };
         reader.readAsText(file);
@@ -1163,7 +1163,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                 </Box>
 
                                 <Alert severity="info" sx={{ mb: 3 }}>
-                                    Add external references for this city — DOI links, Wikipedia, JSTOR, archive.org, etc.
+                                    Add external references for this city - DOI links, Wikipedia, JSTOR, archive.org, etc.
                                     Do not host PDFs directly; link to the original source.
                                 </Alert>
 

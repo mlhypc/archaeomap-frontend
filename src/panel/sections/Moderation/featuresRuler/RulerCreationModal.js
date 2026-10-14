@@ -424,7 +424,7 @@ const RulerCreationModal = ({ open, onClose, onRulerCreated }) => {
                                 fullWidth
                                 required
                                 error={!!validationErrors.slug}
-                                helperText={validationErrors.slug || 'URL key — auto-generated from name'}
+                                helperText={validationErrors.slug || 'URL key - auto-generated from name'}
                             />
                         </Box>
                     </Box>
@@ -487,8 +487,8 @@ const RulerCreationModal = ({ open, onClose, onRulerCreated }) => {
                                 disabled={!formData.color_override}
                                 placeholder="#b43232 or rgba(180,50,50,0.7)"
                                 helperText={formData.color_override
-                                    ? 'Hex or rgba — locked, algorithm will not change it'
-                                    : 'Leave to algorithm — toggle Override to set manually'}
+                                    ? 'Hex or rgba - locked, algorithm will not change it'
+                                    : 'Leave to algorithm - toggle Override to set manually'}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">

@@ -792,7 +792,7 @@ const globalStyles = {
     display: 'inline-block',
     transition: 'opacity 0.18s ease',
     // When a newer span mounts on text change, the previous span becomes
-    // .outgoing — pulled out of layout flow (so the new span drives
+    // .outgoing - pulled out of layout flow (so the new span drives
     // container width) and centered via translateX(-50%) so its natural
     // width is preserved as the parent's width tweens around it.
     '&.outgoing': {

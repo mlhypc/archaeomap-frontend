@@ -1,7 +1,7 @@
 // Per-page SEO tags driven by the currently selected city.
 //
 // React 19 hoists <title>, <meta>, <link>, and <script> children to
-// the document <head> automatically — no react-helmet dependency is
+// the document <head> automatically - no react-helmet dependency is
 // needed. When selectedCity is null we render the default site-level
 // tags so the home view also has a meaningful title.
 
@@ -10,7 +10,7 @@ import { cityUrl } from '../../config/generalUtils';
 
 const SITE_NAME = 'ArchaeoMap';
 const SITE_ORIGIN = 'https://archaeomap.com';
-const DEFAULT_TITLE = 'ArchaeoMap — Explore Ancient Cities Through Time';
+const DEFAULT_TITLE = 'ArchaeoMap - Explore Ancient Cities Through Time';
 const DEFAULT_DESCRIPTION =
   'Explore how cities evolved from ancient times to today. ArchaeoMap offers an interactive historical map with timelines and detailed insights.';
 const DEFAULT_IMAGE = `${SITE_ORIGIN}/preview.png`;
@@ -86,12 +86,12 @@ function CitySeoTags({ city }) {
 
   const alternateNames = collectAlternateNames(city);
   const titleAlias = alternateNames.length ? ` (ancient ${alternateNames[0]})` : '';
-  const title = `${city.name}${titleAlias}, ${city.country} — ${SITE_NAME}`;
+  const title = `${city.name}${titleAlias}, ${city.country} - ${SITE_NAME}`;
   const description = buildCityDescription(city);
   const canonical = `${SITE_ORIGIN}${cityUrl(city)}`;
   const image = city.image_url || DEFAULT_IMAGE;
 
-  // schema.org/Place — gives Google enough structured signal to show
+  // schema.org/Place - gives Google enough structured signal to show
   // the city as a rich result (name, location, image, description).
   // additionalType points at the more specific historical-place vocab
   // without locking us out of the wider Place ecosystem.
@@ -128,7 +128,7 @@ function CitySeoTags({ city }) {
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonical} />
-      <link rel="alternate" type="text/plain" href={`${canonical}.txt`} title={`${city.name} — plain text`} />
+      <link rel="alternate" type="text/plain" href={`${canonical}.txt`} title={`${city.name} - plain text`} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={canonical} />

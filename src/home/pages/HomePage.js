@@ -78,7 +78,7 @@ const { countrySlug, citySlug } = useParams();
   // Resolve URL slug -> selectedCity (one-way: URL drives state when slug changes).
   // Avoids re-resolving when user clicks a city (since that path also updates the URL).
   // Hits /cityData/by-slug so we only fetch ONE city instead of the whole bulk timeline,
-  // and the response already includes description/controlHistory/etc. — so the Sidebar
+  // and the response already includes description/controlHistory/etc. - so the Sidebar
   // skips its own second fetch.
   useEffect(() => {
     if (!countrySlug || !citySlug) {
@@ -117,7 +117,7 @@ const { countrySlug, citySlug } = useParams();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countrySlug, citySlug]);
 
-  // Handle city selection — pushes a canonical URL when a city is picked.
+  // Handle city selection - pushes a canonical URL when a city is picked.
   // Null/deselect intentionally does NOT navigate, because Map fires onSelectCity(null)
   // on initial mount and would otherwise redirect us off the /cities/... URL.
   const handleSelectCity = useCallback((city) => {
@@ -358,7 +358,7 @@ const { countrySlug, citySlug } = useParams();
 
       {/* ===== MAP CONTAINER ===== */}
       <MapContainer>
-        {/* Re-expand tab — only when sidebar is fully collapsed */}
+        {/* Re-expand tab - only when sidebar is fully collapsed */}
         {!isMobile && sidebarWidth === 0 && (
           <Box
             onClick={() => setSidebarWidth(360)}

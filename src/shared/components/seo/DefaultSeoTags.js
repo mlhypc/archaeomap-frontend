@@ -8,7 +8,7 @@
 import { useEffect } from 'react';
 
 const SITE_URL = 'https://archaeomap.com';
-const TITLE = 'ArchaeoMap — Explore Ancient Cities Through Time';
+const TITLE = 'ArchaeoMap - Explore Ancient Cities Through Time';
 const DESCRIPTION = 'Explore how cities evolved from ancient times to today. ArchaeoMap offers an interactive historical map with timelines and detailed insights.';
 const IMAGE = `${SITE_URL}/preview.png`;
 
