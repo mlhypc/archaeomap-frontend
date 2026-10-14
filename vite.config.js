@@ -17,6 +17,16 @@ export default defineConfig({
     },
     react(),
     cesium(),
+    {
+      // vite-plugin-cesium puts <script src="/cesium/Cesium.js"> (5.7 MB raw, ~1.6 MB gz) in <head>
+      // without defer, so every page waited for Cesium before first paint even if 3D never opens.
+      // defer keeps document order (Cesium before the module bundle), so window.Cesium is ready.
+      name: 'defer-cesium-script',
+      enforce: 'post',
+      transformIndexHtml(html) {
+        return html.replace('<script src="/cesium/Cesium.js"></script>', '<script defer src="/cesium/Cesium.js"></script>');
+      },
+    },
   ],
   optimizeDeps: {
     esbuildOptions: {
