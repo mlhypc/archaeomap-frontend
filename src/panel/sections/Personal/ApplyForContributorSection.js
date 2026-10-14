@@ -76,14 +76,17 @@ function ApplyForContributorSection() {
     }
   };
 
+  // Backend time_remaining'i milisaniye (number) döner; kapalı başvurularda alan yoktur.
   const formatTimeRemaining = (timeRemaining) => {
-    if (!timeRemaining) return null;
-    
-    if (timeRemaining.expired) {
+    if (timeRemaining === undefined || timeRemaining === null) return null;
+
+    const ms = Number(timeRemaining) || 0;
+    if (ms <= 0) {
       return { text: 'Voting Closed', color: 'error' };
     }
-    
-    const { hours, minutes } = timeRemaining;
+
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
     if (hours > 0) {
       return { 
         text: `${hours}h ${minutes}m remaining`, 

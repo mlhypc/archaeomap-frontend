@@ -45,7 +45,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { cachedCitiesApi as citiesApi } from '../../../../shared/services/cityApi';
 
-function PendingCitiesList({ onCityReview, onDataUpdate }) {
+function PendingCitiesList({ onCityReview, onDataUpdate, refreshKey = 0 }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -185,13 +185,13 @@ function PendingCitiesList({ onCityReview, onDataUpdate }) {
             setLoading(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Boş dependency array artık güvenli
+    }, [statusFilter]); // statusFilter kapanışta donuyordu: filtre değişince hep 'pending' geliyordu
 
-    // İlk yükleme ve status filter değişikliği
+    // İlk yükleme, status filter değişikliği ve üst bileşenden gelen yenileme (review sonrası)
     useEffect(() => {
         fetchPendingCities();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statusFilter]);
+    }, [statusFilter, refreshKey]);
 
     // Debounced search için ayrı useEffect'ler - DÜZELTILDI
     useEffect(() => {

@@ -66,6 +66,7 @@ const parseResponse = async (response) => {
     } else {
       return {
         success: false,
+        status: response.status,
         error: data.error || 'Request failed',
         details: data.details,
         code: data.code

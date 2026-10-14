@@ -133,12 +133,18 @@ export const endedCityIcon = L.divIcon({
 // change (old one becomes .outgoing, new one mounts at opacity 0 → 1).
 // labelColor (optional) becomes the --ruler-color CSS var, paining a
 // colored ring around the pill without touching text / background.
+const escapeHtml = (s) => String(s ?? '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 export const createCityLabel = (cityName, isSelected = false, status = 'active', labelColor = null) => {
   const className = `city-label${isSelected ? ' selected' : ''}${status === 'ended' ? ' ended' : ''}${labelColor ? ' has-ruler' : ''}`;
-  const styleAttr = labelColor ? ` style="--ruler-color:${labelColor}"` : '';
+  // labelColor API'den gelir; yalnız hex renk kabul et (style enjeksiyonu olmasın)
+  const safeColor = labelColor && /^#[0-9a-fA-F]{3,8}$/.test(labelColor) ? labelColor : null;
+  const styleAttr = safeColor ? ` style="--ruler-color:${safeColor}"` : '';
   return L.divIcon({
     className: 'leaflet-label-wrapper',
-    html: `<div class="${className}"${styleAttr}><span class="city-label-text">${cityName}</span></div>`,
+    // Şehir adı katkıcı girdisi; innerHTML'e ham gidince stored XSS (token çalma) mümkündü.
+    html: `<div class="${className}"${styleAttr}><span class="city-label-text">${escapeHtml(cityName)}</span></div>`,
     iconSize: undefined,
     iconAnchor: [0, 0]
   });

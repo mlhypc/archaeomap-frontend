@@ -557,7 +557,6 @@ function MapComponent(props) {
     if (!mapState.map) return;
     const resize = () => {
       setTimeout(() => mapState.map.invalidateSize(), 100);
-      if (isMobile) mapState.map.setZoom(3);
     };
     resize();
     window.addEventListener('orientationchange', resize);
@@ -644,8 +643,10 @@ function MapComponent(props) {
     });
   }, [uiState.mapLayerKey, uiState.currentYear]);
 
+  // react-leaflet 5: MapContainer ref callback'i harita örneğiyle (unmount'ta null) çağrılır.
+  // whenCreated v4'te kaldırıldığı için mapState.map hep null kalıyor, invalidateSize hiç çalışmıyordu.
   const handleMapReady = useCallback((map) => {
-    setMapState(prev => ({ ...prev, map }));
+    setMapState(prev => (prev.map === map ? prev : { ...prev, map }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -881,7 +882,7 @@ function MapComponent(props) {
           maxZoom={MAP_LAYERS[uiState.mapLayerKey].maxZoom || MAP_MAX_ZOOM}
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
-          whenCreated={handleMapReady}
+          ref={handleMapReady}
           worldCopyJump={false}
           maxBounds={[
             [-90, -180], // Southwest corner
@@ -1007,9 +1008,11 @@ const CityMarkers = React.memo(({
   );
 }, (prevProps, nextProps) => {
   // Custom comparison for deep memoization
+  // visibleCities useMemo ile üretilir: referans değiştiyse içerik değişmiştir. Sadece uzunluk
+  // karşılaştırmak, aynı sayıda şehir içeren başka bir görünümde marker'ları güncellemiyordu.
   return (
-    prevProps.visibleCities.active.length === nextProps.visibleCities.active.length &&
-    prevProps.visibleCities.ended.length === nextProps.visibleCities.ended.length &&
+    prevProps.visibleCities.active === nextProps.visibleCities.active &&
+    prevProps.visibleCities.ended === nextProps.visibleCities.ended &&
     prevProps.selectedCity?.id === nextProps.selectedCity?.id &&
     prevProps.labelFilter === nextProps.labelFilter &&
     prevProps.showLabels === nextProps.showLabels &&

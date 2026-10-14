@@ -24,6 +24,7 @@ import Sidebar from '../sections/Sidebar/Sidebar';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { COLORS } from '../../shared/config/generalUtils';
 import CitySeoTags from '../../shared/components/seo/CitySeoTags';
+import DefaultSeoTags, { useRemoveStaticSeoTags } from '../../shared/components/seo/DefaultSeoTags';
 import NotFoundPage from '../../shared/components/NotFoundPage';
 
 const AppContainer = styled(Box)({
@@ -53,7 +54,8 @@ const DesktopSidebarContainer = styled(Box)(({ theme }) => ({
 
 function HomePage() {
   const navigate = useNavigate();
-  const { countrySlug, citySlug } = useParams();
+  useRemoveStaticSeoTags(); // index.html'deki statik SEO etiketleri React'inkilerle çakışmasın
+const { countrySlug, citySlug } = useParams();
 
   const [selectedCity, setSelectedCity] = useState(null);
   const [focusCity, setFocusCity] = useState(null);
@@ -80,7 +82,9 @@ function HomePage() {
   // skips its own second fetch.
   useEffect(() => {
     if (!countrySlug || !citySlug) {
+      // Geri tuşuyla / 'a dönünce seçili şehir (sidebar, canonical, JSON-LD) kalıyordu.
       setCityNotFound(false);
+      setSelectedCity(null);
       return;
     }
 
@@ -98,10 +102,9 @@ function HomePage() {
       const result = await cachedCitiesApi.getCityBySlug(countrySlug, citySlug);
       if (cancelled) return;
       if (!result.success) {
-        // Treat any unsuccessful resolve as a missing city. The backend
-        // returns 404 for unknown slugs; network errors are also surfaced
-        // here so we render the 404 page rather than a silently blank UI.
-        setCityNotFound(true);
+        // Only a real 404 is "not found". A 429/5xx/network error used to render the
+        // 404 page for a valid city; now the map stays up without a selection.
+        setCityNotFound(result.status === 404);
         setSelectedCity(null);
         return;
       }
@@ -121,7 +124,9 @@ function HomePage() {
     setSelectedCity(city);
     if (city) {
       const url = cityUrl(city);
-      if (url && url !== '/') navigate(url);
+      // Aynı URL'yi tekrar push etme: bulk -> detay nesnesi değişimi ve Back sonrası focus
+      // her tıklamada 2-3 geçmiş kaydı üretip Back/Forward'ı bozuyordu.
+      if (url && url !== '/' && url !== window.location.pathname) navigate(url);
     }
   }, [navigate]);
 
@@ -189,7 +194,7 @@ function HomePage() {
 
   return (
     <AppContainer>
-      <CitySeoTags city={selectedCity} />
+      {selectedCity ? <CitySeoTags city={selectedCity} /> : <DefaultSeoTags />}
       {/* ===== DESKTOP SIDEBAR ===== */}
       <DesktopSidebarContainer sx={{ width: sidebarWidth, transition: isDraggingState ? 'none' : 'width 0.3s ease' }}>
         {/* Desktop Header - Sadece Logo + Title */}

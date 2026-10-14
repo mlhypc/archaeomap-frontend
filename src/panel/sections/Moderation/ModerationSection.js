@@ -32,6 +32,7 @@ function ModerationSection() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [pendingCount, setPendingCount] = useState(0);
+    const [listRefreshKey, setListRefreshKey] = useState(0); // review sonrası listeyi yenilemek için
     
     // Review modal
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -94,6 +95,8 @@ function ModerationSection() {
         if (action === 'approved' || action === 'rejected') {
             setPendingCount(prev => Math.max(0, prev - 1));
         }
+        // Liste yenilensin (onaylanan/reddedilen şehir listede kalıyordu)
+        setListRefreshKey(prev => prev + 1);
         
         // Show success message based on action
         const actionText = action === 'approved' ? 'approved' : 'rejected';
@@ -224,6 +227,7 @@ function ModerationSection() {
                     <PendingCitiesList
                         onCityReview={handleCityReview}
                         onDataUpdate={handleDataUpdate}
+                        refreshKey={listRefreshKey}
                     />
                 )}
 

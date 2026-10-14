@@ -1,6 +1,7 @@
 // archaeomap-frontend\src\shared\services\authApi.js
 
 import axios from 'axios';
+import { attachRefreshInterceptor } from './tokenRefresh';
 
 // API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -25,18 +26,8 @@ authApi.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
-authApi.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('archaeomap_token');
-      localStorage.removeItem('archaeomap_refresh_token');
-    }
-    return Promise.reject(error);
-  }
-);
+// 401 -> refresh token exchange + retry (see tokenRefresh.js); tokens are cleared only if the refresh fails
+attachRefreshInterceptor(authApi);
 
 // Authentication API functions
 export const authService = {

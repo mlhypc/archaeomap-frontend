@@ -132,9 +132,12 @@ const authReducer = (state, action) => {
       };
 
     case AUTH_ACTIONS.UPDATE_USER:
+      // SET_LOADING sonrası status LOADING'de kalıyordu; kullanıcı güncellenince oturum yine açık.
       return {
         ...state,
-        user: action.payload
+        user: action.payload,
+        status: action.payload ? AUTH_STATES.AUTHENTICATED : state.status,
+        error: null
       };
 
     // Forgot Password Cases
@@ -291,12 +294,13 @@ export const AuthProvider = ({ children }) => {
       const result = await authService.getCurrentUser();
       
       if (result.success) {
+        // 401 interceptor'ı token'ları yenilemiş olabilir; state'teki eski çift yerine storage'dakini al.
         dispatch({
           type: AUTH_ACTIONS.LOGIN_SUCCESS,
           payload: {
             user: result.user,
-            token: state.token,
-            refreshToken: state.refreshToken
+            token: localStorage.getItem('archaeomap_token') || state.token,
+            refreshToken: localStorage.getItem('archaeomap_refresh_token') || state.refreshToken
           }
         });
       } else {

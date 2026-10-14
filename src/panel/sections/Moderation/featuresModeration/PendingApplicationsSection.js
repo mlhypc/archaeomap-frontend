@@ -171,22 +171,25 @@ function PendingApplicationsSection() {
     }
   };
 
-  // Format time remaining
+  // Format time remaining — backend milisaniye (number) döner
   const formatTimeRemaining = (timeRemaining) => {
-    if (timeRemaining.expired) {
-      return { text: 'Expired', color: 'error' };
+    const ms = typeof timeRemaining === 'number' ? timeRemaining : 0;
+    if (ms <= 0) {
+      return { text: 'Expired', color: 'error', expired: true };
     }
-    
-    const { hours, minutes } = timeRemaining;
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
     if (hours > 0) {
-      return { 
-        text: `${hours}h ${minutes}m remaining`, 
-        color: hours > 2 ? 'success' : 'warning' 
+      return {
+        text: `${hours}h ${minutes}m remaining`,
+        color: hours > 2 ? 'success' : 'warning',
+        expired: false
       };
     } else {
-      return { 
-        text: `${minutes}m remaining`, 
-        color: minutes > 30 ? 'warning' : 'error' 
+      return {
+        text: `${minutes}m remaining`,
+        color: minutes > 30 ? 'warning' : 'error',
+        expired: false
       };
     }
   };
@@ -304,12 +307,12 @@ function PendingApplicationsSection() {
                         startIcon={<VoteIcon />}
                         onClick={() => openVoteModal(application)}
                         color={userVoted ? "inherit" : "primary"}
-                        disabled={application.time_remaining.expired}
+                        disabled={!(application.time_remaining > 0)}
                       >
                         {userVoted ? 'Update Vote' : 'Vote'}
                       </Button>
                       
-                      {isAdmin && !application.time_remaining.expired && (
+                      {isAdmin && application.time_remaining > 0 && (
                         <Button
                           variant="outlined"
                           color="error"

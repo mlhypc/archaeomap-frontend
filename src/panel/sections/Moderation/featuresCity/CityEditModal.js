@@ -182,7 +182,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                         setImagePreview(result.data.image_url);
                     } else {
                         // Local path - prepend base URL
-                        const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '');
+                        const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, ''); // sondaki /api; 'https://api.' hostunu bozmasın
                         setImagePreview(`${baseUrl}${result.data.image_url}`);
                     }
                 }
@@ -443,7 +443,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 generic_city_name: formData.generic_city_name.trim(),
                 country: formData.country.trim(),
                 founded: parseInt(formData.founded),
-                end_date: formData.end_date ? parseInt(formData.end_date) : new Date().getFullYear(),
+                end_date: formData.end_date !== '' && formData.end_date !== null && formData.end_date !== undefined ? parseInt(formData.end_date) : null, // boş = hâlâ var
                 description: formData.description.trim() || null,
                 city_tier: parseInt(formData.city_tier),
                 data_status: formData.data_status,
@@ -564,7 +564,12 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
 
     const hasUnsavedChanges = () => {
         if (!originalData) return false;
-        return JSON.stringify(formData) !== JSON.stringify(originalData);
+        if (JSON.stringify(formData) !== JSON.stringify(originalData)) return true;
+        // HistoricalDataEditor formData'ya dokunmaz; hükümdar/nüfus/yapı değişiklikleri de kaydedilebilsin
+        const base = completeCityData || {};
+        return JSON.stringify(controlHistory) !== JSON.stringify(base.control_history_json || [])
+            || JSON.stringify(populationHistory) !== JSON.stringify(base.population_history_json || [])
+            || JSON.stringify(landmarksHistory) !== JSON.stringify(base.landmarks_history_json || []);
     };
 
     // Save handler for Sources tab - sends only sources + minimum city fields
@@ -607,7 +612,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                 generic_city_name: formData.generic_city_name.trim(),
                 country: formData.country.trim(),
                 founded: parseInt(formData.founded),
-                end_date: formData.end_date ? parseInt(formData.end_date) : new Date().getFullYear(),
+                end_date: formData.end_date !== '' && formData.end_date !== null && formData.end_date !== undefined ? parseInt(formData.end_date) : null, // boş = hâlâ var
                 description: formData.description.trim() || null,
                 city_tier: parseInt(formData.city_tier),
                 data_status: formData.data_status,

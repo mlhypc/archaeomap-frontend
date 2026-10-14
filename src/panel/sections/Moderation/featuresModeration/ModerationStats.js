@@ -112,8 +112,19 @@ function ModerationStats({ pendingCount }) {
             const result = await citiesApi.getModerationStats(true);
 
             if (result.success) {
-                setStats(result.data.workflow);
-                setUserStats(result.data.userStats);
+                // Backend: data.stats {pending_count, approved_count, rejected_count, total_count}, data.summary
+                const s = result.data.stats || {};
+                const sum = result.data.summary || {};
+                setStats({
+                    total: s.total_count ?? 0,
+                    pending: s.pending_count ?? 0,
+                    approved: s.approved_count ?? 0,
+                    rejected: s.rejected_count ?? 0,
+                    pendingRatio: sum.pending_percentage != null ? `${sum.pending_percentage}% of total` : undefined,
+                    approvalRatio: sum.approval_rate != null ? `${sum.approval_rate}% approval rate` : undefined,
+                    recent_submissions: s.recent_submissions || []
+                });
+                setUserStats(result.data.userStats || null);
             } else {
                 setError(result.error || 'Failed to load statistics');
             }

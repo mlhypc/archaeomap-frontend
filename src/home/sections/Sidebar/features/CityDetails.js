@@ -90,11 +90,10 @@ function CityDetails({ cityDetails, currentYear }) {
             <img
               src={cityDetails.image_url.startsWith('http')
                 ? cityDetails.image_url
-                : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000').replace('/api', '')}${cityDetails.image_url}`}
+                : `${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '')}${cityDetails.image_url}`}
               alt={`${cityDetails.name}`}
               onError={handleImageError}
               onLoad={handleImageLoad}
-              loading="lazy"
               decoding="async"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />

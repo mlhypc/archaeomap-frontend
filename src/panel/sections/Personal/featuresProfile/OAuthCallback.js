@@ -40,7 +40,7 @@ function OAuthCallback() {
           
           // Redirect to login after 3 seconds
           setTimeout(() => {
-            navigate('/login');
+            navigate('/panel', { replace: true });
           }, 3000);
           return;
         }
@@ -51,7 +51,7 @@ function OAuthCallback() {
           setErrorMessage('Authentication tokens missing. Please try again.');
           
           setTimeout(() => {
-            navigate('/login');
+            navigate('/panel', { replace: true });
           }, 3000);
           return;
         }
@@ -64,14 +64,14 @@ function OAuthCallback() {
           
           // Redirect to home after 1 second
           setTimeout(() => {
-            navigate('/');
+            navigate('/', { replace: true }); // callback URL'si (token'lı) geçmişte kalmasın
           }, 1000);
         } else {
           setStatus('error');
           setErrorMessage('Failed to authenticate with received tokens.');
           
           setTimeout(() => {
-            navigate('/login');
+            navigate('/panel', { replace: true });
           }, 3000);
         }
 
@@ -81,7 +81,7 @@ function OAuthCallback() {
         setErrorMessage('An unexpected error occurred during authentication.');
         
         setTimeout(() => {
-          navigate('/login');
+          navigate('/panel', { replace: true });
         }, 3000);
       }
     };

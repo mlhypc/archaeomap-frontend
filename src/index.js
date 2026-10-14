@@ -2,17 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import App from './App';
-import AppTheme from './shared/theme/styles';
-import { AuthProvider } from './shared/contexts/AuthContext';
 
+// AuthProvider ve tema App.js içinde sarılıyor; burada ikinci kez sarmak iki /auth/me çağrısı
+// ve iki bağımsız auth state'i yaratıyordu.
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <AppTheme>
-        <App />
-      </AppTheme>
-    </AuthProvider>
+    <App />
   </React.StrictMode>
 );
 

@@ -132,13 +132,23 @@ function PanelPage() {
     // Contribution (contributor+ için)
     if (canManageData) {
       items.push(
-        { 
-          id: PANEL_SECTIONS.MY_SUBMISSIONS, 
-          label: 'My Submissions', 
+        {
+          id: PANEL_SECTIONS.MY_SUBMISSIONS,
+          label: 'My Submissions',
           icon: AssignmentIcon,
           category: 'Contribution'
         }
       );
+      // Katkıcı şehir gönderebilir (backend /city-creation contributor'a açık); moderatör değilse
+      // "Cities" bölümünü burada göster, moderatör ise aşağıda Moderation altında.
+      if (!canModerate) {
+        items.push({
+          id: PANEL_SECTIONS.CITIES,
+          label: 'Cities',
+          icon: LocationCityIcon,
+          category: 'Contribution'
+        });
+      }
     }
 
     // Moderation (moderator+ için)

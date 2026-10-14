@@ -17,4 +17,8 @@
 # the React app's index.html so client-side routing
 # (/cities/:country/:city, /panel, /reset-password, /auth/callback)
 # works on hard refresh. Functions take precedence over this rule.
+# www -> apex (301). Was a root functions/_middleware.js, which made EVERY request
+# (JS, CSS, Cesium, tiles) a Function invocation; a static rule costs nothing.
+https://www.archaeomap.com/*  https://archaeomap.com/:splat  301
+
 /*  /index.html  200

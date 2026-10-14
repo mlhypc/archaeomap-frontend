@@ -289,11 +289,14 @@ function CityLists() {
             setTimeout(() => setSuccess(null), SUCCESS_MESSAGE_DURATION);
             
             await fetchCollections();
-            
-            // If detail view is open, refresh it
+
+            // If detail view is open, drop the removed city from it (the closure's `collections` is stale)
             if (detailCollection && detailCollection.id === collection.id) {
-                const updatedCollection = collections.find(c => c.id === collection.id);
-                setDetailCollection(updatedCollection);
+                setDetailCollection(prev => prev ? {
+                    ...prev,
+                    cities: (prev.cities || []).filter(c => (c.id || c._id) !== (city.id || city._id)),
+                    city_count: Math.max(0, (prev.city_count || prev.cities?.length || 1) - 1)
+                } : prev);
             }
 
         } catch (err) {
