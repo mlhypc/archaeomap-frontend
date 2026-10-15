@@ -7,6 +7,12 @@ versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 8.
 
 ## Unreleased
 
+## 1.2.2 - Validation reasons in errors (2026-10-15)
+
+### Fixed
+- City and ruler API clients append the 400 `details` messages (text and logic rules) to the error,
+  so the panel shows why a save was refused instead of "Validation failed".
+
 ## 1.2.1 - City description target (2026-10-15)
 
 ### Changed

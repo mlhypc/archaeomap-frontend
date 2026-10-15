@@ -57,9 +57,11 @@ const parseResponse = async (response) => {
     if (response.ok) {
       return { success: true, data, message: data.message };
     }
+    // 400s from the text rules carry [{ path, msg }]; show them, the modals print `error` only.
+    const reasons = Array.isArray(data.details) ? data.details.map((d) => d.msg).filter(Boolean) : [];
     return {
       success: false,
-      error: data.error || 'Request failed',
+      error: reasons.length ? `${data.error || 'Request failed'}: ${reasons.join('; ')}` : (data.error || 'Request failed'),
       errors: data.errors,
       details: data.details
     };
