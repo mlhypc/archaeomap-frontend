@@ -13,6 +13,12 @@ export const TEXT_LIMITS = Object.freeze({
   name: 255
 });
 
+// Curated target, stricter than the hard limit: the counter counts against it and the field turns
+// red past it, while maxLength stays at the hard limit.
+export const TEXT_TARGETS = Object.freeze({
+  cityDescription: 1000
+});
+
 const DASH_RE = /[–—―]/g;
 
 // " — " and " – " become " - ", bare dashes become "-".

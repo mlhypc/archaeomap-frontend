@@ -3,9 +3,15 @@
 One entry per version, titled like its commit (`<version> - <short title>`), with Added / Changed / Fixed /
 Removed underneath. Versions follow Semantic Versioning (major: a route or URL scheme changes incompatibly;
 minor: a new page, feature or panel; patch: fixes, performance, documentation). Work that is not yet
-versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 14.
+versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 8.
 
 ## Unreleased
+
+## 1.2.1 - City description target (2026-10-15)
+
+### Changed
+- City description counter in the create and edit forms counts against the 1000-character target
+  (`TEXT_TARGETS`) and turns the field red past it; `maxLength` stays at the 1500 hard limit.
 
 ## 1.2.0 - Text rules in forms (2026-10-15)
 
