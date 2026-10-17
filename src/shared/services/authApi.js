@@ -418,6 +418,33 @@ export const authService = {
     }
   },
 
+  // Email verification: the token from the emailed link
+  async verifyEmail(token) {
+    try {
+      const response = await authApi.post('/auth/verify-email', { token });
+      return { success: true, message: response.data.message || 'Your email address is verified.' };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Could not verify your email. Please try again.'
+      };
+    }
+  },
+
+  // Email verification: a new link for the signed-in user (2-minute cooldown on the server)
+  async resendVerification() {
+    try {
+      const response = await authApi.post('/auth/resend-verification');
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Could not send the verification email.',
+        code: error.response?.data?.code
+      };
+    }
+  },
+
   // Unlink Google account
   async unlinkGoogleAccount() {
     try {

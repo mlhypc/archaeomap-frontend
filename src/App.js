@@ -8,6 +8,7 @@ import Theme from './shared/theme/styles';
 import HomePage from './home/pages/HomePage';
 import PanelPage from './panel/pages/PanelPage';
 import ResetPasswordPage from './panel/pages/ResetPasswordPage';
+import VerifyEmailPage from './panel/pages/VerifyEmailPage';
 import OAuthCallback from './panel/sections/Personal/featuresProfile/OAuthCallback';
 import NotFoundPage from './shared/components/NotFoundPage';
 
@@ -21,6 +22,7 @@ function App() {
             <Route path="/cities/:countrySlug/:citySlug" element={<HomePage />} />
             <Route path="/panel" element={<PanelPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

@@ -1,12 +1,14 @@
 // archaeomap-frontend/src/panel/sections/Personal/features/ProfileInfo.js
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
   Avatar,
   Stack,
-  Chip
+  Chip,
+  Alert,
+  Button
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
@@ -14,10 +16,20 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import { useAuth } from '../../../../shared/contexts/AuthContext';
+import { authService } from '../../../../shared/services/authApi';
 import { COLORS } from '../../../../shared/config/generalUtils';
 
 function ProfileInfo() {
   const { user } = useAuth();
+  // Unverified email: a banner with a button that mails a new verification link
+  const [verifySending, setVerifySending] = useState(false);
+  const [verifyResult, setVerifyResult] = useState(null); // { ok, text }
+  const sendVerification = async () => {
+    setVerifySending(true);
+    const result = await authService.resendVerification();
+    setVerifySending(false);
+    setVerifyResult({ ok: result.success, text: result.success ? result.message : result.error });
+  };
 
   // Email visibility comes directly from user preferences - no local state needed
   const emailVisible = user?.preferences?.showEmail ?? false;
@@ -113,6 +125,22 @@ function ProfileInfo() {
           )}
         </Box>
       </Stack>
+
+      {/* Email not verified yet (email/password accounts; Google and Apple arrive verified) */}
+      {user && !user.emailVerified && (
+        <Alert
+          severity={verifyResult?.ok ? 'success' : 'info'}
+          action={!verifyResult?.ok && (
+            <Button color="inherit" size="small" disabled={verifySending} onClick={sendVerification} sx={{ whiteSpace: 'nowrap' }}>
+              {verifySending ? 'Sending...' : 'Send link'}
+            </Button>
+          )}
+        >
+          {verifyResult
+            ? verifyResult.text
+            : 'Your email address is not verified yet. We can send you a verification link.'}
+        </Alert>
+      )}
 
       {/* Additional Info */}
       <Stack direction="row" spacing={3} useFlexGap sx={{ pt: 2, borderTop: 1, borderColor: 'divider', flexWrap: 'wrap', rowGap: 2 }}>

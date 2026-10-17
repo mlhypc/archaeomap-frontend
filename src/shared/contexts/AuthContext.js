@@ -654,6 +654,13 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_PREFERENCES_STATUS });
   }, [dispatch]);
 
+  // Re-read the signed-in user without the loading state (e.g. after email verification)
+  const reloadUser = useCallback(async () => {
+    const result = await authService.getCurrentUser();
+    if (result.success) dispatch({ type: AUTH_ACTIONS.UPDATE_USER, payload: result.user });
+    return result;
+  }, []);
+
   const uploadProfilePicture = useCallback(async (file) => {
     const result = await authService.uploadProfilePicture(file);
     if (result.success) dispatch({ type: AUTH_ACTIONS.UPDATE_USER, payload: result.user });
@@ -732,6 +739,7 @@ export const AuthProvider = ({ children }) => {
     
     // Preferences functions
     updateUserPreferences,
+    reloadUser,
     updateSinglePreference,
     updatePrivacySettings,
     clearPreferencesStatus,
@@ -752,7 +760,7 @@ export const AuthProvider = ({ children }) => {
 
     // OAuth functions
     unlinkGoogleAccount
-  }), [state, login, loginWithToken, register, logout, updateProfile, clearError, updateUserPreferences, updateSinglePreference, updatePrivacySettings, clearPreferencesStatus, requestPasswordReset, resetPassword, verifyResetToken, clearForgotPassword, changePassword, clearChangePassword, uploadProfilePicture, deleteProfilePicture, unlinkGoogleAccount]);
+  }), [state, login, loginWithToken, register, logout, updateProfile, clearError, updateUserPreferences, updateSinglePreference, updatePrivacySettings, clearPreferencesStatus, requestPasswordReset, resetPassword, verifyResetToken, clearForgotPassword, changePassword, clearChangePassword, uploadProfilePicture, deleteProfilePicture, unlinkGoogleAccount, reloadUser]);
 
   return (
     <AuthContext.Provider value={contextValue}>

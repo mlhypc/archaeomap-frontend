@@ -7,6 +7,13 @@ versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 8.
 
 ## Unreleased
 
+## 1.4.0 - Email verification page (2026-10-17)
+
+### Added
+- `/verify-email` page for the link in the verification email (token in the fragment, wiped from the address
+  bar, the signed-in user refreshed so the Verified badge shows); the profile shows unverified users a banner
+  with a "Send link" button (backend 1.6.0).
+
 ## 1.3.0 - My cities filter, map search, Apple login (2026-10-17)
 
 ### Added
