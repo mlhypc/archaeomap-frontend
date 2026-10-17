@@ -21,17 +21,26 @@ function OAuthCallback() {
       try {
         setProcessed(true); // Mark as processed immediately
         
-        // Get tokens from URL parameters
-        const token = searchParams.get('token');
-        const refreshToken = searchParams.get('refresh');
+        // Tokens arrive in the fragment (#token=...&refresh=...), errors in the query (?error=...).
+        // The fragment is wiped from the address bar at once so the tokens do not sit in history.
+        const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        if (window.location.hash) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+        const token = hash.get('token') || searchParams.get('token');
+        const refreshToken = hash.get('refresh') || searchParams.get('refresh');
         const error = searchParams.get('error');
 
         if (error) {
           console.error('OAuth error:', error);
           setStatus('error');
           
-          if (error === 'oauth_failed') {
-            setErrorMessage('Google authentication failed. Please try again.');
+          if (error === 'apple_cancelled') {
+            setErrorMessage('Sign in with Apple was cancelled.');
+          } else if (error === 'apple_unavailable') {
+            setErrorMessage('Sign in with Apple is not available right now.');
+          } else if (error === 'oauth_failed') {
+            setErrorMessage('Sign-in failed. Please try again.');
           } else if (error === 'oauth_callback_failed') {
             setErrorMessage('Authentication callback failed. Please try again.');
           } else {

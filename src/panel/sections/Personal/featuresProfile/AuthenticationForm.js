@@ -28,9 +28,19 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../../../../shared/contexts/AuthContext';
 import { COLORS } from '../../../../shared/config/generalUtils';
 import GoogleOAuthButton from './GoogleOAuthButton';
+import AppleOAuthButton from './AppleOAuthButton';
 
 function AuthenticationForm() {
   const [tabValue, setTabValue] = useState(0);
+  // The Apple button appears only once the backend has its keys (GET /api/auth/providers)
+  const [appleEnabled, setAppleEnabled] = useState(false);
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    fetch(`${apiUrl}/auth/providers`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(p => setAppleEnabled(Boolean(p?.apple)))
+      .catch(() => setAppleEnabled(false));
+  }, []);
   const [formData, setFormData] = useState({
     identifier: '',
     email: '',
@@ -176,6 +186,11 @@ function AuthenticationForm() {
       {/* Google OAuth Section */}
       <Box sx={{ mb: 3 }}>
         <GoogleOAuthButton type={tabValue === 0 ? 'login' : 'register'} />
+        {appleEnabled && (
+          <Box sx={{ mt: 1.5 }}>
+            <AppleOAuthButton type={tabValue === 0 ? 'login' : 'register'} />
+          </Box>
+        )}
         
         <Box sx={{ 
           display: 'flex', 

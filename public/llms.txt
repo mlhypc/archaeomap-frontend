@@ -70,6 +70,6 @@ City data can be exported individually as JSON from the city detail panel. A pub
 
 ## Contact
 
-Email: melih@archaeomap.com
+Email: info@archaeomap.com
 Website: https://archaeomap.com
 About page: https://archaeomap.com/about.html

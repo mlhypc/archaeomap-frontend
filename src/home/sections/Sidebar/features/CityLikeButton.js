@@ -75,6 +75,10 @@ function UserInteractions({ cityId }) {
           liked: result.data.liked,
           likesCount: result.data.likesCount
         });
+        // The map's "liked only" filter listens for this (MapMain.js)
+        window.dispatchEvent(new CustomEvent('archaeomap:like', {
+          detail: { cityId: String(cityId), liked: result.data.liked }
+        }));
         
         // Trigger animation only when liking (not unliking)
         if (!wasLiked && result.data.liked) {
@@ -159,16 +163,18 @@ function UserInteractions({ cityId }) {
           color: likeStatus.liked ? COLORS.primary : COLORS.texts.secondary,
           transition: 'all 0.2s ease'
         }}>
-          Like
+          {likeStatus.liked ? 'Liked' : 'Like'}
         </Typography>
         
-        <Typography sx={{
-          fontSize: '0.8rem',
-          color: COLORS.texts.muted,
-          fontWeight: 400
-        }}>
-          ({formatLikeCount(likeStatus.likesCount)})
-        </Typography>
+        {likeStatus.likesCount > 0 && (
+          <Typography sx={{
+            fontSize: '0.8rem',
+            color: COLORS.texts.muted,
+            fontWeight: 400
+          }}>
+            {formatLikeCount(likeStatus.likesCount)}
+          </Typography>
+        )}
       </Box>
 
       {/* Login Prompt Snackbar */}

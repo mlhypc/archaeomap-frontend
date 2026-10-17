@@ -10,20 +10,43 @@ import {
   IconButton
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { COLORS, formatYear, truncateText, getCurrentCityName, hexToRgb } from '../../../../shared/config/generalUtils';
+import { COLORS, formatYear, formatYearRange, yearSpan, truncateText, hexToRgb } from '../../../../shared/config/generalUtils';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CityLikeButton from './CityLikeButton';
 import CityAddCollectionButton from './CityAddCollectionButton';
 
+// Item count pill next to a section header (control, landmarks, sources)
+const SectionCount = ({ n }) => (
+  <Typography variant="caption" sx={{
+    fontSize: '0.7rem',
+    color: COLORS.texts.muted,
+    backgroundColor: `${COLORS.primary}20`,
+    px: 0.8,
+    py: 0.2,
+    borderRadius: '10px'
+  }}>
+    {n}
+  </Typography>
+);
+
 function CityDetails({ cityDetails, currentYear }) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'), { noSsr: true }); // right on first render (initial open state)
   const isSmallMobile = useMediaQuery('(max-width:360px)');
   const isLandscape = useMediaQuery('(orientation: landscape) and (max-height: 500px)');
 
+  // The control period covering the time slider's year; same rule as the map's ruler color (first match)
+  const activeControlIndex = (cityDetails?.controlHistory || []).findIndex(c =>
+    typeof currentYear === 'number' && currentYear >= c.startYear && (c.endYear == null || currentYear <= c.endYear)
+  );
+
+  // Header: name in the slider's year (historical_city_name of that period), generic name otherwise
+  const activeControl = activeControlIndex >= 0 ? cityDetails.controlHistory[activeControlIndex] : null;
+  const displayName = activeControl?.historical_city_name?.trim() || cityDetails?.name;
+
   // Local state for collapsible sections
-  const [controlHistoryOpen, setControlHistoryOpen] = useState(false);
+  const [controlHistoryOpen, setControlHistoryOpen] = useState(!isMobile);
   const [landmarksOpen, setLandmarksOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -49,22 +72,22 @@ function CityDetails({ cityDetails, currentYear }) {
   if (!cityDetails) return null;
 
   return (
-    <Box sx={{ flex: 1 }}>
+    <Box className="selectable" sx={{ flex: 1 }}>
       {/* City Header */}
       <Typography variant="cityName" sx={{ fontSize: { xs: isSmallMobile ? '1.3rem' : undefined } }}>
-        {getCurrentCityName(cityDetails, currentYear)}
+        {displayName}
       </Typography>
 
-      <Typography variant="subtitle2" sx={{ 
-        mt: 0.5, 
-        color: COLORS.texts.secondary, 
+      <Typography variant="subtitle2" sx={{
+        mt: 0.5,
+        color: COLORS.texts.secondary,
         fontSize: { xs: isSmallMobile ? '0.7rem' : '0.85rem' }
       }}>
         {cityDetails.country}
       </Typography>
 
       {/* City Actions */}
-      <Box sx={{
+      <Box className="no-select" sx={{
         display: 'flex',
         gap: 1,
         flexWrap: 'wrap',
@@ -118,7 +141,7 @@ function CityDetails({ cityDetails, currentYear }) {
 
       {/* Dates Box */}
       <Paper variant="datesBox" sx={{ mt: { xs: 1.5, md: 2 } }}>
-        <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', backgroundColor: 'rgba(76, 120, 137, 0.08)' }}>
+        <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', backgroundColor: `${COLORS.primary}0d` }}>
           <Box sx={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: COLORS.primary, mr: 1.5 }} />
           <Typography variant="body2" sx={{ fontSize: { xs: isSmallMobile ? '0.75rem' : '0.85rem' }, fontWeight: 500, color: COLORS.texts.primary }}>
             Founded: <span style={{ fontFamily: 'Georgia, serif', color: COLORS.primary }}>{formatYear(cityDetails.founded)}</span>
@@ -127,16 +150,13 @@ function CityDetails({ cityDetails, currentYear }) {
 
         {cityDetails.endDate && (
           <>
-            <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', backgroundColor: 'rgba(180, 0, 0, 0.08)', borderTop: `1px solid ${COLORS.border}` }}>
-              <Box sx={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgba(180, 0, 0, 0.8)', mr: 1.5 }} />
+            <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', backgroundColor: `${COLORS.texts.muted}12`, borderTop: `1px solid ${COLORS.border}` }}>
+              <Box sx={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: COLORS.texts.muted, mr: 1.5 }} />
               <Typography variant="body2" sx={{ fontSize: { xs: isSmallMobile ? '0.75rem' : '0.85rem' }, fontWeight: 500, color: COLORS.texts.primary }}>
-                Ended: <span style={{ fontFamily: 'Georgia, serif', color: 'rgba(180, 0, 0, 0.8)' }}>{formatYear(cityDetails.endDate)}</span>
+                Ended: <span style={{ fontFamily: 'Georgia, serif', color: COLORS.texts.secondary }}>{formatYear(cityDetails.endDate)}</span>
               </Typography>
-            </Box>
-
-            <Box sx={{ backgroundColor: 'rgba(240, 240, 235, 0.4)', borderTop: `1px solid ${COLORS.border}`, textAlign: 'center' }}>
-              <Typography variant="caption" sx={{ fontSize: { xs: isSmallMobile ? '0.65rem' : '0.7rem' }, lineHeight: 3.0, fontStyle: 'italic', color: COLORS.texts.secondary }}>
-                Existed for {Math.abs(cityDetails.endDate - cityDetails.founded)} years
+              <Typography variant="caption" sx={{ ml: 'auto', pl: 1, fontSize: { xs: isSmallMobile ? '0.65rem' : '0.7rem' }, fontStyle: 'italic', color: COLORS.texts.muted, whiteSpace: 'nowrap' }}>
+                {yearSpan(cityDetails.founded, cityDetails.endDate)} years
               </Typography>
             </Box>
           </>
@@ -148,7 +168,7 @@ function CityDetails({ cityDetails, currentYear }) {
         mt: { xs: 1.5, md: 2 },
         color: COLORS.texts.secondary,
         lineHeight: 1.5,
-        fontSize: { xs: isSmallMobile ? '0.65rem' : '0.9rem' }
+        fontSize: { xs: isSmallMobile ? '0.8rem' : '0.9rem' }
       }}>
         {cityDetails.description ? (
           isLandscape && isMobile
@@ -162,7 +182,7 @@ function CityDetails({ cityDetails, currentYear }) {
       {/* Control History */}
       {cityDetails.controlHistory && cityDetails.controlHistory.length > 0 && (
         <Box sx={{ mt: { xs: 1.5, md: 2 } }}>
-          <Box sx={{
+          <Box className="no-select" sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -178,13 +198,16 @@ function CityDetails({ cityDetails, currentYear }) {
               backgroundColor: `rgba(${hexToRgb(COLORS.primary)}, 0.14)`
             }
           }} onClick={() => setControlHistoryOpen(!controlHistoryOpen)}>
-            <Typography variant="h6" sx={{
-              fontSize: { xs: isSmallMobile ? '0.95rem' : '1.05rem' },
-              color: COLORS.texts.primary,
-              fontWeight: 600
-            }}>
-              Historical Control
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" sx={{
+                fontSize: { xs: isSmallMobile ? '0.95rem' : '1.05rem' },
+                color: COLORS.texts.primary,
+                fontWeight: 600
+              }}>
+                Historical Control
+              </Typography>
+              <SectionCount n={cityDetails.controlHistory.length} />
+            </Box>
 
             <IconButton size="small" aria-label={controlHistoryOpen ? "Collapse historical control" : "Expand historical control"} sx={{ color: COLORS.texts.secondary }}>
               {controlHistoryOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -198,6 +221,7 @@ function CityDetails({ cityDetails, currentYear }) {
                   const dotColor = control.ruler_color || COLORS.timeline.dotPrimary;
                   const lineColor = control.ruler_color || COLORS.timeline.line;
                   const isLast = index === cityDetails.controlHistory.length - 1;
+                  const isActive = index === activeControlIndex;
                   return (
                   <Box key={index} sx={{
                     position: 'relative',
@@ -236,10 +260,12 @@ function CityDetails({ cityDetails, currentYear }) {
                     }} />
 
                     <Box sx={{
-                      backgroundColor: `${COLORS.background}cc`,
-                      border: `1px solid ${COLORS.border}`,
+                      backgroundColor: isActive ? `${dotColor}14` : `${COLORS.background}cc`,
+                      border: `1px solid ${isActive ? dotColor : COLORS.border}`,
+                      boxShadow: isActive ? `0 0 0 1px ${dotColor}` : 'none',
                       borderRadius: '4px',
-                      p: 1.5
+                      p: 1.5,
+                      transition: 'background-color 0.2s ease, border-color 0.2s ease'
                     }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                         <Typography variant="timestamp" sx={{
@@ -247,7 +273,7 @@ function CityDetails({ cityDetails, currentYear }) {
                           fontWeight: 600,
                           color: COLORS.secondary
                         }}>
-                          {formatYear(control.startYear)} - {control.endYear ? formatYear(control.endYear) : 'Present'}
+                          {formatYearRange(control.startYear, control.endYear)}
                         </Typography>
                         <Typography variant="caption" sx={{
                           fontSize: '0.7rem',
@@ -257,10 +283,7 @@ function CityDetails({ cityDetails, currentYear }) {
                           py: 0.2,
                           borderRadius: '10px'
                         }}>
-                          {control.endYear
-                            ? `${Math.abs(control.endYear - control.startYear)} years`
-                            : `${Math.abs(new Date().getFullYear() - control.startYear)} years`
-                          }
+                          {`${yearSpan(control.startYear, control.endYear ?? new Date().getFullYear())} years`}
                         </Typography>
                       </Box>
 
@@ -284,14 +307,14 @@ function CityDetails({ cityDetails, currentYear }) {
                         </Typography>
                       )}
 
-                      {!isMobile && control.description && (
+                      {control.description && (
                         <Typography variant="body2" sx={{
                           fontSize: '0.8rem',
                           color: COLORS.texts.secondary,
                           lineHeight: 1.4,
                           mt: 0.5
                         }}>
-                          {truncateText(control.description, 280)}
+                          {control.description}
                         </Typography>
                       )}
                     </Box>
@@ -307,7 +330,7 @@ function CityDetails({ cityDetails, currentYear }) {
       {/* Landmarks History */}
       {cityDetails.landmarksHistory && cityDetails.landmarksHistory.length > 0 && (
         <Box sx={{ mt: { xs: 1.5, md: 2 } }}>
-          <Box sx={{
+          <Box className="no-select" sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -323,13 +346,16 @@ function CityDetails({ cityDetails, currentYear }) {
               backgroundColor: `rgba(${hexToRgb(COLORS.secondary)}, 0.14)`
             }
           }} onClick={() => setLandmarksOpen(!landmarksOpen)}>
-            <Typography variant="h6" sx={{
-              fontSize: { xs: isSmallMobile ? '0.95rem' : '1.05rem' },
-              color: COLORS.texts.primary,
-              fontWeight: 600
-            }}>
-              Historical Landmarks
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" sx={{
+                fontSize: { xs: isSmallMobile ? '0.95rem' : '1.05rem' },
+                color: COLORS.texts.primary,
+                fontWeight: 600
+              }}>
+                Historical Landmarks
+              </Typography>
+              <SectionCount n={cityDetails.landmarksHistory.length} />
+            </Box>
 
             <IconButton size="small" aria-label={landmarksOpen ? "Collapse historical landmarks" : "Expand historical landmarks"} sx={{ color: COLORS.texts.secondary }}>
               {landmarksOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -351,7 +377,7 @@ function CityDetails({ cityDetails, currentYear }) {
                   borderRadius: '1px'
                 }
               }}>
-                {cityDetails.landmarksHistory
+                {[...cityDetails.landmarksHistory]
                   .sort((a, b) => a.constructionDate - b.constructionDate)
                   .map((landmark, index) => (
                     <Box key={index} sx={{
@@ -406,18 +432,18 @@ function CityDetails({ cityDetails, currentYear }) {
                           </Typography>
                         )}
 
-                        {landmark.description && !isMobile && (
+                        {landmark.description && (
                           <Typography variant="body2" sx={{
                             fontSize: '0.8rem',
                             color: COLORS.texts.secondary,
                             lineHeight: 1.4,
                             mt: 0.5
                           }}>
-                            {truncateText(landmark.description, 200)}
+                            {landmark.description}
                           </Typography>
                         )}
 
-                        {landmark.significance && !isMobile && (
+                        {landmark.significance && (
                           <Typography sx={{
                             fontSize: '0.75rem',
                             color: COLORS.texts.muted,
@@ -441,7 +467,7 @@ function CityDetails({ cityDetails, currentYear }) {
       {/* Sources */}
       {cityDetails.sources && cityDetails.sources.length > 0 && (
         <Box sx={{ mt: { xs: 1.5, md: 2 } }}>
-          <Box sx={{
+          <Box className="no-select" sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -465,16 +491,7 @@ function CityDetails({ cityDetails, currentYear }) {
               }}>
                 Sources
               </Typography>
-              <Typography variant="caption" sx={{
-                fontSize: '0.7rem',
-                color: COLORS.texts.muted,
-                backgroundColor: `${COLORS.primary}20`,
-                px: 0.8,
-                py: 0.2,
-                borderRadius: '10px'
-              }}>
-                {cityDetails.sources.length}
-              </Typography>
+              <SectionCount n={cityDetails.sources.length} />
             </Box>
 
             <IconButton size="small" aria-label={sourcesOpen ? "Collapse sources" : "Expand sources"} sx={{ color: COLORS.texts.secondary }}>

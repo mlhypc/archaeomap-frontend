@@ -440,7 +440,7 @@ const RulerCreationModal = ({ open, onClose, onRulerCreated }) => {
                                 fullWidth
                                 type="number"
                                 error={!!validationErrors.start_year}
-                                helperText={validationErrors.start_year || 'Negative for BC (e.g., -27)'}
+                                helperText={validationErrors.start_year || 'Negative for BCE (e.g., -27)'}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">

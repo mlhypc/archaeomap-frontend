@@ -381,7 +381,7 @@ function LikedCities() {
 
                   {city.founded && (
                     <Chip 
-                      label={`Founded: ${city.founded < 0 ? `${Math.abs(city.founded)} BC` : `${city.founded} AD`}`}
+                      label={`Founded: ${city.founded < 0 ? `${Math.abs(city.founded)} BCE` : `${city.founded} CE`}`}
                       size="small" 
                       sx={{ 
                         backgroundColor: COLORS.primary + '20',

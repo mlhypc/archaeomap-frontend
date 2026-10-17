@@ -1,6 +1,7 @@
 // archaeomap-frontend/src/panel/sections/Personal/featuresInteractions/CityLists.js
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Box,
     Typography,
@@ -44,7 +45,8 @@ import {
     Visibility as ViewIcon,
     LocationCity as CityIcon,
     Close as CloseIcon,
-    BookmarkAdd as BookmarkAddIcon
+    BookmarkAdd as BookmarkAddIcon,
+    Map as MapIcon
 } from '@mui/icons-material';
 import { COLORS } from '../../../../shared/config/generalUtils';
 import { useAuth } from '../../../../shared/contexts/AuthContext';
@@ -55,6 +57,11 @@ const SUCCESS_MESSAGE_DURATION = 3000;
 
 function CityLists() {
     const { user, token } = useAuth();
+    const navigate = useNavigate();
+    // The map reads ?collection=<id> once and filters to that collection (MapMain.js)
+    const showOnMap = (collection) => {
+        if (collection?.id) navigate(`/?collection=${collection.id}`);
+    };
     const [collections, setCollections] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -467,7 +474,7 @@ function CityLists() {
                                                         variant="outlined"
                                                     />
                                                 )}
-                                                <Badge badgeContent={collection.city_count} color="primary">
+                                                <Badge badgeContent={collection.cities?.length ?? collection.city_count} color="primary">
                                                     <CityIcon sx={{ color: COLORS.texts.muted, fontSize: 20 }} />
                                                 </Badge>
                                             </Box>
@@ -540,7 +547,7 @@ function CityLists() {
 
                                     {/* Footer */}
                                     <Typography variant="caption" sx={{ color: COLORS.texts.muted }}>
-                                        Updated {new Date(collection.updated_at).toLocaleDateString()}
+                                        Updated {new Date(collection.updatedAt || collection.updated_at).toLocaleDateString()}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -558,6 +565,10 @@ function CityLists() {
                 <MenuItem onClick={() => handleViewCollection(menuCollection)}>
                     <ViewIcon sx={{ mr: 1, fontSize: 18 }} />
                     View Details
+                </MenuItem>
+                <MenuItem onClick={() => showOnMap(menuCollection)}>
+                    <MapIcon sx={{ mr: 1, fontSize: 18 }} />
+                    Show on Map
                 </MenuItem>
                 <MenuItem onClick={() => handleAddCities(menuCollection)}>
                     <BookmarkAddIcon sx={{ mr: 1, fontSize: 18 }} />
@@ -765,6 +776,13 @@ function CityLists() {
                             )}
                         </DialogContent>
                         <DialogActions>
+                            <Button
+                                startIcon={<MapIcon />}
+                                disabled={!detailCollection.cities?.length}
+                                onClick={() => showOnMap(detailCollection)}
+                            >
+                                Show on Map
+                            </Button>
                             <Button
                                 startIcon={<AddIcon />}
                                 onClick={() => {

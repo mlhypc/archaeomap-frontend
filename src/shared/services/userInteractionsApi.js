@@ -100,6 +100,27 @@ export const likeApi = {
   },
 
   /**
+   * Get every city id the user liked (unpaginated, for the map's "liked only" filter)
+   * @returns {Promise<Object>} Response with cityIds (array of strings)
+   */
+  async getLikedCityIds() {
+    try {
+      const response = await userInteractionsApi.get('/liked-city-ids');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Get liked city ids error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to get liked city ids',
+        needsAuth: error.response?.status === 401
+      };
+    }
+  },
+
+  /**
    * Get user's liked cities with pagination
    * @param {number} page - Page number (default: 1)
    * @param {number} limit - Items per page (default: 20)

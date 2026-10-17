@@ -7,6 +7,8 @@ import { Box, useMediaQuery, Alert, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import TimeSlider from './TimeSlider';
 import { cachedCitiesApi } from '../../../shared/services/cityApi';
+import { likeApi, collectionsApi } from '../../../shared/services/userInteractionsApi';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../shared/contexts/AuthContext';
 import L from 'leaflet';
 
@@ -108,6 +110,8 @@ const generateTimelineYears = () => {
   for (let year = -5000; year <= -3300; year += 100) timePeriods.push(year);
   for (let year = -3250; year <= -1200; year += 50) timePeriods.push(year);
   for (let year = -1175; year <= 2025; year += 25) timePeriods.push(year);
+  const thisYear = new Date().getFullYear();
+  if (thisYear > 2025) timePeriods.push(thisYear); // the last mark is always today
   return timePeriods.sort((a, b) => a - b);
 };
 
@@ -119,6 +123,12 @@ const filterCitiesByAge = (cities, ageFilter) => {
   const ageConfig = HISTORICAL_AGE_CONFIG[ageFilter];
   return ageConfig ? cities.filter(city => ageConfig.range(city.founded)) : cities;
 };
+
+// cityScope: 'all' | 'liked' | 'collection:<id>'; scopeIds is the id set it resolves to (null = no filter)
+const COLLECTION_SCOPE = 'collection:';
+const EMPTY_IDS = new Set();
+const filterCitiesByScope = (cities, scopeIds) =>
+  scopeIds ? cities.filter(city => scopeIds.has(String(city.id))) : cities;
 
 const filterCitiesByYear = (cities, year) => 
   cities.filter(city => city.founded <= year);
@@ -362,6 +372,7 @@ function useMapState() {
     currentYear: persisted?.currentYear ?? -5000,
     ageFilter: HISTORICAL_AGES.ALL_AGES,
     labelFilter: LABEL_VISIBILITY.SHOW_ACTIVE_ONLY.key,
+    cityScope: 'all', // 'all' | 'liked' | 'collection:<id>' (the user's own cities only)
     mapLayerKey: persisted?.mapLayerKey && MAP_LAYERS[persisted.mapLayerKey] ? persisted.mapLayerKey : 'cawm',
     showLabels: true,
     enable3D: false, // Toggle for 3D mode
@@ -372,6 +383,7 @@ function useMapState() {
 
   const [menuState, setMenuState] = useState({
     ageMenuAnchorEl: null,
+    scopeMenuAnchorEl: null,
     labelMenuAnchorEl: null,
     layerMenuAnchorEl: null
   });
@@ -399,7 +411,8 @@ function MapComponent(props) {
     onYearChange = () => {},
     onAuthClick = () => {},
     sidebarCollapsed = false,
-    focusCity = null
+    focusCity = null,
+    onSearchPick
   } = props || {};
 
   // CUSTOM HOOK USAGE
@@ -420,6 +433,104 @@ function MapComponent(props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, isAuthenticated } = useAuth();
+  const [likedIds, setLikedIds] = useState(() => new Set());
+  const [collections, setCollections] = useState([]); // [{ id, name, cityIds: Set }]
+  const [collectionsLoaded, setCollectionsLoaded] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const fitCollectionRef = useRef(null); // collection to frame once its cities are known
+
+  const loadCollections = useCallback(async () => {
+    const result = await collectionsApi.getUserCollections();
+    if (!result.success) return;
+    setCollections((result.data.collections || []).map(c => ({
+      id: String(c.id || c._id),
+      name: c.name,
+      cityIds: new Set((c.cityIds || []).map(String))
+    })));
+    setCollectionsLoaded(true);
+  }, []);
+
+  // Liked ids and collections for the "my cities" filter: loaded per user, cleared on logout.
+  // The scope resets only on a real logout: auth starts out idle, which must not drop a ?collection= link.
+  const userId = user?.id || user?._id || null;
+  const wasAuthenticatedRef = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLikedIds(new Set());
+      setCollections([]);
+      setCollectionsLoaded(false);
+      if (wasAuthenticatedRef.current) {
+        setUiState(prev => (prev.cityScope !== 'all' ? { ...prev, cityScope: 'all' } : prev));
+      }
+      wasAuthenticatedRef.current = false;
+      return;
+    }
+    wasAuthenticatedRef.current = true;
+    let cancelled = false;
+    likeApi.getLikedCityIds().then(result => {
+      if (!cancelled && result.success) setLikedIds(new Set(result.data.cityIds || []));
+    });
+    loadCollections();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, userId]);
+
+  // Collection edits in the sidebar (CityAddCollectionButton) trigger a refetch
+  useEffect(() => {
+    window.addEventListener('archaeomap:collections', loadCollections);
+    return () => window.removeEventListener('archaeomap:collections', loadCollections);
+  }, [loadCollections]);
+
+  // "Show on map" from the profile arrives as /?collection=<id>; consumed once, then dropped from the URL
+  useEffect(() => {
+    const id = searchParams.get('collection');
+    if (!id) return;
+    if (localStorage.getItem('archaeomap_token')) {
+      setUiState(prev => ({ ...prev, cityScope: COLLECTION_SCOPE + id }));
+      fitCollectionRef.current = id;
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete('collection');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const scopeIds = useMemo(() => {
+    const scope = uiState.cityScope;
+    if (scope === 'liked') return likedIds;
+    if (scope.startsWith(COLLECTION_SCOPE)) {
+      const id = scope.slice(COLLECTION_SCOPE.length);
+      return collections.find(c => c.id === id)?.cityIds || EMPTY_IDS;
+    }
+    return null;
+  }, [uiState.cityScope, likedIds, collections]);
+
+  // A selected collection that no longer exists (deleted, or not this user's) falls back to all cities
+  useEffect(() => {
+    const scope = uiState.cityScope;
+    if (!collectionsLoaded || !scope.startsWith(COLLECTION_SCOPE)) return;
+    const id = scope.slice(COLLECTION_SCOPE.length);
+    if (!collections.some(c => c.id === id)) {
+      setUiState(prev => ({ ...prev, cityScope: 'all' }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collectionsLoaded, collections, uiState.cityScope]);
+
+  // Likes made in the sidebar (CityLikeButton) update the set without a refetch
+  useEffect(() => {
+    const onLike = (e) => {
+      const { cityId, liked } = e.detail || {};
+      if (!cityId) return;
+      setLikedIds(prev => {
+        if (prev.has(cityId) === liked) return prev;
+        const next = new Set(prev);
+        liked ? next.add(cityId) : next.delete(cityId);
+        return next;
+      });
+    };
+    window.addEventListener('archaeomap:like', onLike);
+    return () => window.removeEventListener('archaeomap:like', onLike);
+  }, []);
 
   // OPTIMIZED: Load initial data effect
   useEffect(() => {
@@ -462,6 +573,7 @@ function MapComponent(props) {
     }
 
     let filteredCities = filterCitiesByAge(dataState.allCities, uiState.ageFilter);
+    filteredCities = filterCitiesByScope(filteredCities, scopeIds);
     filteredCities = filterCitiesByYear(filteredCities, uiState.currentYear);
     const categorizedData = categorizeCitiesByStatus(filteredCities, uiState.currentYear);
 
@@ -470,7 +582,7 @@ function MapComponent(props) {
       currentDisplayData: categorizedData
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataState.allCities, uiState.currentYear, uiState.ageFilter]);
+  }, [dataState.allCities, uiState.currentYear, uiState.ageFilter, scopeIds]);
 
   // OPTIMIZED: Callback to parent effect
   useEffect(() => {
@@ -584,6 +696,12 @@ function MapComponent(props) {
     onYearChange(year);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onYearChange]);
+
+  // The page starts at its own default year; report the restored one once so the panel matches the map
+  useEffect(() => {
+    onYearChange(uiState.currentYear);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // External focus (URL-driven): pan to city + select + jump slider to founded year.
   // Zoom is intentionally preserved.
@@ -706,6 +824,41 @@ function MapComponent(props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // "My cities" menu; logged-out users are sent to login instead
+  const handleScopeMenuOpen = useCallback((event) => {
+    if (!isAuthenticated) {
+      onAuthClick();
+      return;
+    }
+    const target = event.currentTarget;
+    setMenuState(prev => ({ ...prev, scopeMenuAnchorEl: prev.scopeMenuAnchorEl ? null : target }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, onAuthClick]);
+
+  const handleScopeMenuClose = useCallback(() => {
+    setMenuState(prev => ({ ...prev, scopeMenuAnchorEl: null }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleScopeChange = useCallback((scope) => {
+    setUiState(prev => ({ ...prev, cityScope: scope }));
+    if (scope.startsWith(COLLECTION_SCOPE)) fitCollectionRef.current = scope.slice(COLLECTION_SCOPE.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Frame a newly chosen collection in 2D (its cities may be off-screen); runs once per choice
+  useEffect(() => {
+    const id = fitCollectionRef.current;
+    if (!id || !mapState.map || uiState.enable3D || !dataState.allCities.length) return;
+    const collection = collections.find(c => c.id === id);
+    if (!collection) return;
+    fitCollectionRef.current = null;
+    const points = dataState.allCities
+      .filter(city => collection.cityIds.has(String(city.id)) && Array.isArray(city.coordinates))
+      .map(city => city.coordinates);
+    if (points.length) mapState.map.fitBounds(L.latLngBounds(points).pad(0.2), { maxZoom: 8 });
+  }, [collections, mapState.map, uiState.enable3D, uiState.cityScope, dataState.allCities]);
+
   // Simple 3D toggle - sync camera position only when switching
   const toggle3D = useCallback(() => {
     // Update state with latest camera position from ref
@@ -823,6 +976,14 @@ function MapComponent(props) {
         ageMenuAnchorEl={menuState.ageMenuAnchorEl}
         setAgeMenuAnchorEl={handleAgeMenuOpen}
         ageMenuClose={handleAgeMenuClose}
+        cityScope={uiState.cityScope}
+        setCityScope={handleScopeChange}
+        scopeMenuAnchorEl={menuState.scopeMenuAnchorEl}
+        setScopeMenuAnchorEl={handleScopeMenuOpen}
+        scopeMenuClose={handleScopeMenuClose}
+        likedCount={likedIds.size}
+        collections={collections}
+        isAuthenticated={isAuthenticated}
         labelFilter={uiState.labelFilter}
         setLabelFilter={(value) => handleFilterChange('labelFilter', value)}
         labelMenuAnchorEl={menuState.labelMenuAnchorEl}
@@ -834,6 +995,7 @@ function MapComponent(props) {
         setLayerMenuAnchorEl={handleLayerMenuOpen}
         layerMenuClose={handleLayerMenuClose}
         mapLayers={MAP_LAYERS}
+        onSearchPick={onSearchPick}
       />
 
       {/* Conditional rendering: 3D Globe or 2D Map with smooth transitions */}

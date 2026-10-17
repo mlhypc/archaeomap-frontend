@@ -68,7 +68,6 @@ const ValueLabelComponent = React.memo(function ValueLabelComponent(props) {
 function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isLandscape = useMediaQuery('(orientation: landscape) and (max-height: 500px)');
 
   const minYear = availableYears[0] || -3300;
   const maxYear = availableYears[availableYears.length - 1] || 2025;
@@ -158,39 +157,42 @@ function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
     }
   }), [theme, isMobile, currentPeriod.color]);
 
+  // Absolute inside the map area (MapMain's root box), so it centres on the map whatever the sidebar does:
+  // resized, collapsed, or absent below 900px (the old fixed "360px + half" put it off-screen on tablets).
   const containerStyles = useMemo(() => ({
-    width: isMobile ? 'calc(100% - 32px)' : '600px',
-    maxWidth: isMobile ? 'calc(100% - 32px)' : '80%',
-    position: 'fixed',
-    bottom: isMobile ? (isLandscape ? 12 : 60) : 20,
-    // Center in the map area (excluding sidebar on desktop)
-    left: isMobile ? '50%' : 'calc(360px + (100% - 360px) / 2)',
+    width: isMobile ? 'calc(100% - 24px)' : '600px',
+    maxWidth: isMobile ? 'calc(100% - 24px)' : 'calc(100% - 32px)',
+    position: 'absolute',
+    bottom: isMobile ? 'calc(24px + env(safe-area-inset-bottom, 0px))' : 24, // clears the map attribution line
+    left: '50%',
     transform: 'translateX(-50%)',
     height: expanded ? 'auto' : '48px',
     overflow: 'hidden',
     opacity: expanded ? 1 : 0.9,
     '&:hover': { opacity: 1 },
     zIndex: 9
-  }), [isMobile, isLandscape, expanded]);
+  }), [isMobile, expanded]);
 
   return (
-    <Box sx={{ position: 'relative'}}>
+    <>
       <SliderContainer elevation={3} sx={containerStyles}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: expanded ? 1 : 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <TimelineIcon sx={{ color: theme.palette.primary.main, mr: 1, fontSize: isMobile ? '1.2rem' : '1.4rem' }} />
-            <Typography variant="subtitle1" sx={{ fontFamily: 'Georgia, serif', fontSize: isMobile ? '0.9rem' : '1rem', color: theme.palette.primary.main }}>
-              Timeline
-            </Typography>
+            {!isMobile && (
+              <Typography variant="subtitle1" sx={{ fontFamily: 'Georgia, serif', fontSize: '1rem', color: theme.palette.primary.main }}>
+                Timeline
+              </Typography>
+            )}
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ fontStyle: 'italic', color: currentPeriod.color, fontSize: isMobile ? '0.7rem' : '0.9rem', fontWeight: 'bold' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: 1, justifyContent: 'center', px: 1 }}>
+            <Typography variant="caption" noWrap sx={{ fontStyle: 'italic', color: currentPeriod.color, fontSize: isMobile ? '0.75rem' : '0.9rem', fontWeight: 'bold' }}>
               {currentPeriod.name}
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <Chip label={formatYear(year)} size="small" color="secondary" sx={{ mr: 1, backgroundColor: currentPeriod.color, minWidth: '48px', color: '#fff', fontFamily: 'Georgia, serif', fontSize: '0.7rem' }} />
             <IconButton size="small" onClick={toggleExpanded} aria-label={expanded ? "Collapse timeline" : "Expand timeline"} sx={{ color: theme.palette.primary.main, p: 0.5 }}>
               {expanded ? <ExpandMoreIcon /> : <ExpandLessIcon />}
@@ -232,7 +234,7 @@ function TimeSlider({ currentYear, onYearChange, availableYears = [] }) {
           </Box>
         )}
       </SliderContainer>
-    </Box>
+    </>
   );
 }
 

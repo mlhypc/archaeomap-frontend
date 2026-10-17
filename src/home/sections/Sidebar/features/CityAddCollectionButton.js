@@ -23,7 +23,8 @@ import {
   Chip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import CollectionsIcon from '@mui/icons-material/Collections';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import CheckIcon from '@mui/icons-material/Check';
 import { COLORS } from '../../../../shared/config/generalUtils';
@@ -137,6 +138,8 @@ function CityAddCollectionButton({ cityId }) {
           setSuccess('City added to collection');
         }
 
+        window.dispatchEvent(new Event('archaeomap:collections')); // map's collection filter refetches (MapMain.js)
+
         // Update collections count
         setCollections(prev => prev.map(collection => {
           if (collection.id === collectionId) {
@@ -214,6 +217,7 @@ function CityAddCollectionButton({ cityId }) {
         setError('Collection created but failed to add city');
       }
       
+      window.dispatchEvent(new Event('archaeomap:collections')); // map's collection filter refetches (MapMain.js)
       setCreateDialogOpen(false);
       setNewCollectionName('');
       setNewCollectionDescription('');
@@ -239,6 +243,7 @@ function CityAddCollectionButton({ cityId }) {
   };
 
   const cityInCollectionsCount = cityCollections.length;
+  const SaveIcon = cityInCollectionsCount > 0 ? BookmarkIcon : BookmarkBorderIcon;
 
   return (
     <>
@@ -267,7 +272,7 @@ function CityAddCollectionButton({ cityId }) {
           }
         }}
       >
-        <CollectionsIcon sx={{ 
+        <SaveIcon sx={{ 
           fontSize: '1rem', 
           color: cityInCollectionsCount > 0 ? COLORS.secondary : COLORS.texts.secondary,
           transition: 'all 0.2s ease'
@@ -279,7 +284,7 @@ function CityAddCollectionButton({ cityId }) {
           color: cityInCollectionsCount > 0 ? COLORS.secondary : COLORS.texts.secondary,
           transition: 'all 0.2s ease'
         }}>
-          Collections
+          {cityInCollectionsCount > 0 ? 'Saved' : 'Save'}
         </Typography>
         
         {cityInCollectionsCount > 0 && (

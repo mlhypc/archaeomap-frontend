@@ -781,6 +781,22 @@ const globalStyles = {
     boxSizing: 'border-box',
   },
 
+  // TEXT SELECTION - off for the interface (buttons, tabs, headers, counters, labels), on for what people
+  // read and quote: inputs, and any container marked .selectable (city details). Clickable parts inside a
+  // .selectable container (buttons, collapsible headers marked .no-select) stay unselectable.
+  'body': {
+    userSelect: 'none',
+    WebkitUserSelect: 'none'
+  },
+  'input, textarea, [contenteditable="true"], .selectable': {
+    userSelect: 'text',
+    WebkitUserSelect: 'text'
+  },
+  '.selectable .MuiButtonBase-root, .selectable [role="button"], .selectable .no-select': {
+    userSelect: 'none',
+    WebkitUserSelect: 'none'
+  },
+
   // LEAFLET MAP STYLES - Optimized
   '.leaflet-label-wrapper': {
     background: 'none !important',

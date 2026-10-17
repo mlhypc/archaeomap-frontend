@@ -27,7 +27,7 @@ export const COLORS = {
     { name: "Classical Antiquity", start: -500, end: 500, color: "#495057" },
     { name: "Medieval Period", start: 500, end: 1500, color: "#5f0f40" },
     { name: "Renaissance & Age of Discovery", start: 1500, end: 1800, color: "#0f4c5c" },
-    { name: "Modern Era", start: 1800, end: 2025, color: "#1d3557" }
+    { name: "Modern Era", start: 1800, end: new Date().getFullYear(), color: "#1d3557" }
   ];
   
   export const TIME_RANGE = {
@@ -36,12 +36,24 @@ export const COLORS = {
   };
   
   // Formatting utilities
+  // BCE / CE, matching the descriptions in the data (2026-10-17: was "BC" and a bare number)
   export const formatYear = (year) => {
-    if (year < 0) return `${Math.abs(year)} BC`;
-    if (year === null) return 'Present';
-    return `${year}`;
+    if (year === null || year === undefined) return 'Present';
+    if (year < 0) return `${Math.abs(year)} BCE`;
+    return `${year} CE`;
   };
   
+  // "2100-1940 BCE", "300-450 CE", "50 BCE - 120 CE", "1923 CE - Present"
+  export const formatYearRange = (start, end) => {
+    if (end === null || end === undefined) return `${formatYear(start)} - Present`;
+    if (start < 0 && end < 0) return `${Math.abs(start)}-${Math.abs(end)} BCE`;
+    if (start > 0 && end > 0) return `${start}-${end} CE`;
+    return `${formatYear(start)} - ${formatYear(end)}`;
+  };
+
+  // Years between two dates; the calendar has no year 0, so 100 BCE to 100 CE is 199 years
+  export const yearSpan = (start, end) => Math.abs(end - start) - (start < 0 && end > 0 ? 1 : 0);
+
   export const truncateText = (text, maxLength) => {
     if (!text || text.length <= maxLength) return text;
     return `${text.substring(0, maxLength)}...`;

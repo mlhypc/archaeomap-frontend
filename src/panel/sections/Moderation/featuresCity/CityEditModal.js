@@ -944,7 +944,7 @@ const CityEditModal = ({ open, onClose, cityId, onCityUpdated }) => {
                                         required
                                         type="number"
                                         error={!!validationErrors.founded}
-                                        helperText={validationErrors.founded || "Use negative numbers for BC (e.g., -753 for 753 BC)"}
+                                        helperText={validationErrors.founded || "Use negative numbers for BCE (e.g., -753 for 753 BCE)"}
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">

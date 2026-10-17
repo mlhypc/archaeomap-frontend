@@ -1,6 +1,6 @@
 // frontend\src\config\mapControls.js - OPTIMIZED VERSION
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   IconButton,
   Tooltip as MuiTooltip,
@@ -14,6 +14,8 @@ import {
   Box,
   Typography,
   Avatar,
+  Divider,
+  ListSubheader,
   useMediaQuery
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -23,8 +25,12 @@ import LayersIcon from '@mui/icons-material/Layers';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import CheckIcon from '@mui/icons-material/Check';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark';
 
 import { COLORS } from '../../../../shared/config/generalUtils';
+import MapSearch, { SEARCH_DURATION, SEARCH_EASE } from './MapSearch';
 import {
   HISTORICAL_AGE_CONFIG,
   LABEL_VISIBILITY,
@@ -258,6 +264,14 @@ export const ControlPanel = ({
   ageMenuAnchorEl,
   setAgeMenuAnchorEl,
   ageMenuClose,
+  cityScope = 'all',
+  setCityScope,
+  scopeMenuAnchorEl,
+  setScopeMenuAnchorEl,
+  scopeMenuClose,
+  likedCount = 0,
+  collections = [],
+  isAuthenticated = false,
   labelFilter,
   setLabelFilter,
   labelMenuAnchorEl,
@@ -270,17 +284,51 @@ export const ControlPanel = ({
   layerMenuClose,
   mapLayers,
   enable3D,
-  toggle3D
+  toggle3D,
+  onSearchPick
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // City search (leftmost). On phones the other buttons fold away while it is open and the group spans
+  // the screen width, over the logo; on desktop the group just grows to the left.
+  const [searchOpen, setSearchOpen] = useState(false);
+  const foldOthers = isMobile && searchOpen;
+
   // Get current configs
   const ageProps = HISTORICAL_AGE_CONFIG[ageFilter];
   const labelProps = LABEL_VISIBILITY_LOOKUP[labelFilter];
   const currentLayer = mapLayers[mapLayerKey];
+  const scopeCollection = cityScope.startsWith('collection:')
+    ? collections.find(c => `collection:${c.id}` === cityScope)
+    : null;
+  const scopeIcon = cityScope === 'liked' ? FavoriteIcon : scopeCollection ? CollectionsBookmarkIcon : FavoriteBorderIcon;
+  const scopeTooltip = !isAuthenticated
+    ? 'Log in to show only your liked cities or a collection'
+    : cityScope === 'liked'
+      ? `Showing liked cities (${likedCount})`
+      : scopeCollection
+        ? `Showing collection: ${scopeCollection.name} (${scopeCollection.cityIds.size})`
+        : 'My cities: liked cities and collections';
 
   return (
     <>
-      <ControlContainer position="topRight">
+      <ControlContainer position="topRight" sx={foldOthers ? { zIndex: 1100 } : {}}>
         <Stack direction="row">
+          {/* City Search */}
+          <MapSearch
+            open={searchOpen}
+            onOpen={() => setSearchOpen(true)}
+            onClose={() => setSearchOpen(false)}
+            onPick={onSearchPick}
+            expandedWidth={isMobile ? 'calc(100vw - 26px)' : 300}
+          />
+
+          <Box sx={{
+            display: 'flex',
+            overflow: 'hidden',
+            maxWidth: foldOthers ? 0 : 400,
+            transition: `max-width ${SEARCH_DURATION}ms ${SEARCH_EASE}`
+          }}>
           {/* Age Filter */}
           <ControlButton
             icon={HistoryIcon}
@@ -288,6 +336,16 @@ export const ControlPanel = ({
             onClick={setAgeMenuAnchorEl}
             color={ageProps.color}
             aria-label="Filter cities by historical age"
+          />
+
+          {/* My Cities Filter (liked / a collection) */}
+          <ControlButton
+            icon={scopeIcon}
+            tooltip={scopeTooltip}
+            onClick={setScopeMenuAnchorEl}
+            color={COLORS.primary}
+            isActive={cityScope !== 'all'}
+            aria-label="Filter to my liked cities or a collection"
           />
 
           {/* Label Filter */}
@@ -325,6 +383,7 @@ export const ControlPanel = ({
             isActive={enable3D}
             aria-label={enable3D ? "Switch to 2D" : "Switch to 3D"}
           />
+          </Box>
         </Stack>
       </ControlContainer>
 
@@ -334,6 +393,15 @@ export const ControlPanel = ({
         anchorEl={ageMenuAnchorEl}
         onClose={ageMenuClose}
         onFilterSelect={setAgeFilter}
+      />
+
+      <ScopeMenu
+        cityScope={cityScope}
+        anchorEl={scopeMenuAnchorEl}
+        onClose={scopeMenuClose}
+        onSelect={setCityScope}
+        likedCount={likedCount}
+        collections={collections}
       />
 
       <LabelMenu
@@ -378,6 +446,45 @@ export const AgeMenu = ({ ageFilter, anchorEl, onClose, onFilterSelect }) => (
     ))}
   </ControlMenu>
 );
+
+// My Cities Menu: all, liked, or one of the user's collections
+const ScopeMenu = ({ cityScope, anchorEl, onClose, onSelect, likedCount, collections }) => {
+  const pick = (scope) => {
+    onSelect(scope);
+    onClose();
+  };
+  return (
+    <ControlMenu
+      id="scope-menu"
+      anchorEl={anchorEl}
+      onClose={onClose}
+    >
+      <ControlMenuItem selected={cityScope === 'all'} onClick={() => pick('all')}>
+        All cities
+      </ControlMenuItem>
+      <ControlMenuItem selected={cityScope === 'liked'} onClick={() => pick('liked')}>
+        {`Liked cities (${likedCount})`}
+      </ControlMenuItem>
+      <Divider sx={{ my: 0.5 }} />
+      <ListSubheader sx={{ backgroundColor: 'transparent', lineHeight: '28px', color: COLORS.primary }}>
+        Collections
+      </ListSubheader>
+      {collections.length === 0 ? (
+        <ControlMenuItem disabled>No collections yet</ControlMenuItem>
+      ) : (
+        collections.map((c) => (
+          <ControlMenuItem
+            key={c.id}
+            selected={cityScope === `collection:${c.id}`}
+            onClick={() => pick(`collection:${c.id}`)}
+          >
+            {`${c.name} (${c.cityIds.size})`}
+          </ControlMenuItem>
+        ))
+      )}
+    </ControlMenu>
+  );
+};
 
 // Label Filter Menu
 export const LabelMenu = ({ labelFilter, anchorEl, onClose, onFilterSelect }) => (

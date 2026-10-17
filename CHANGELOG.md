@@ -7,6 +7,58 @@ versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 8.
 
 ## Unreleased
 
+## 1.3.0 - My cities filter, map search, Apple login (2026-10-17)
+
+### Added
+- "My cities" filter on the map (heart button in the top-right controls, 2D and 3D): all cities, only the
+  liked ones, or one of the user's collections. Likes and collection edits in the sidebar apply at once,
+  choosing a collection frames its cities in 2D, logout switches it off, logged-out users get the login page.
+- "Show on Map" for a collection in the profile (card menu and detail dialog): opens the map filtered to it
+  via `/?collection=<id>`, which the map reads once and drops from the URL.
+- "Sign in with Apple" button under the Google one, shown only when the backend reports Apple as configured
+  (`/api/auth/providers`); the sign-in callback explains a cancelled or unavailable Apple sign-in.
+- City search on the map: the leftmost button of the top-right control group, which widens to the left
+  into the field when clicked (on phones the other buttons fold away and it spans the screen) and folds back
+  after a pick, on Escape or on a click elsewhere. It searches the map's loaded data, so it is instant and matches old names too
+  (Constantinople, Byzantion -> Istanbul); picking a city opens it like its URL does.
+- The logo links to the About page (desktop header, phone drawer and phone map overlay); centred in the
+  desktop header and the phone drawer.
+
+### Changed
+- Text selection is off across the interface (buttons, tabs, headers, counters) and stays on where people
+  read and quote: city details (name, description, periods, landmarks, sources) and form fields. Global rule
+  in `shared/theme/styles.js`; a container opts in with `.selectable`, clickable parts inside it with `.no-select`.
+- City panel: years read BCE / CE everywhere (`formatYear`, time slider, liked cities, form hints), as in the
+  descriptions; the dates box uses earth tones instead of teal and alarm red for "Ended", with the lifespan
+  on the Ended row; every section header carries its item count; Like shows "Liked" and hides a zero count;
+  the collections button reads "Save" / "Saved"; the description is 0.8rem on small phones (was 0.65rem).
+- City panel periods and landmarks show their full description on every screen (were cut at 280 / 200
+  characters with no way to read on, which hid the end of 65% of period and 92% of landmark texts, and were
+  hidden on phones); the period covering the time slider's year is highlighted in its ruler's color;
+  Historical Control opens by default on desktop; ranges read "2100-1940 BCE"; spans across BCE/CE count
+  no year 0 (100 BCE to 100 CE is 199 years).
+- The time slider reaches the current year (stopped at 2025).
+- Contact address is info@archaeomap.com (was melih@archaeomap.com) in the About page, the structured data of
+  both index pages and llms.txt.
+- The collections button uses a bookmark icon (was a photo gallery icon).
+
+### Fixed
+- Landmarks were sorted in place, reordering the cached city object on every render.
+- Google sign-in callback reads the tokens from the URL fragment (backend 1.5.0) and wipes it from the address
+  bar at once; the old query form still works.
+- Profile header on phones: a long email, the Verified chip and the info row (member since, role, last login)
+  could not wrap and pushed the page sideways; they wrap now, and the avatar and name are smaller below 600px.
+- The city panel used year 2000 until the slider moved, while the map restored the last year from the
+  browser (so its name and highlighted period could be wrong); the map now reports the restored year on load.
+- Time slider: fixed to the window at "360px + half the rest", so it sat off-screen between 600 and 900px
+  (no sidebar there) and off-centre when the sidebar was resized or collapsed; it is now placed inside the
+  map area. On phones it no longer hides the map attribution, and the word "Timeline" gives way to the period.
+- Phones: the page used 100vh, which includes the area under the browser's address bar (bottom of the map
+  hidden); it uses 100dvh. Below 420px the header shows the logo without the name, which collided with the
+  map buttons.
+- Profile collection cards: "Updated Invalid Date" (read `updated_at`, the API sends `updatedAt`), and the
+  city badge counts the cities actually listed.
+
 ## 1.2.2 - Validation reasons in errors (2026-10-15)
 
 ### Fixed

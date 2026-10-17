@@ -1,9 +1,9 @@
 // archaeomap-frontend/src/panel/sections/Personal/features/ProfileInfo.js
 
 import React from 'react';
-import { 
-  Box, 
-  Typography, 
+import {
+  Box,
+  Typography,
   Avatar,
   Stack,
   Chip
@@ -27,7 +27,7 @@ function ProfileInfo() {
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 30) {
       return `${diffDays} days ago`;
     } else if (diffDays < 365) {
@@ -42,12 +42,13 @@ function ProfileInfo() {
   return (
     <Stack spacing={3}>
       {/* Main Profile Header */}
-      <Stack direction="row" spacing={3} alignItems="center">
+      <Stack direction="row" spacing={{ xs: 2, sm: 3 }} alignItems="center">
         <Avatar
           src={user?.profileImageUrl || undefined}
           sx={{
-            width: 80,
-            height: 80,
+            width: { xs: 64, sm: 80 },
+            height: { xs: 64, sm: 80 },
+            flexShrink: 0,
             bgcolor: COLORS.primary,
             fontSize: '2rem',
             fontFamily: 'Georgia, serif',
@@ -56,25 +57,29 @@ function ProfileInfo() {
         >
           {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
         </Avatar>
-        
-        <Box sx={{ flex: 1 }}>
-          <Typography 
-            variant="h4" 
-            sx={{ 
+
+        {/* minWidth 0 lets the text column shrink below its content (long names and emails wrap instead of
+            pushing the page sideways on phones) */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="h4"
+            sx={{
               color: COLORS.texts.primary,
               fontFamily: 'Georgia, serif',
               fontWeight: 500,
+              fontSize: { xs: '1.5rem', sm: undefined },
+              overflowWrap: 'anywhere',
               mb: 0.5
             }}
           >
             {user?.firstName} {user?.lastName}
           </Typography>
-          
+
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
             <BadgeIcon sx={{ fontSize: '1rem', color: COLORS.texts.muted }} />
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: COLORS.texts.secondary,
                 fontWeight: 500
               }}
@@ -85,18 +90,18 @@ function ProfileInfo() {
 
           {/* Email section - only show if emailVisible is true */}
           {emailVisible && (
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} useFlexGap alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 0.5 }}>
               <EmailIcon sx={{ fontSize: '1rem', color: COLORS.texts.muted }} />
-              <Typography variant="body1" sx={{ color: COLORS.texts.muted }}>
+              <Typography variant="body1" sx={{ color: COLORS.texts.muted, minWidth: 0, overflowWrap: 'anywhere' }}>
                 {user?.email}
               </Typography>
-              
+
               {user?.emailVerified && (
-                <Chip 
+                <Chip
                   icon={<VerifiedIcon sx={{ fontSize: '0.8rem' }} />}
-                  label="Verified" 
+                  label="Verified"
                   size="small"
-                  sx={{ 
+                  sx={{
                     height: 20,
                     bgcolor: 'rgba(76, 175, 80, 0.1)',
                     color: '#4CAF50',
@@ -110,7 +115,7 @@ function ProfileInfo() {
       </Stack>
 
       {/* Additional Info */}
-      <Stack direction="row" spacing={3} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+      <Stack direction="row" spacing={3} useFlexGap sx={{ pt: 2, borderTop: 1, borderColor: 'divider', flexWrap: 'wrap', rowGap: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <CalendarTodayIcon sx={{ fontSize: '1.1rem', color: COLORS.primary }} />
           <Box>

@@ -29,7 +29,7 @@ import NotFoundPage from '../../shared/components/NotFoundPage';
 
 const AppContainer = styled(Box)({
   display: 'flex',
-  height: '100vh',
+  height: ['100vh', '100dvh'], // dvh = visible height on phones (address bar excluded); vh as fallback
   width: '100%'
 });
 
@@ -51,6 +51,23 @@ const DesktopSidebarContainer = styled(Box)(({ theme }) => ({
     display: 'none'
   }
 }));
+
+// Logo + name, a link to the About page (desktop header, phone drawer, phone map overlay)
+const LogoLink = ({ height = 24, fontSize = '1.4rem', gap = 1.5, showName = true }) => (
+  <Box
+    component="a"
+    href="/about.html"
+    aria-label="About ArchaeoMap"
+    sx={{ display: 'inline-flex', alignItems: 'center', gap, textDecoration: 'none' }}
+  >
+    <img src="/archaeomap_primary.svg" alt="ArchaeoMap Logo" style={{ height }} />
+    {showName && (
+      <Typography sx={{ fontFamily: 'Georgia, serif', color: COLORS.primary, fontSize, fontWeight: 'normal' }}>
+        ArchaeoMap
+      </Typography>
+    )}
+  </Box>
+);
 
 function HomePage() {
   const navigate = useNavigate();
@@ -74,6 +91,7 @@ const { countrySlug, citySlug } = useParams();
   const { user, isAuthenticated } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isNarrow = useMediaQuery('(max-width:419px)'); // logo text would collide with the map controls
 
   // Resolve URL slug -> selectedCity (one-way: URL drives state when slug changes).
   // Avoids re-resolving when user clicks a city (since that path also updates the URL).
@@ -142,7 +160,7 @@ const { countrySlug, citySlug } = useParams();
   }, []);
 
   const openInfoSidebar = useCallback(() => {
-    setLeftDrawerMode('info'); 
+    setLeftDrawerMode('info');
     setLeftDrawerOpen(true);
   }, []);
 
@@ -197,33 +215,17 @@ const { countrySlug, citySlug } = useParams();
       {selectedCity ? <CitySeoTags city={selectedCity} /> : <DefaultSeoTags />}
       {/* ===== DESKTOP SIDEBAR ===== */}
       <DesktopSidebarContainer sx={{ width: sidebarWidth, transition: isDraggingState ? 'none' : 'width 0.3s ease' }}>
-        {/* Desktop Header - Sadece Logo + Title */}
+        {/* Desktop Header - logo, centred, links to About */}
         <Box sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           p: 2,
           borderBottom: `1px solid ${COLORS.border}`,
           backgroundColor: 'rgba(248, 245, 238, 0.5)',
           minHeight: '64px'
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'center' }}>
-            <img
-              src="/archaeomap_primary.svg"
-              alt="ArchaeoMap Logo"
-              style={{ marginRight: theme.spacing(1.5), height: '24px' }}
-            />
-            <Typography
-              variant="h5"
-              sx={{
-                fontFamily: 'Georgia, serif',
-                color: COLORS.primary,
-                fontSize: '1.4rem'
-              }}
-            >
-              ArchaeoMap
-            </Typography>
-          </Box>
+          <LogoLink />
         </Box>
 
         {/* Desktop Sidebar Content */}
@@ -303,34 +305,20 @@ const { countrySlug, citySlug } = useParams();
           }
         }}
       >
-        {/* Mobile Drawer Header with Close Button */}
+        {/* Mobile Drawer Header: logo centred (links to About), close on the right */}
         <Box sx={{
-          display: 'flex',
+          display: 'grid',
+          gridTemplateColumns: '40px 1fr 40px',
           alignItems: 'center',
-          justifyContent: 'space-between',
           p: 2,
           borderBottom: `1px solid ${COLORS.border}`,
           backgroundColor: 'rgba(248, 245, 238, 0.5)',
           minHeight: '64px'
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <img
-              src="/archaeomap_primary.svg"
-              alt="ArchaeoMap Logo"
-              style={{ marginRight: theme.spacing(1.5), height: '20px' }}
-            />
-            <Typography
-              variant="h6"
-              sx={{
-                fontFamily: 'Georgia, serif',
-                color: COLORS.primary,
-                fontSize: '1.2rem'
-              }}
-            >
-              ArchaeoMap
-            </Typography>
+          <Box />
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <LogoLink height={20} fontSize="1.2rem" />
           </Box>
-
           <IconButton
             onClick={closeLeftDrawer}
             aria-label="Close panel"
@@ -398,6 +386,7 @@ const { countrySlug, citySlug } = useParams();
           onAuthClick={navigateToPanel}
           sidebarCollapsed={sidebarWidth === 0}
           focusCity={focusCity}
+          onSearchPick={isMobile ? openCitySidebar : undefined}
         />
 
         {/* ===== MOBILE HEADER & CONTROL PANEL ===== */}
@@ -420,22 +409,7 @@ const { countrySlug, citySlug } = useParams();
               WebkitBackdropFilter: 'blur(8px)',
               boxShadow: '0 4px 16px rgba(119, 73, 54, 0.12)'
             }}>
-              <img
-                src="/archaeomap_primary.svg"
-                alt="ArchaeoMap Logo"
-                style={{ height: '18px' }}
-              />
-              <Typography
-                variant="h6"
-                sx={{
-                  fontFamily: 'Georgia, serif',
-                  color: COLORS.primary,
-                  fontSize: '1.0rem',
-                  fontWeight: 'normal'
-                }}
-              >
-                ArchaeoMap
-              </Typography>
+              <LogoLink height={18} fontSize="1.0rem" gap={1} showName={!isNarrow} />
             </Box>
 
             {/* Mobile Control Panel - Sağ tarafta */}
@@ -486,6 +460,7 @@ const { countrySlug, citySlug } = useParams();
                   </IconButton>
                 </Badge>
               </Tooltip>
+
 
               {/* Context-Aware FAB - Info/Explore Combined */}
               {(() => {
