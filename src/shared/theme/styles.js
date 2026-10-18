@@ -861,6 +861,40 @@ const globalStyles = {
     }
   },
 
+  // Right-click coordinates popup (MapCoordinates.js): same frosted look as the map controls
+  '.coord-popup': {
+    marginBottom: '12px',
+    '& .leaflet-popup-content-wrapper': {
+      backgroundColor: 'rgba(255, 255, 255, 0.85)',
+      backdropFilter: 'blur(8px)',
+      border: `1px solid ${COLORS.border}`,
+      borderRadius: '10px',
+      boxShadow: '0 4px 16px 0 rgba(119, 73, 54, 0.18)',
+      padding: 0
+    },
+    '& .leaflet-popup-content': {
+      margin: '4px 6px',
+      lineHeight: 1.2
+    },
+    '& .leaflet-popup-tip': {
+      backgroundColor: 'rgba(255, 255, 255, 0.85)',
+      boxShadow: 'none'
+    }
+  },
+
+  // Marker hover note for investigation / identification / location (MapMain, cityCertainty.js)
+  '.leaflet-tooltip.certainty-tooltip': {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '8px',
+    boxShadow: '0 4px 16px 0 rgba(119, 73, 54, 0.18)',
+    color: COLORS.texts.primary,
+    fontSize: '0.72rem',
+    lineHeight: 1.4,
+    padding: '4px 8px',
+    '&::before': { display: 'none' }
+  },
+
   // SCROLLBAR STYLES
   '.archaeo-scrollbar': {
     scrollbarGutter: 'stable',

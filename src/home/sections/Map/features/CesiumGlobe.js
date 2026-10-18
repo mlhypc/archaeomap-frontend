@@ -22,6 +22,7 @@ import {
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import './cesium-custom.css';
 import { getCurrentCityName } from '../../../../shared/config/generalUtils';
+import { isHollowCity } from './cityCertainty';
 
 // Flat ellipsoid terrain - no Ion asset required.
 const ELLIPSOID_TERRAIN = new EllipsoidTerrainProvider();
@@ -277,6 +278,9 @@ const CesiumGlobe = ({
       const iconSize = getCitySize(city);
       const displayLabel = shouldShowLabel(city, hasEnded);
       const labelText = getCurrentCityName(city, currentYear);
+      // Survey / unexamined: hollow point, its colour moves to a 2px outline (as in 2D). Cesium points
+      // cannot dash their outline, so identification "uncertain" shows in the panel only in 3D.
+      const hollow = isHollowCity(city);
 
       const entityId = `city-${city.id}`;
 
@@ -305,9 +309,9 @@ const CesiumGlobe = ({
         position: position,
         point: {
           pixelSize: isSelected ? iconSize + 4 : iconSize,
-          color: color,
-          outlineColor: Color.WHITE,
-          outlineWidth: isSelected ? 2 : 1,
+          color: hollow ? Color.TRANSPARENT : color,
+          outlineColor: hollow ? color : Color.WHITE,
+          outlineWidth: hollow || isSelected ? 2 : 1,
         },
         label: displayLabel ? {
           text: ` ${labelText} `, // Add space padding for visual effect

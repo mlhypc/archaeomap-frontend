@@ -4,6 +4,7 @@ import React from 'react';
 import L from 'leaflet';
 import HistoryIcon from '@mui/icons-material/History';
 import { COLORS } from '../../../../shared/config/generalUtils';
+import { isHollowCity, isDashedCity } from './cityCertainty';
 
 // === Historical Age Filter Config ===
 export const HISTORICAL_AGES = {
@@ -99,11 +100,54 @@ export const LABEL_VISIBILITY_LOOKUP = Object.values(LABEL_VISIBILITY).reduce((a
 // city is active and unselected. Selected always wins (gold). Ended
 // cities are drawn from the static `endedCityIcon` singleton below and
 // are unaffected by ruler color.
+//
+// Hollow (survey / unexamined) and dashed (identification uncertain) markers, rule in cityCertainty.js.
+// Drawn as SVG, same anchor and click box as the plain dot. Hollow: transparent inside, 2px ring in the
+// marker colour, drawn 2px wider than the plain dot so the hole still reads at 5px (manager decision). Dashed: the 2px edge alternates marker colour and white (6 dashes at any
+// size, via pathLength). Cities without the fields never reach this and keep the plain div.
+const SAFE_COLOR = /^(#[0-9a-f]{3,8}|(rgb|hsl)a?\([\d\s.,%/]+\))$/i;
+const DASH = ' pathLength="12" stroke-dasharray="1 1"';
+
+// g: d = drawn diameter, margin = offset of that box against the icon box, halo = outer 1px white ring,
+// ringR = centre of the 2px hollow ring, coreR = filled disc, bandR / bandW = dashed edge of a filled dot
+const certaintyMarkerHtml = (color, hollow, dashed, g) => {
+  const c = g.d / 2;
+  const circle = (r, attrs) => `<circle cx="${c}" cy="${c}" r="${r}" ${attrs}/>`;
+  let body = g.halo ? circle(c - 0.5, 'fill="none" stroke="white" stroke-width="1"') : '';
+  if (hollow) {
+    if (dashed) body += circle(g.ringR, 'fill="none" stroke="white" stroke-width="2"');
+    body += circle(g.ringR, `fill="none" stroke="${color}" stroke-width="2"${dashed ? DASH : ''}`);
+  } else {
+    body += circle(g.coreR, `fill="${color}"`);
+    body += circle(g.bandR, `fill="none" stroke="white" stroke-width="${g.bandW}"`);
+    body += circle(g.bandR, `fill="none" stroke="${color}" stroke-width="${g.bandW}"${DASH}`);
+  }
+  return `<svg width="${g.d}" height="${g.d}" viewBox="0 0 ${g.d} ${g.d}" `
+    + `style="display:block;margin:${g.margin}px;overflow:visible" aria-hidden="true">${body}</svg>`;
+};
+
+// Active dot: `size` box (fill + 1px light border) plus the 1px white box-shadow ring, so size + 2 drawn.
+// Hollow: size + 4 drawn (ring over size / 2 +-1, white ring outside it, hole size - 2), still centred.
+const activeGeometry = (size, hollow) => (hollow
+  ? { d: size + 4, margin: -2, halo: true, ringR: size / 2 }
+  : { d: size + 2, margin: -1, halo: true, coreR: size / 2 - 1, bandR: size / 2, bandW: 2 });
+
 export const getCityIcon = (city, isSelected = false, rulerColor = null) => {
   const size = city.iconSize || 5;
   const color = isSelected
     ? '#daa520'
     : (rulerColor || COLORS.primary);
+
+  const hollow = isHollowCity(city);
+  const dashed = isDashedCity(city);
+  if (hollow || dashed) {
+    return L.divIcon({
+      className: 'custom-div-icon',
+      html: certaintyMarkerHtml(SAFE_COLOR.test(color) ? color : COLORS.primary, hollow, dashed, activeGeometry(size, hollow)),
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2]
+    });
+  }
 
   return L.divIcon({
     className: 'custom-div-icon',
@@ -126,6 +170,29 @@ export const endedCityIcon = L.divIcon({
   iconSize: [5, 5],
   iconAnchor: [2.5, 2.5]
 });
+
+// Ended dot is 6px (4px red + 1px white border), centred 0.5px off the 5px icon box. Hollow: 8px drawn
+// (2px wider, same centre), red ring over radius 1-3 with the white ring outside, 2px hole. Filled +
+// dashed: the dashed edge replaces the white border.
+const ENDED_GEOMETRY = { d: 6, margin: 0, halo: false, coreR: 2, bandR: 2.5, bandW: 1 };
+const ENDED_HOLLOW_GEOMETRY = { d: 8, margin: -1, halo: true, ringR: 2 };
+const endedVariantIcons = new Map(); // 'h' | 'd' | 'hd' -> L.divIcon, built once each
+
+export const getEndedCityIcon = (city) => {
+  const hollow = isHollowCity(city);
+  const dashed = isDashedCity(city);
+  if (!hollow && !dashed) return endedCityIcon;
+  const key = `${hollow ? 'h' : ''}${dashed ? 'd' : ''}`;
+  if (!endedVariantIcons.has(key)) {
+    endedVariantIcons.set(key, L.divIcon({
+      className: 'custom-div-icon',
+      html: certaintyMarkerHtml('#a72626', hollow, dashed, hollow ? ENDED_HOLLOW_GEOMETRY : ENDED_GEOMETRY),
+      iconSize: [5, 5],
+      iconAnchor: [2.5, 2.5]
+    }));
+  }
+  return endedVariantIcons.get(key);
+};
 
 // === City Label Icons ===
 // The text is wrapped in a `<span class="city-label-text">` so the

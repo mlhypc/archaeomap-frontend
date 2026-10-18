@@ -1,7 +1,7 @@
 // frontend\src\components\map\MapMain.js - OPTIMIZED VERSION
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Box, useMediaQuery, Alert, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -14,7 +14,7 @@ import L from 'leaflet';
 
 import {
   getCityIcon,
-  endedCityIcon,
+  getEndedCityIcon,
   HISTORICAL_AGES,
   HISTORICAL_AGE_CONFIG,
   createCityLabel,
@@ -22,6 +22,9 @@ import {
 } from './features/mapUtils';
 
 import { ControlPanel, AuthenticationPanel } from './features/mapControls';
+import MapCoordinates from './features/MapCoordinates';
+import MapLegend from './features/MapLegend';
+import { getCertaintyLines, getLegendNeeds } from './features/cityCertainty';
 import { getCurrentCityName, getCurrentRulerColor } from '../../../shared/config/generalUtils';
 const CesiumGlobe = React.lazy(() => import('./features/CesiumGlobe'));
 
@@ -298,13 +301,22 @@ const OptimizedCityMarker = React.memo(({
   // Memoize click handler
   const handleClick = useCallback(() => onSelect(city), [city, onSelect]);
 
+  // Investigation / identification / location lines; empty (no tooltip at all) for default cities
+  const certaintyLines = useMemo(() => getCertaintyLines(city), [city]);
+
   return (
     <>
       <Marker
         position={city.coordinates}
         icon={icon}
         eventHandlers={{ click: handleClick }}
-      />
+      >
+        {certaintyLines.length > 0 && (
+          <Tooltip direction="right" offset={[6, 0]} className="certainty-tooltip">
+            {certaintyLines.map(line => <div key={line}>{line}</div>)}
+          </Tooltip>
+        )}
+      </Marker>
       {showLabel && labelIcon && (
         <Marker
           ref={labelMarkerRef}
@@ -666,6 +678,14 @@ function MapComponent(props) {
     };
   }, [dataState.currentDisplayData, padBounds, uiState.currentYear]);
 
+  // Legend rows for hollow / dashed markers, only while such a city is on screen (2D: in view; 3D: the
+  // year's cities, the globe has no bounds here). Today's data carries no such field: no legend.
+  const displayedForLegend = uiState.enable3D ? dataState.currentDisplayData : visibleCities;
+  const legendNeeds = useMemo(
+    () => getLegendNeeds([displayedForLegend.active, displayedForLegend.ended]),
+    [displayedForLegend]
+  );
+
   // Map resize handler. Leaflet only re-measures its container on window resize; when the sidebar
   // collapses or is dragged, the container grows but the window does not, so the new strip stayed
   // grey (no tiles) and markers there were culled by stale bounds. A ResizeObserver on the container
@@ -998,6 +1018,9 @@ function MapComponent(props) {
         onSearchPick={onSearchPick}
       />
 
+      {/* Hollow / dashed marker legend; renders nothing unless a visible city needs it */}
+      <MapLegend hollow={legendNeeds.hollow} dashed={legendNeeds.dashed} />
+
       {/* Conditional rendering: 3D Globe or 2D Map with smooth transitions */}
       {/* Render 3D if enabled OR transitioning FROM 3D */}
       {(uiState.enable3D || (uiState.isTransitioning && !uiState.enable3D)) && (
@@ -1081,6 +1104,9 @@ function MapComponent(props) {
             onCameraChange={handleCameraChange}
           />
 
+          {/* Right-click / long press: coordinates of the point */}
+          <MapCoordinates />
+
           {/* OPTIMIZED: Memoized 2D city markers */}
           <CityMarkers
             visibleCities={visibleCities}
@@ -1123,7 +1149,7 @@ const CityMarkers = React.memo(({
 
   // Memoized icon functions to prevent recreations
   const activeCityIconFn = useCallback((city, isSelected, rulerColor) => getCityIcon(city, isSelected, rulerColor), []);
-  const endedCityIconFn = useCallback(() => endedCityIcon, []);
+  const endedCityIconFn = useCallback((city) => getEndedCityIcon(city), []);
 
   // Memoize active cities rendering
   const activeMarkers = useMemo(() => 

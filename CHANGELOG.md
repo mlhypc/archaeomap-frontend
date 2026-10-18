@@ -5,7 +5,23 @@ Removed underneath. Versions follow Semantic Versioning (major: a route or URL s
 minor: a new page, feature or panel; patch: fixes, performance, documentation). Work that is not yet
 versioned accumulates under Unreleased. Rules: ../../CLAUDE.md section 8.
 
-## Unreleased
+## 1.5.0 - Map coordinates and certainty markers (2026-10-18)
+
+### Added
+- Right-click on the 2D map (long press on touch) shows the point's coordinates as "lat, lng" with 4
+  decimals in a small popup with a copy button; it closes on Escape, on another click or when the point
+  leaves the view. The browser menu is suppressed on the map only; city markers behave as before.
+- How sure a city is, from three optional fields of the bulk timeline and city payloads (backend):
+  `investigation` survey or unexamined draws a hollow marker (transparent inside, 2px ring in the
+  marker colour, drawn 2px wider than the plain dot so the hole reads at 5px), `identification`
+  uncertain a dashed outline; `location_precision` rough adds no marker style. Anchor, colours and
+  clicks stay as they were; the ended dot follows the same rule.
+  Such a marker gets a hover tooltip, and the city panel lists the notes under the dates
+  ("Investigation: surface survey only" / "sounding only" / "unexamined", "Identification: debated" /
+  "uncertain", "Location: approximate"). A legend at the top left explains hollow and dashed markers,
+  each row only while such a city is in view. The 3D globe draws hollow points; Cesium points cannot
+  be dashed, so uncertain identification shows there in the panel only. Without the fields (all of
+  today's data) nothing changes. Rule in `Map/features/cityCertainty.js`.
 
 ## 1.4.0 - Email verification page (2026-10-17)
 

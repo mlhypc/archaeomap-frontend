@@ -15,6 +15,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CityLikeButton from './CityLikeButton';
 import CityAddCollectionButton from './CityAddCollectionButton';
+import { getCertaintyLines } from '../../Map/features/cityCertainty';
 
 // Item count pill next to a section header (control, landmarks, sources)
 const SectionCount = ({ n }) => (
@@ -70,6 +71,9 @@ function CityDetails({ cityDetails, currentYear }) {
   }, [cityDetails?.image_credit]);
 
   if (!cityDetails) return null;
+
+  // Investigation / identification / location notes; none for a city with default values
+  const certaintyLines = getCertaintyLines(cityDetails);
 
   return (
     <Box className="selectable" sx={{ flex: 1 }}>
@@ -160,6 +164,16 @@ function CityDetails({ cityDetails, currentYear }) {
               </Typography>
             </Box>
           </>
+        )}
+
+        {certaintyLines.length > 0 && (
+          <Box sx={{ py: 1, pr: 1.5, pl: 4, borderTop: `1px solid ${COLORS.border}` }}>
+            {certaintyLines.map(line => (
+              <Typography key={line} variant="body2" sx={{ fontSize: { xs: isSmallMobile ? '0.7rem' : '0.78rem' }, fontStyle: 'italic', color: COLORS.texts.secondary, lineHeight: 1.5 }}>
+                {line}
+              </Typography>
+            ))}
+          </Box>
         )}
       </Paper>
 
